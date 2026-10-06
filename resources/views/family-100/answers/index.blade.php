@@ -1,33 +1,55 @@
 @extends('layouts.app')
 
-@section('title', 'Jawaban Family 100')
-@section('page-pretitle', $question->question)
-@section('page-title', 'Jawaban')
+@section('title', 'Jawaban - ' . $question->question)
+@section('page-pretitle', 'Family 100 • Kelola Jawaban')
+@section('page-title', $question->question)
 
 @section('page-actions')
-    <a href="{{ route('family-100.questions.index') }}" class="btn">Kembali</a>
-    <a href="{{ route('family-100.questions.tv', $question) }}" class="btn" target="_blank" rel="noopener">Tampil di TV</a>
-    <a href="{{ route('family-100.answers.create', $question) }}" class="btn btn-primary">Tambah Jawaban</a>
+    <a href="{{ route('family-100.questions.index') }}" class="btn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
+        Kembali
+    </a>
+    <a href="{{ route('family-100.questions.tv', $question) }}" class="btn btn-cyan" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M16 3l-4 4l-4 -4" /></svg>
+        Tampil di TV ↗
+    </a>
+    <a href="{{ route('family-100.answers.create', $question) }}" class="btn btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
+        Tambah Jawaban
+    </a>
 @endsection
 
 @section('content')
-    <div class="card mb-3">
-        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div>
-                <div class="text-secondary small text-uppercase fw-bold">Kontrol TV</div>
-                <div class="h3 m-0">Tampilan Jawaban & Efek Salah</div>
-            </div>
-            <div>
-                <button type="button" class="btn btn-danger btn-lg px-4" data-wrong-url="{{ route('family-100.questions.wrong', $question) }}">
-                    ❌ Tombol Salah (Strike)
-                </button>
+    <!-- Kartu Informasi Pertanyaan & Kontrol TV -->
+    <div class="card mb-3 shadow-sm" style="border-left: 5px solid var(--tblr-primary) !important;">
+        <div class="card-body p-4">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="badge bg-primary text-white text-uppercase fw-bold px-2 py-1">Pertanyaan Aktif</span>
+                        <span class="badge bg-blue-lt">Maks. {{ $question->display_limit }} Jawaban di TV</span>
+                        <span class="badge bg-secondary-lt">{{ $answers->count() }} Total Jawaban</span>
+                    </div>
+                    <div class="h1 fw-bold text-dark m-0 mb-2 lh-sm">
+                        "{{ $question->question }}"
+                    </div>
+                    <div class="text-secondary small d-flex align-items-center gap-2 flex-wrap">
+                        <span>Hanya <strong>{{ $question->display_limit }} jawaban teratas</strong> (sesuai ranking) yang akan tampil di layar TV.</span>
+                        <a href="{{ route('family-100.questions.edit', $question) }}" class="btn btn-sm btn-outline-primary py-0 px-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-inline" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>
+                            Ubah Pertanyaan / Batas
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="text-secondary small text-uppercase fw-bold mb-1">Kontrol Efek TV</div>
+                    <button type="button" class="btn btn-danger btn-lg px-4 py-3 shadow-sm w-100 w-sm-auto" data-wrong-url="{{ route('family-100.questions.wrong', $question) }}">
+                        <span class="fs-1 me-2 align-middle">❌</span>
+                        <span class="fw-bold fs-3 align-middle">Tombol Salah (Strike)</span>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-
-    <div class="alert alert-info" role="alert">
-        Di TV hanya tampil <strong>{{ $question->display_limit }}</strong> jawaban teratas dari {{ $answers->count() }} jawaban.
-        Ubah di <a href="{{ route('family-100.questions.edit', $question) }}">pengaturan pertanyaan</a>.
     </div>
 
     <x-datatable title="Daftar Jawaban">
