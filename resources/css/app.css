@@ -46,6 +46,17 @@ body {
     z-index: 1060 !important;
 }
 
+/* Geser popup ke kiri agar border dan bayangan sebelah kanan tidak terpotong tepi tabel/card */
+.table.datatable .dropdown-menu.dropdown-menu-end,
+.table-responsive .dropdown-menu.dropdown-menu-end,
+.dropdown-menu.dropdown-menu-end {
+    right: 32px !important;
+    left: auto !important;
+    top: 100% !important;
+    margin-top: 4px !important;
+}
+
+
 
 
 
