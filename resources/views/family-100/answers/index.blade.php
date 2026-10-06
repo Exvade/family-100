@@ -11,19 +11,16 @@
 @endsection
 
 @section('content')
-    <div class="card mb-3" data-timer data-state='@json($timer)'>
-        <div class="card-body d-flex align-items-center flex-wrap gap-3">
+    <div class="card mb-3">
+        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
-                <div class="text-secondary">Timer</div>
-                <div class="display-6 fw-bold" data-timer-display>--:--</div>
+                <div class="text-secondary small text-uppercase fw-bold">Kontrol TV</div>
+                <div class="h3 m-0">Tampilan Jawaban & Efek Salah</div>
             </div>
-            <div class="btn-list ms-auto">
-                <button type="button" class="btn btn-danger" data-wrong-url="{{ route('family-100.questions.wrong', $question) }}">Salah</button>
-                <button type="button" class="btn btn-success" data-timer-toggle
-                        data-start-url="{{ route('family-100.questions.timer', [$question, 'start']) }}"
-                        data-pause-url="{{ route('family-100.questions.timer', [$question, 'pause']) }}">Mulai</button>
-                <button type="button" class="btn" data-timer-reset
-                        data-url="{{ route('family-100.questions.timer', [$question, 'reset']) }}">Reset</button>
+            <div>
+                <button type="button" class="btn btn-danger btn-lg px-4" data-wrong-url="{{ route('family-100.questions.wrong', $question) }}">
+                    ❌ Tombol Salah (Strike)
+                </button>
             </div>
         </div>
     </div>

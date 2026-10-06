@@ -191,65 +191,6 @@
             border: 1.5px solid #86efac;
         }
 
-        /* Timer Capsule Elegan di Pojok Kanan Atas */
-        .tv-timer-capsule {
-            position: fixed;
-            top: 2.5vh;
-            right: 3vw;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: rgba(3, 14, 43, 0.85);
-            border: 2px solid #d4af37;
-            padding: 0.55rem 1.4rem;
-            border-radius: 9999px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 15px rgba(212, 175, 55, 0.3);
-            backdrop-filter: blur(8px);
-            z-index: 20;
-        }
-
-        .tv-timer-label {
-            font-family: 'Cinzel', serif;
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: #d4af37;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-        }
-
-        .tv-timer {
-            font-size: clamp(1.75rem, 3.2vw, 2.5rem);
-            font-weight: 900;
-            font-variant-numeric: tabular-nums;
-            color: #fff1a8;
-            text-shadow: 0 0 10px rgba(255, 241, 168, 0.5);
-            min-width: 4.8rem;
-            text-align: center;
-            line-height: 1;
-        }
-
-        .tv-timer.warning {
-            color: #fb923c;
-            text-shadow: 0 0 15px rgba(251, 146, 60, 0.8);
-            animation: tv-pulse 1s ease-in-out infinite alternate;
-        }
-
-        .tv-timer.finished {
-            color: #ef4444;
-            text-shadow: 0 0 20px rgba(239, 68, 68, 0.9);
-            animation: tv-blink 0.8s ease-in-out infinite alternate;
-        }
-
-        @keyframes tv-pulse {
-            from { transform: scale(1); }
-            to { transform: scale(1.08); }
-        }
-
-        @keyframes tv-blink {
-            from { opacity: 1; }
-            to { opacity: 0.3; }
-        }
-
         /* Overlay Jawaban Salah (X Merah Besar) */
         .tv-strike {
             position: fixed;
@@ -321,12 +262,6 @@
     </style>
 </head>
 <body>
-    <!-- Timer Capsule -->
-    <div class="tv-timer-capsule">
-        <span class="tv-timer-label">Timer</span>
-        <div class="tv-timer" data-tv-timer>{{ sprintf('%02d:%02d', intdiv(intdiv($timer['remaining_ms'] + 999, 1000), 60), intdiv($timer['remaining_ms'] + 999, 1000) % 60) }}</div>
-    </div>
-
     <!-- Area Papan Jawaban (Tepat di dalam bingkai panggung) -->
     <main class="tv-screen-container">
         @if ($answers->isEmpty())
@@ -373,7 +308,7 @@
         async function sync() {
             try {
                 const response = await fetch(stateUrl, { headers: { 'Accept': 'application/json' } });
-                const { answered, timer, wrong_count: wrongCount } = await response.json();
+                const { answered, wrong_count: wrongCount } = await response.json();
                 let newlyRevealed = false;
                 slots.forEach((slot) => {
                     const reveal = answered.includes(Number(slot.dataset.slot));
@@ -381,7 +316,6 @@
                     slot.classList.toggle('revealed', reveal);
                 });
                 if (newlyRevealed) { playCorrect(); }
-                setTimer(timer);
                 if (wrongCount > wrongSeen) { strike(); }
                 wrongSeen = wrongCount;
             } catch (error) {
@@ -477,28 +411,6 @@
             }
         });
 
-        // Timer sinkronisasi
-        const timerEl = document.querySelector('[data-tv-timer]');
-        const timer = { status: @js($timer['status']), remaining: {{ $timer['remaining_ms'] }}, receivedAt: performance.now() };
-
-        function setTimer(state) {
-            timer.status = state.status;
-            timer.remaining = state.remaining_ms;
-            timer.receivedAt = performance.now();
-        }
-
-        function renderTimer() {
-            const left = timer.status === 'running'
-                ? Math.max(0, timer.remaining - (performance.now() - timer.receivedAt))
-                : timer.remaining;
-            const seconds = Math.ceil(left / 1000);
-            timerEl.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
-            const finished = timer.status === 'finished' || (timer.status === 'running' && left === 0);
-            timerEl.classList.toggle('finished', finished);
-            timerEl.classList.toggle('warning', !finished && timer.status === 'running' && seconds <= 10);
-        }
-
-        setInterval(renderTimer, 200);
         setInterval(sync, 1500);
     </script>
 </body>
