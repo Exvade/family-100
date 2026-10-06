@@ -7,3 +7,13 @@
 body {
     font-feature-settings: 'cv03', 'cv04', 'cv11';
 }
+
+/* Hindari dropdown pada tabel terpotong oleh overflow table-responsive */
+.table-responsive:has(.dropdown-menu.show) {
+    overflow: visible !important;
+}
+
+.table-responsive .dropdown-menu {
+    z-index: 1055 !important;
+}
+
