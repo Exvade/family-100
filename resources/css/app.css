@@ -8,10 +8,26 @@ body {
     font-feature-settings: 'cv03', 'cv04', 'cv11';
 }
 
-/* Hilangkan scroll horizontal tabel sama sekali sesuai permintaan user */
+/* Card dan Table container tidak memotong dropdown dan tidak membuat scrollbar */
+.card[data-datatable],
+.card:has(.datatable) {
+    overflow: visible !important;
+}
+
+.card[data-datatable] .table-responsive,
+.card:has(.datatable) .table-responsive,
 .table-responsive {
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
+    overflow: visible !important;
+    position: relative;
+    z-index: 20;
+}
+
+/* Card footer memiliki z-index lebih rendah sehingga dropdown menu melayang di ATAS footer */
+.card[data-datatable] .card-footer,
+.card:has(.datatable) .card-footer,
+.card-footer {
+    position: relative;
+    z-index: 1;
 }
 
 .table.datatable {
@@ -19,7 +35,7 @@ body {
     table-layout: auto;
 }
 
-/* Kolom pertanyaan bisa membungkus teks agar tabel kompak dan tidak melebar */
+/* Kolom teks (pertanyaan / jawaban) bisa membungkus teks agar tabel kompak */
 .table.datatable td:nth-child(2),
 .table.datatable th:nth-child(2) {
     white-space: normal;
@@ -34,15 +50,16 @@ body {
     width: 1%;
 }
 
-/* Pastikan dropdown menu melayang di atas baris tabel */
+/* Pastikan baris dan container dropdown yang sedang terbuka melayang di atas baris lainnya */
 .table.datatable tr:has(.dropdown-menu.show),
 .table.datatable td:has(.dropdown-menu.show),
 .dropdown:has(.dropdown-menu.show) {
     position: relative;
-    z-index: 1050;
+    z-index: 1050 !important;
 }
 
-.table.datatable .dropdown-menu {
+.table.datatable .dropdown-menu,
+.dropdown-menu {
     z-index: 1060 !important;
 }
 
@@ -55,6 +72,7 @@ body {
     top: 100% !important;
     margin-top: 4px !important;
 }
+
 
 
 
