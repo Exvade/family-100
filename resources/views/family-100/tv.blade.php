@@ -332,10 +332,10 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
     </div>
 
-    <!-- Tombol Suara (Wajib interaksi browser pertama kali) -->
-    <button type="button" class="tv-sound-btn" data-tv-sound>
+    <!-- Tombol Suara TV -->
+    <button type="button" class="tv-sound-btn" data-tv-sound title="Klik untuk mengaktifkan / mematikan suara (atau tekan X untuk tes salah, C untuk tes benar)">
         <span class="tv-sound-icon">🔊</span>
-        <span class="tv-sound-text">Aktifkan Suara</span>
+        <span class="tv-sound-text">Suara Aktif</span>
     </button>
 
     <script>
@@ -377,28 +377,45 @@
         const soundButton = document.querySelector('[data-tv-sound]');
         const soundText = soundButton.querySelector('.tv-sound-text');
         const soundIcon = soundButton.querySelector('.tv-sound-icon');
-        let soundOn = false;
+        let soundOn = true;
 
         const wrongAudio = new Audio('{{ asset("sounds/wrong.mp3") }}');
         wrongAudio.preload = 'auto';
         const correctAudio = new Audio('{{ asset("sounds/correct.mp3") }}');
         correctAudio.preload = 'auto';
 
-        soundButton.addEventListener('click', () => {
+        // Buka kunci AudioContext/Autoplay browser saat ada interaksi pertama
+        function unlockAudio() {
+            wrongAudio.load();
+            correctAudio.load();
+        }
+        window.addEventListener('pointerdown', unlockAudio, { once: true });
+        window.addEventListener('keydown', unlockAudio, { once: true });
+
+        soundButton.addEventListener('click', (e) => {
+            e.stopPropagation();
             soundOn = !soundOn;
             soundText.textContent = soundOn ? 'Suara Aktif' : 'Suara Mati';
             soundIcon.textContent = soundOn ? '🔊' : '🔇';
+            soundButton.style.opacity = soundOn ? '1' : '0.6';
             if (soundOn) {
-                playCorrect();
+                playWrong();
             }
         });
 
         function playCorrect() {
             if (!soundOn) return;
             try {
-                const s = correctAudio.cloneNode();
-                s.volume = 1.0;
-                s.play().catch(() => {});
+                correctAudio.currentTime = 0;
+                correctAudio.volume = 1.0;
+                const p = correctAudio.play();
+                if (p !== undefined) {
+                    p.catch(() => {
+                        const s = new Audio('{{ asset("sounds/correct.mp3") }}');
+                        s.volume = 1.0;
+                        s.play().catch(() => {});
+                    });
+                }
             } catch (err) {
                 console.warn(err);
             }
@@ -407,13 +424,30 @@
         function playWrong() {
             if (!soundOn) return;
             try {
-                const s = wrongAudio.cloneNode();
-                s.volume = 1.0;
-                s.play().catch(() => {});
+                wrongAudio.currentTime = 0;
+                wrongAudio.volume = 1.0;
+                const p = wrongAudio.play();
+                if (p !== undefined) {
+                    p.catch(() => {
+                        const s = new Audio('{{ asset("sounds/wrong.mp3") }}');
+                        s.volume = 1.0;
+                        s.play().catch(() => {});
+                    });
+                }
             } catch (err) {
                 console.warn(err);
             }
         }
+
+        // Shortcut keyboard testing (X: salah, C: benar)
+        window.addEventListener('keydown', (e) => {
+            if (e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+            if (e.key === 'x' || e.key === 'X') {
+                strike();
+            } else if (e.key === 'c' || e.key === 'C') {
+                playCorrect();
+            }
+        });
 
         // Timer sinkronisasi
         const timerEl = document.querySelector('[data-tv-timer]');
