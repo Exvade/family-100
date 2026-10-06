@@ -27,6 +27,22 @@
             position: relative;
         }
 
+        /* Video background panggung TV (Muted & Loop) */
+        .tv-bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 100vw;
+            height: 100vh;
+            min-width: 100vw;
+            min-height: 100vh;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            object-position: center center;
+            z-index: 1;
+            pointer-events: none;
+        }
+
         /* Container papan jawaban tepat di dalam frame emas panggung */
         .tv-screen-container {
             position: absolute;
@@ -262,6 +278,11 @@
     </style>
 </head>
 <body>
+    <!-- Background Video Panggung TV (Muted & Loop) -->
+    <video class="tv-bg-video" autoplay loop muted playsinline preload="auto" poster="{{ asset('images/background-quiz.png') }}">
+        <source src="{{ asset('videos/background.mp4') }}" type="video/mp4">
+    </video>
+
     <!-- Area Papan Jawaban (Tepat di dalam bingkai panggung) -->
     <main class="tv-screen-container">
         @if ($answers->isEmpty())
@@ -410,6 +431,25 @@
                 playCorrect();
             }
         });
+
+        // Video background: selalu muted & looping
+        const bgVideo = document.querySelector('.tv-bg-video');
+        if (bgVideo) {
+            bgVideo.muted = true;
+            bgVideo.defaultMuted = true;
+            bgVideo.loop = true;
+            const startBgVideo = () => {
+                bgVideo.muted = true;
+                bgVideo.play().catch(() => {});
+            };
+            startBgVideo();
+            window.addEventListener('click', startBgVideo, { once: true });
+            window.addEventListener('keydown', startBgVideo, { once: true });
+            bgVideo.addEventListener('ended', () => {
+                bgVideo.currentTime = 0;
+                bgVideo.play().catch(() => {});
+            });
+        }
 
         setInterval(sync, 1500);
     </script>
