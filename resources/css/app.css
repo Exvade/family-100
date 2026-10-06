@@ -8,20 +8,44 @@ body {
     font-feature-settings: 'cv03', 'cv04', 'cv11';
 }
 
-/* Hindari dropdown pada tabel terpotong oleh overflow table-responsive */
-.table-responsive:has(.dropdown-menu.show) {
-    overflow: visible !important;
+/* Kolom Aksi / Opsi Sticky di sebelah kanan tabel agar selalu terlihat dan tidak terpotong */
+.table-responsive {
+    min-height: 280px;
+    padding-bottom: 2.5rem;
 }
 
-tr:has(.dropdown-menu.show),
-td:has(.dropdown-menu.show),
-.dropdown:has(.dropdown-menu.show) {
-    position: relative;
+.table-responsive .table th:last-child,
+.table-responsive .table td:last-child {
+    position: sticky;
+    right: 0;
+    background-color: var(--tblr-card-bg, #ffffff);
+    z-index: 5;
+    box-shadow: -4px 0 8px -3px rgba(0, 0, 0, 0.08);
+}
+
+.table-responsive .table th:last-child {
+    z-index: 6;
+}
+
+.table-responsive .table tbody tr:hover td:last-child {
+    background-color: var(--tblr-table-hover-bg, var(--tblr-bg-surface-secondary, #f8fafc));
+}
+
+.table-responsive .table td:has(.dropdown-menu.show),
+.table-responsive .table tr:has(.dropdown-menu.show) {
     z-index: 1050;
 }
 
 .table-responsive .dropdown-menu {
-    z-index: 1055 !important;
+    z-index: 1060 !important;
 }
+
+/* Kolom pertanyaan bisa membungkus teks agar tabel lebih kompak */
+.table-responsive .table td:nth-child(2),
+.table-responsive .table th:nth-child(2) {
+    white-space: normal;
+    min-width: 260px;
+}
+
 
 

@@ -2,8 +2,7 @@
 
 <span class="dropdown">
     <button class="btn dropdown-toggle align-text-top"
-            data-bs-toggle="dropdown"
-            data-bs-boundary="viewport">Opsi</button>
+            data-bs-toggle="dropdown">Opsi</button>
     <div class="dropdown-menu dropdown-menu-end shadow">
         {{ $slot }}
         <form method="POST" action="{{ $deleteUrl }}" onsubmit="return confirm(@js($deleteMessage))">
