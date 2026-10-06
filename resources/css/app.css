@@ -8,44 +8,44 @@ body {
     font-feature-settings: 'cv03', 'cv04', 'cv11';
 }
 
-/* Kolom Aksi / Opsi Sticky di sebelah kanan tabel agar selalu terlihat dan tidak terpotong */
+/* Hilangkan scroll horizontal tabel sama sekali sesuai permintaan user */
 .table-responsive {
-    min-height: 280px;
-    padding-bottom: 2.5rem;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
 }
 
-.table-responsive .table th:last-child,
-.table-responsive .table td:last-child {
-    position: sticky;
-    right: 0;
-    background-color: var(--tblr-card-bg, #ffffff);
-    z-index: 5;
-    box-shadow: -4px 0 8px -3px rgba(0, 0, 0, 0.08);
+.table.datatable {
+    width: 100% !important;
+    table-layout: auto;
 }
 
-.table-responsive .table th:last-child {
-    z-index: 6;
+/* Kolom pertanyaan bisa membungkus teks agar tabel kompak dan tidak melebar */
+.table.datatable td:nth-child(2),
+.table.datatable th:nth-child(2) {
+    white-space: normal;
+    word-break: break-word;
 }
 
-.table-responsive .table tbody tr:hover td:last-child {
-    background-color: var(--tblr-table-hover-bg, var(--tblr-bg-surface-secondary, #f8fafc));
+/* Kolom opsi dan dropdown menu */
+.table.datatable td:last-child,
+.table.datatable th:last-child {
+    white-space: nowrap;
+    text-align: right;
+    width: 1%;
 }
 
-.table-responsive .table td:has(.dropdown-menu.show),
-.table-responsive .table tr:has(.dropdown-menu.show) {
+/* Pastikan dropdown menu melayang di atas baris tabel */
+.table.datatable tr:has(.dropdown-menu.show),
+.table.datatable td:has(.dropdown-menu.show),
+.dropdown:has(.dropdown-menu.show) {
+    position: relative;
     z-index: 1050;
 }
 
-.table-responsive .dropdown-menu {
+.table.datatable .dropdown-menu {
     z-index: 1060 !important;
 }
 
-/* Kolom pertanyaan bisa membungkus teks agar tabel lebih kompak */
-.table-responsive .table td:nth-child(2),
-.table-responsive .table th:nth-child(2) {
-    white-space: normal;
-    min-width: 260px;
-}
 
 
 
