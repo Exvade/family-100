@@ -10,10 +10,13 @@ class Family100Seeder extends Seeder
 {
     public function run(): void
     {
+        Answer::query()->delete();
+        Question::query()->delete();
+
         $data = [
             [
                 'question' => 'Sebutkan barang yang biasa dibawa tamu saat menghadiri pesta kondangan!',
-                'display_limit' => 6,
+                'display_limit' => 10,
                 'answers' => [
                     ['answer' => 'Amplop / Uang', 'ranking' => 1],
                     ['answer' => 'Kado / Hadiah', 'ranking' => 2],
@@ -22,6 +25,25 @@ class Family100Seeder extends Seeder
                     ['answer' => 'Make Up / Lipstik', 'ranking' => 5],
                     ['answer' => 'Pasangan / Gandengan', 'ranking' => 6],
                     ['answer' => 'Undangan', 'ranking' => 7],
+                    ['answer' => 'Kipas / Kipas Angin Portable', 'ranking' => 8],
+                    ['answer' => 'Parfum / Minyak Wangi', 'ranking' => 9],
+                    ['answer' => 'Sepatu Cadangan / Sandal', 'ranking' => 10],
+                ],
+            ],
+            [
+                'question' => 'Sebutkan hal penting yang harus dipersiapkan sebelum hari resepsi pernikahan!',
+                'display_limit' => 10,
+                'answers' => [
+                    ['answer' => 'Gedung / Venue Pernikahan', 'ranking' => 1],
+                    ['answer' => 'Katering / Menu Makanan', 'ranking' => 2],
+                    ['answer' => 'Baju Pengantin / Busana', 'ranking' => 3],
+                    ['answer' => 'Undangan & Souvenir', 'ranking' => 4],
+                    ['answer' => 'Cincin Kawin & Mahar', 'ranking' => 5],
+                    ['answer' => 'Make Up Artist (MUA)', 'ranking' => 6],
+                    ['answer' => 'Dokumentasi / Fotografer', 'ranking' => 7],
+                    ['answer' => 'Dekorasi Pelaminan', 'ranking' => 8],
+                    ['answer' => 'MC dan Hiburan Musik', 'ranking' => 9],
+                    ['answer' => 'Penghulu / Petugas KUA', 'ranking' => 10],
                 ],
             ],
             [

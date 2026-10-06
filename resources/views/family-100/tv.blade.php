@@ -30,8 +30,8 @@
         /* Container papan jawaban tepat di dalam frame emas panggung */
         .tv-screen-container {
             position: absolute;
-            top: 42%;
-            bottom: 11%;
+            top: 38.5%;
+            bottom: 8.5%;
             left: 14%;
             right: 14%;
             display: flex;
@@ -47,7 +47,35 @@
             flex-direction: column;
             width: 100%;
             max-width: clamp(650px, 56vw, 920px);
-            gap: clamp(0.4rem, 0.95vh, 0.75rem);
+            gap: clamp(0.35rem, 0.85vh, 0.75rem);
+        }
+
+        /* Modifikasi untuk 8 - 10 jawaban agar muat pas dan proporsional di dalam frame panggung */
+        .tv-board.tv-board-dense {
+            gap: clamp(0.18rem, 0.52vh, 0.42rem);
+        }
+
+        .tv-board.tv-board-dense .tv-slot {
+            height: clamp(1.85rem, 3.7vh, 2.75rem);
+        }
+
+        .tv-board.tv-board-dense .tv-rank,
+        .tv-board.tv-board-dense .tv-empty-badge,
+        .tv-board.tv-board-dense .tv-answer-badge {
+            width: clamp(1.55rem, 3.1vh, 2.25rem);
+            height: clamp(1.55rem, 3.1vh, 2.25rem);
+            font-size: clamp(0.85rem, 1.5vh, 1.15rem);
+        }
+
+        .tv-board.tv-board-dense .tv-answer-text {
+            font-size: clamp(0.85rem, 1.35vw, 1.35rem);
+            letter-spacing: 0.04em;
+        }
+
+        .tv-board.tv-board-dense .tv-card-front,
+        .tv-board.tv-board-dense .tv-card-back {
+            padding: 0 clamp(0.5rem, 0.9vw, 1rem);
+            gap: 0.6rem;
         }
 
         /* Baris / Slot Jawaban Pill Capsule 3D */
@@ -304,7 +332,7 @@
         @if ($answers->isEmpty())
             <div class="tv-empty-state">Menunggu babak dimulai...</div>
         @else
-            <div class="tv-board">
+            <div class="tv-board {{ $answers->count() >= 8 ? 'tv-board-dense' : '' }}">
                 @foreach ($answers as $answer)
                     <div class="tv-slot {{ $answer->is_answered ? 'revealed' : '' }}" data-slot="{{ $answer->id }}">
                         <div class="tv-card-inner">
