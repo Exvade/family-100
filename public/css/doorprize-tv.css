@@ -1,0 +1,690 @@
+:root {
+            --blue-glow:    #1e40af;
+            --blue-stage:   #0f2e9e;
+            --blue-deep:    #071960;
+            --blue-abyss:   #020617;
+
+            --board-navy:   #061340;
+            --bar-dark:     #020a26;
+            --bar-light:    #081d68;
+
+            --gold-hi:      #fffef0;
+            --gold-light:   #fde68a;
+            --gold-bright:  #f59e0b;
+            --gold-mid:     #d97706;
+            --gold-dark:    #92400e;
+            --gold-deep:    #451a03;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #020617;
+            font-family: 'Montserrat', sans-serif;
+            color: #ffffff;
+        }
+
+        /* ==================== FULL VIEWPORT STAGE CANVAS (ZERO BLACK BARS) ==================== */
+        .stage-viewport {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: clamp(10px, 1.8vh, 22px) clamp(16px, 2.5vw, 40px) clamp(12px, 2vh, 24px);
+            background: radial-gradient(ellipse at 50% 18%, #1e4de8 0%, #0d2bbd 35%, #071868 68%, #020617 100%);
+            overflow: hidden;
+        }
+
+        /* Volumetric Ceiling Spotlights */
+        .stage-lighting-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .spotlight-cone {
+            position: absolute;
+            top: -12%;
+            height: 115%;
+            filter: blur(24px);
+            opacity: 0.75;
+            pointer-events: none;
+        }
+        .spotlight-cone.l1 { left: 3%;  width: 16%; background: conic-gradient(from 148deg at 50% 0%, rgba(147,197,253,0.42) 0deg, rgba(37,99,235,0.08) 22deg, transparent 42deg); }
+        .spotlight-cone.l2 { left: 19%; width: 15%; background: conic-gradient(from 158deg at 50% 0%, rgba(147,197,253,0.32) 0deg, rgba(37,99,235,0.06) 18deg, transparent 38deg); }
+        .spotlight-cone.r2 { right: 19%; width: 15%; background: conic-gradient(from 174deg at 50% 0%, rgba(147,197,253,0.32) 0deg, rgba(37,99,235,0.06) 18deg, transparent 38deg); }
+        .spotlight-cone.r1 { right: 3%;  width: 16%; background: conic-gradient(from 184deg at 50% 0%, rgba(147,197,253,0.42) 0deg, rgba(37,99,235,0.08) 22deg, transparent 42deg); }
+
+        /* Symmetrical Blue LED Dot-Matrix Wing Walls */
+        .stage-wing-wall {
+            position: absolute;
+            top: 4%;
+            width: 12%;
+            height: 84%;
+            background-image: radial-gradient(circle, #60a5fa 2.2px, transparent 3.2px);
+            background-size: 15px 15px;
+            opacity: 0.52;
+            mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 40%, transparent 88%);
+            -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 40%, transparent 88%);
+            pointer-events: none;
+            z-index: 2;
+        }
+        .stage-wing-wall.left { left: 0; }
+        .stage-wing-wall.right { right: 0; }
+
+        /* 3D Sculpted Golden Stage Arches */
+        .stage-arch-beam {
+            position: absolute;
+            top: 0;
+            width: 16%;
+            height: 96%;
+            border: 14px solid #d97706;
+            border-color: #b45309 #f59e0b #d97706 #fde68a;
+            border-radius: 50%;
+            box-shadow: 0 0 35px rgba(245, 158, 11, 0.55), inset 0 0 25px rgba(0,0,0,0.85);
+            pointer-events: none;
+            z-index: 3;
+        }
+        .stage-arch-beam.left { left: -9%; transform: rotate(-10deg); }
+        .stage-arch-beam.right { right: -9%; transform: rotate(10deg); }
+
+        /* Glossy Circular Reflective Stage Floor */
+        .stage-floor-reflect {
+            position: absolute;
+            bottom: -32vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 88vw;
+            height: 52vh;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at 50% 25%, rgba(37,99,235,0.7) 0%, rgba(10,31,106,0.9) 45%, #010619 88%);
+            border: 8px solid rgba(245, 158, 11, 0.8);
+            box-shadow: 0 0 70px rgba(37, 99, 235, 0.8), inset 0 0 45px rgba(245, 158, 11, 0.4);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* ==================== GRAND 3D TITLE CREST (WEDDING DOORPRIZE) ==================== */
+        .stage-header-crest {
+            position: relative;
+            z-index: 25;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+            margin-bottom: clamp(-20px, -2.2vh, -12px);
+        }
+
+        .crest-rings {
+            filter: drop-shadow(0 0 16px rgba(254, 230, 138, 0.95));
+            margin-bottom: -8px;
+        }
+        .crest-rings svg {
+            width: clamp(54px, 4.8vw, 78px);
+            height: auto;
+        }
+
+        .crest-title-3d {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            text-align: center;
+            line-height: 1.02;
+            text-transform: uppercase;
+            background: linear-gradient(180deg, #ffffff 0%, #fffef0 25%, #fde68a 52%, #d97706 78%, #78350f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 0 #92400e)
+                    drop-shadow(0 4px 0 #5c2205)
+                    drop-shadow(0 8px 18px rgba(0, 0, 0, 0.92));
+        }
+        .title-top {
+            display: block;
+            font-size: clamp(1.4rem, 2.4vw, 2.4rem);
+            letter-spacing: 4px;
+        }
+        .title-bottom {
+            display: block;
+            font-size: clamp(1.8rem, 3.4vw, 3.4rem);
+            letter-spacing: 6px;
+        }
+
+        /* Navy Ribbon with Gold Calligraphy */
+        .crest-ribbon {
+            position: relative;
+            margin-top: 2px;
+            background: linear-gradient(180deg, #091747 0%, #03081e 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 9999px;
+            padding: 2px clamp(24px, 3.2vw, 44px);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.45), 0 6px 14px rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .crest-ribbon::before, .crest-ribbon::after {
+            content: '♥';
+            color: #fde68a;
+            font-size: 0.85rem;
+            filter: drop-shadow(0 0 6px #f59e0b);
+        }
+        .crest-ribbon-names {
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(1.35rem, 2vw, 2.1rem);
+            font-weight: 400;
+            letter-spacing: 2px;
+            background: linear-gradient(180deg, #ffffff 0%, #fff9db 40%, #fde68a 75%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
+        }
+
+        /* ==================== THE GRAND GOLDEN MARQUEE BOARD ==================== */
+        .marquee-stage-board {
+            position: relative;
+            z-index: 10;
+            width: min(96vw, 1420px);
+            flex: 1;
+            min-height: 0;
+            background: linear-gradient(145deg, #fffef0 0%, #fde68a 22%, #b45309 48%, #f59e0b 74%, #451a03 100%);
+            border-radius: 36px;
+            padding: 12px;
+            box-shadow: 0 0 55px rgba(245, 158, 11, 0.5),
+                        0 24px 75px rgba(0, 0, 0, 0.95),
+                        inset 0 2px 4px #ffffff;
+            display: flex;
+            overflow: visible;
+        }
+
+        .marquee-inner-surface {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 26px;
+            background: radial-gradient(ellipse at 50% 35%, #153ea8 0%, #0d2875 48%, #030c2c 95%);
+            border: 3px solid #78350f;
+            box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.92);
+            display: flex;
+            flex-direction: column;
+            padding: clamp(24px, 3.6vh, 36px) clamp(16px, 2.2vw, 28px) clamp(12px, 1.8vh, 20px);
+            overflow: hidden;
+        }
+
+        /* Perimeter Tungsten Light Bulbs */
+        .marquee-bulbs-track {
+            position: absolute;
+            inset: -3px;
+            border-radius: 35px;
+            pointer-events: none;
+            z-index: 15;
+        }
+        .static-bulb {
+            position: absolute;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ffffff 0%, #ffea79 40%, #d97706 85%, #78350f 100%);
+            box-shadow: 0 0 10px #ffe066, 0 0 20px #f59e0b;
+        }
+        .static-bulb:nth-child(even) {
+            background: radial-gradient(circle at 35% 35%, #ffffff 0%, #ffd043 40%, #b45309 85%, #451a03 100%);
+            box-shadow: 0 0 8px #ffd043, 0 0 16px #d97706;
+        }
+
+        /* 2-COLUMN SPLIT (5 BARS + REAL PHOTO FRAME) */
+        .board-split-columns {
+            position: relative;
+            z-index: 5;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            align-items: stretch;
+            gap: clamp(14px, 2.2vw, 28px);
+        }
+
+        /* ---------------- LEFT COLUMN: 5 FAMILY 100 WINNER BARS (~62%) ---------------- */
+        .col-participants-bars {
+            flex: 1.55;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            gap: 10px;
+        }
+
+        .bars-top-title-badge {
+            align-self: flex-start;
+            background: linear-gradient(180deg, #fffbeb 0%, #fde047 35%, #d97706 80%, #78350f 100%);
+            padding: 5px 24px;
+            border-radius: 8px;
+            border: 1.5px solid #fde047;
+            box-shadow: 0 0 0 1.5px #78350f, 0 4px 12px rgba(0, 0, 0, 0.75), 0 0 14px rgba(245, 158, 11, 0.4);
+            font-size: clamp(0.72rem, 0.9vw, 0.88rem);
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #1c1103;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .bars-vertical-stack {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(8px, 1.3vh, 16px);
+            flex: 1;
+            min-height: 0;
+            justify-content: space-between;
+        }
+
+        /* Family 100 Style Answer Bar */
+        .family-participant-bar {
+            position: relative;
+            background: linear-gradient(180deg, #030b2e 0%, #081d68 50%, #030b2e 100%);
+            border: 2.5px solid #d97706;
+            border-radius: 14px;
+            padding: clamp(7px, 1.1vh, 11px) clamp(12px, 1.4vw, 18px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.15),
+                        0 4px 12px rgba(0, 0, 0, 0.7),
+                        0 0 12px rgba(217, 119, 6, 0.25);
+            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            flex: 1;
+            max-height: 74px;
+        }
+        .family-participant-bar:hover {
+            border-color: #fde68a;
+            transform: translateX(4px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85), 0 0 20px rgba(245, 158, 11, 0.45);
+        }
+        .family-participant-bar.revealed {
+            background: linear-gradient(180deg, #051a66 0%, #0d35ad 50%, #051a66 100%);
+            border-color: #fde68a;
+            box-shadow: 0 0 24px rgba(245, 158, 11, 0.75), inset 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+
+        /* 3D Golden Sphere Rank Badge (Exact Family 100 Coin) */
+        .sphere-rank-badge {
+            flex: none;
+            width: clamp(34px, 2.5vw, 42px);
+            height: clamp(34px, 2.5vw, 42px);
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #fffef0 0%, #fde68a 32%, #f59e0b 65%, #92400e 90%, #451a03 100%);
+            border: 2px solid #fde047;
+            box-shadow: 0 0 0 1.5px #78350f, 0 3px 8px rgba(0, 0, 0, 0.7), 0 0 10px rgba(245, 158, 11, 0.6);
+            display: grid;
+            place-items: center;
+            font-size: clamp(1.1rem, 1.35vw, 1.4rem);
+            font-weight: 900;
+            color: #1a0e02;
+        }
+
+        .bar-label-container {
+            display: flex;
+            flex-direction: column;
+            margin-left: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+        .bar-rank-heading {
+            font-size: clamp(0.72rem, 0.85vw, 0.9rem);
+            font-weight: 800;
+            color: #fde68a;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .bar-status-sub {
+            font-size: clamp(0.62rem, 0.72vw, 0.76rem);
+            font-weight: 700;
+            color: #93c5fd;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Participant Name Display Window */
+        .bar-participant-window {
+            background: #010619;
+            border: 2px solid #b45309;
+            border-radius: 10px;
+            padding: clamp(4px, 0.7vh, 7px) clamp(12px, 1.4vw, 18px);
+            box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.95), 0 0 10px rgba(217, 119, 6, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: clamp(180px, 19vw, 260px);
+            text-align: center;
+        }
+
+        /* Golden Dots When Unrevealed (Matching Family 100) */
+        .slot-dots-unrevealed {
+            font-size: clamp(1.2rem, 1.6vw, 1.8rem);
+            color: #fde68a;
+            letter-spacing: 6px;
+            filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+        }
+
+        /* Revealed Participant Name */
+        .participant-name-text {
+            font-size: clamp(1.05rem, 1.4vw, 1.55rem);
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: #ffffff;
+            background: linear-gradient(180deg, #ffffff 0%, #fffef0 40%, #fde68a 75%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 12px rgba(245, 158, 11, 0.65);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+
+
+        /* ---------------- RIGHT COLUMN: SLOT FOTO MEMPELAI (~38%) ---------------- */
+        .col-couple-portrait {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+        }
+
+        .couple-portrait-outer-frame {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #fffef0 0%, #fde68a 25%, #b45309 50%, #f59e0b 75%, #451a03 100%);
+            border-radius: 22px;
+            padding: 8px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.9),
+                        0 0 28px rgba(245, 158, 11, 0.4);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .couple-portrait-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+            background: radial-gradient(ellipse at 50% 35%, #0e297a 0%, #061548 65%, #02071d 100%);
+            border: 2px solid #78350f;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .portrait-top-badge {
+            background: linear-gradient(180deg, #fffef0 0%, #fde68a 35%, #d97706 80%, #78350f 100%);
+            border: 1.5px solid #fde047;
+            border-radius: 6px;
+            padding: 3px 16px;
+            font-size: clamp(0.68rem, 0.8vw, 0.78rem);
+            font-weight: 900;
+            color: #1a0e02;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: 0 0 0 1.5px #78350f, 0 3px 8px rgba(0, 0, 0, 0.55);
+            z-index: 5;
+        }
+
+        /* ELEGANT COUPLE INITIALS & MONOGRAM DISPLAY */
+        .portrait-artwork-viewport {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            margin: 6px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(245, 158, 11, 0.6);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.85), 0 0 16px rgba(37, 99, 235, 0.35);
+            background: radial-gradient(circle at center, #0f2b80 0%, #061548 60%, #010619 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .portrait-monogram-circle {
+            width: clamp(70px, 8vw, 105px);
+            height: clamp(70px, 8vw, 105px);
+            border-radius: 50%;
+            border: 2.5px solid #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), inset 0 0 15px rgba(245, 158, 11, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, #1e40af 0%, #0a1f6a 80%);
+            margin-bottom: 8px;
+        }
+
+        .monogram-script-ah {
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(2rem, 3.2vw, 3.4rem);
+            color: #fde68a;
+            text-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+            line-height: 0.9;
+        }
+
+        .wedding-rings-ornament {
+            margin-top: 4px;
+        }
+        .wedding-rings-ornament svg {
+            width: clamp(34px, 3vw, 42px);
+            height: auto;
+        }
+
+        .portrait-subtitle-label {
+            font-size: clamp(0.7rem, 0.85vw, 0.85rem);
+            font-weight: 800;
+            color: #fde68a;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        .portrait-date-text {
+            font-size: clamp(0.62rem, 0.72vw, 0.74rem);
+            color: #93c5fd;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .portrait-bottom-banner {
+            width: 100%;
+            background: linear-gradient(180deg, #091747 0%, #03081e 100%);
+            border: 1.5px solid #d97706;
+            border-radius: 9px;
+            padding: 4px 10px;
+            text-align: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
+            z-index: 5;
+        }
+        .portrait-couple-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(1.25rem, 1.6vw, 1.7rem);
+            color: #fde68a;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+            line-height: 1.1;
+        }
+        .portrait-couple-sub {
+            font-size: clamp(0.6rem, 0.7vw, 0.72rem);
+            font-weight: 700;
+            color: #93c5fd;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+
+
+        /* ==================== CELEBRATION WINNER POPUP ==================== */
+        .celebration-popup-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            background: rgba(1, 6, 25, 0.94);
+            backdrop-filter: blur(14px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+            padding: 24px;
+        }
+        .celebration-popup-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .celebration-popup-card {
+            position: relative;
+            background: radial-gradient(circle at center, #143ca8 0%, #0a1f6a 65%, #02071d 100%);
+            border: 5px solid #f59e0b;
+            border-radius: 36px;
+            padding: clamp(24px, 3.8vh, 42px) clamp(28px, 3.5vw, 56px);
+            text-align: center;
+            box-shadow: 0 0 45px rgba(245, 158, 11, 0.38),
+                        0 28px 85px rgba(0, 0, 0, 0.98);
+            transform: scale(0.9) translateY(10px);
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 860px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .celebration-popup-overlay.active .celebration-popup-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .popup-header-title {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.8rem, 2.8vw, 2.7rem);
+            font-weight: 900;
+            color: #fffef0;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+            margin-bottom: 6px;
+            line-height: 1.15;
+            letter-spacing: 1px;
+        }
+
+        .popup-header-sub {
+            font-size: clamp(0.78rem, 0.95vw, 0.92rem);
+            font-weight: 700;
+            color: #fde68a;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+        }
+
+        /* 3-Column Grid: Row 1 = 3 cards, Row 2 = 2 cards */
+        .popup-winners-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 768px) {
+            .popup-winners-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+        }
+
+        .winner-card-cell {
+            background: #010619;
+            border: 2px solid #b45309;
+            border-radius: 14px;
+            padding: clamp(12px, 1.8vh, 18px) 12px;
+            box-shadow: inset 0 0 14px rgba(0,0,0,0.9), 0 4px 12px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 5px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .winner-card-cell:hover {
+            transform: translateY(-3px);
+            border-color: #fde047;
+        }
+
+        .winner-card-rank {
+            font-size: clamp(0.68rem, 0.75vw, 0.78rem);
+            font-weight: 800;
+            color: #fde68a;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .winner-card-name {
+            font-size: clamp(1.05rem, 1.25vw, 1.3rem);
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .winner-card-tag {
+            font-size: clamp(0.64rem, 0.7vw, 0.74rem);
+            font-weight: 800;
+            color: #55efc4;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .btn-close-popup {
+            background: linear-gradient(180deg, #fffbeb 0%, #fde047 30%, #f59e0b 70%, #b45309 100%);
+            border: 2px solid #fde047;
+            border-radius: 9999px;
+            padding: 10px 48px;
+            font-size: clamp(0.85rem, 0.95vw, 1rem);
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #1a0e02;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px #78350f, 0 6px 20px rgba(0, 0, 0, 0.8);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-close-popup:hover {
+            transform: scale(1.04);
+            box-shadow: 0 0 0 2px #92400e, 0 8px 26px rgba(0, 0, 0, 0.9);
+        }
+
+        .popup-dismiss-hint {
+            margin-top: 10px;
+            font-size: 0.74rem;
+            color: #93c5fd;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
