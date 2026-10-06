@@ -32,3 +32,4 @@ Route::get('family-100/pengaturan', [SettingController::class, 'edit'])->name('f
 Route::put('family-100/pengaturan', [SettingController::class, 'update'])->name('family-100.settings.update');
 
 Route::view('/doorprize', 'doorprize')->name('doorprize');
+Route::view('/doorprize/tv', 'doorprize-tv')->name('doorprize.tv');
