@@ -6,6 +6,7 @@ use App\Models\Question;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class QuestionController extends Controller
@@ -24,25 +25,104 @@ class QuestionController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $question = Question::create($this->validated($request));
+        $data = $this->validated($request);
+
+        $answersCount = 0;
+        $question = DB::transaction(function () use ($data, $request, &$answersCount) {
+            $question = Question::create([
+                'question' => $data['question'],
+                'display_limit' => $data['display_limit'],
+            ]);
+
+            $answers = $request->input('answers', []);
+            foreach ($answers as $idx => $answerData) {
+                $text = trim(is_array($answerData) ? ($answerData['answer'] ?? '') : (string) $answerData);
+                if ($text !== '') {
+                    $ranking = is_array($answerData) && !empty($answerData['ranking'])
+                        ? (int) $answerData['ranking']
+                        : ($idx + 1);
+
+                    $question->answers()->create([
+                        'answer' => $text,
+                        'ranking' => $ranking,
+                    ]);
+                    $answersCount++;
+                }
+            }
+
+            return $question;
+        });
+
+        $message = $answersCount > 0
+            ? "Pertanyaan dan {$answersCount} jawaban berhasil ditambahkan."
+            : 'Pertanyaan berhasil ditambahkan.';
 
         return redirect()
             ->route('family-100.answers.index', $question)
-            ->with('status', 'Pertanyaan ditambahkan. Silakan tambahkan jawabannya.');
+            ->with('status', $message);
     }
 
     public function edit(Question $question): View
     {
+        $question->load(['answers' => fn ($q) => $q->orderBy('ranking')]);
+
         return view('family-100.questions.edit', compact('question'));
     }
 
     public function update(Request $request, Question $question): RedirectResponse
     {
-        $question->update($this->validated($request));
+        $data = $this->validated($request);
+
+        DB::transaction(function () use ($question, $data, $request) {
+            $question->update([
+                'question' => $data['question'],
+                'display_limit' => $data['display_limit'],
+            ]);
+
+            if ($request->has('answers')) {
+                $submittedIds = [];
+                $answers = $request->input('answers', []);
+
+                foreach ($answers as $idx => $answerData) {
+                    $text = trim(is_array($answerData) ? ($answerData['answer'] ?? '') : (string) $answerData);
+                    if ($text === '') {
+                        continue;
+                    }
+
+                    $ranking = is_array($answerData) && !empty($answerData['ranking'])
+                        ? (int) $answerData['ranking']
+                        : ($idx + 1);
+
+                    $answerId = is_array($answerData) ? ($answerData['id'] ?? null) : null;
+
+                    if ($answerId) {
+                        $existing = $question->answers()->where('id', $answerId)->first();
+                        if ($existing) {
+                            $existing->update([
+                                'answer' => $text,
+                                'ranking' => $ranking,
+                            ]);
+                            $submittedIds[] = $existing->id;
+                            continue;
+                        }
+                    }
+
+                    $newAnswer = $question->answers()->create([
+                        'answer' => $text,
+                        'ranking' => $ranking,
+                    ]);
+                    $submittedIds[] = $newAnswer->id;
+                }
+
+                if (!empty($submittedIds)) {
+                    $question->answers()->whereNotIn('id', $submittedIds)->delete();
+                }
+            }
+        });
 
         return redirect()
             ->route('family-100.questions.index')
-            ->with('status', 'Pertanyaan diperbarui.');
+            ->with('status', 'Pertanyaan dan jawaban berhasil diperbarui.');
     }
 
     public function destroy(Question $question): RedirectResponse
@@ -99,12 +179,21 @@ class QuestionController extends Controller
         return response()->json($question->timerState());
     }
 
-    /** @return array{question: string, display_limit: int} */
+    /** @return array{question: string, display_limit: int, answers?: array} */
     private function validated(Request $request): array
     {
         return $request->validate([
             'question' => ['required', 'string', 'max:255'],
             'display_limit' => ['required', 'integer', 'min:1', 'max:20'],
+            'answers' => ['nullable', 'array'],
+            'answers.*.id' => ['nullable', 'integer'],
+            'answers.*.ranking' => ['nullable', 'integer'],
+            'answers.*.answer' => ['nullable', 'string', 'max:255'],
+        ], [
+            'question.required' => 'Pertanyaan wajib diisi.',
+            'display_limit.required' => 'Jumlah jawaban wajib diisi.',
+            'display_limit.min' => 'Jumlah jawaban minimal 1.',
+            'display_limit.max' => 'Jumlah jawaban maksimal 20.',
         ]);
     }
 }

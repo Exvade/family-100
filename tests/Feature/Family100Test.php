@@ -30,6 +30,27 @@ class Family100Test extends TestCase
             ->assertSessionHasErrors(['question', 'display_limit']);
     }
 
+    public function test_question_can_be_created_with_answers_at_once(): void
+    {
+        $response = $this->post(route('family-100.questions.store'), [
+            'question' => 'Sebutkan makanan favorit anak-anak',
+            'display_limit' => 4,
+            'answers' => [
+                ['ranking' => 1, 'answer' => 'Ayam Goreng'],
+                ['ranking' => 2, 'answer' => 'Es Krim'],
+                ['ranking' => 3, 'answer' => 'Pizza'],
+                ['ranking' => 4, 'answer' => 'Cokelat'],
+            ],
+        ]);
+
+        $question = Question::where('question', 'Sebutkan makanan favorit anak-anak')->firstOrFail();
+        $response->assertRedirect(route('family-100.answers.index', $question));
+
+        $this->assertCount(4, $question->answers);
+        $this->assertSame(['Ayam Goreng', 'Es Krim', 'Pizza', 'Cokelat'], $question->answers()->orderBy('ranking')->pluck('answer')->all());
+        $this->assertSame([1, 2, 3, 4], $question->answers()->orderBy('ranking')->pluck('ranking')->all());
+    }
+
     public function test_many_answers_can_be_added_to_a_question(): void
     {
         $question = Question::factory()->create();
