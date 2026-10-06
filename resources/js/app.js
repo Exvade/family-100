@@ -18,3 +18,27 @@ document.addEventListener('hidden.bs.dropdown', (e) => {
     }
 });
 
+// Tutup dropdown jika user melakukan scroll (baik scroll halaman maupun scroll tabel horizontal)
+window.addEventListener('scroll', () => {
+    document.querySelectorAll('.dropdown-menu.show').forEach((menu) => {
+        const toggle = menu.closest('.dropdown')?.querySelector('[data-bs-toggle="dropdown"]');
+        if (toggle) {
+            const bs = window.bootstrap;
+            if (bs?.Dropdown) {
+                const instance = bs.Dropdown.getInstance(toggle);
+                if (instance) {
+                    instance.hide();
+                    return;
+                }
+            }
+            menu.classList.remove('show');
+            toggle.classList.remove('show');
+            toggle.setAttribute('aria-expanded', 'false');
+            const tableResponsive = menu.closest('.table-responsive');
+            if (tableResponsive) {
+                tableResponsive.style.overflow = '';
+            }
+        }
+    });
+}, true);
+

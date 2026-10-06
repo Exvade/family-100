@@ -13,7 +13,15 @@ body {
     overflow: visible !important;
 }
 
+tr:has(.dropdown-menu.show),
+td:has(.dropdown-menu.show),
+.dropdown:has(.dropdown-menu.show) {
+    position: relative;
+    z-index: 1050;
+}
+
 .table-responsive .dropdown-menu {
     z-index: 1055 !important;
 }
+
 
