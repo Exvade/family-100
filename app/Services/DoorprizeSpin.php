@@ -13,18 +13,15 @@ use InvalidArgumentException;
  * Status undian doorprize yang dikendalikan dari dasbor dan dibaca layar TV.
  *
  * idle -> (start) spinning -> (stop / waktu habis) stopped -> (start) spinning ...
- * Setiap perubahan menaikkan "seq" supaya TV tahu ada perintah baru. Pemenang dipilih di server saat berhenti.
  *
- * - Hanya peserta yang belum pernah menang (won_at kosong) ikut diundi dan ikut berputar di layar TV.
- * - Jumlah pemenang per putaran dinamis (1 s/d MAX_SLOTS, default DEFAULT_SLOTS).
- * - Kategori peserta yang diundi bisa dipilih (bisa lebih dari satu kategori, atau semua kategori).
- * - Undian butuh minimal N peserta yang belum menang sesuai kategori yang dipilih.
- * - Reset pemenang mengosongkan won_at semua peserta dan mengembalikan status ke idle.
- * - Durasi spin > 0 detik: undian berhenti sendiri setelah waktu habis.
+ * Mendukung 2 mode pengundian:
+ * 1. Mode "quota" (SETTING LUCKY DRAW): Kuota pemenang per kategori diatur di form (mis. 1 CPP, 1 CPW, dst).
+ *    Saat undian dihentikan, pemenang dipilih persis sesuai kuota masing-masing kategori.
+ * 2. Mode "category" (Trigger per Kategori / Slot Bebas): Admin memilih kategori dan jumlah slot (1 s/d 10).
  */
 class DoorprizeSpin
 {
-    public const SLOTS = 5;          // fallback konstan lama untuk kompatibilitas
+    public const SLOTS = 5;
 
     public const DEFAULT_SLOTS = 5;
 
@@ -38,9 +35,90 @@ class DoorprizeSpin
 
     private const DURATION_KEY = 'doorprize_spin_duration';
 
-    /**
-     * @return array{status: string, seq: int, winners: list<string>, slots: int, categories: list<string>, eligible: int, eligible_total: int, eligible_by_category: array<string, int>, won: int, duration: int, remaining_ms: int|null}
-     */
+    private const QUOTA_KEY = 'doorprize_quota_setting';
+
+    /** Pengaturan kuota default sesuai permintaan Mas Sarya */
+    public function defaultQuotaSetting(): array
+    {
+        return [
+            'Keluarga CPP' => 1,
+            'Keluarga CPW' => 1,
+            'Teman CPW' => 1,
+            'Teman CPP' => 1,
+            'Umum' => 1,
+        ];
+    }
+
+    /** Ambil setting kuota lucky draw yang tersimpan */
+    public function getQuotaSetting(): array
+    {
+        $raw = json_decode(Setting::get(self::QUOTA_KEY) ?? '', true);
+        if (! is_array($raw)) {
+            return $this->defaultQuotaSetting();
+        }
+
+        $result = [];
+        $defaults = $this->defaultQuotaSetting();
+        foreach (Participant::CATEGORIES as $cat) {
+            // Check direct or canonical key
+            $val = null;
+            if (isset($raw[$cat])) {
+                $val = $raw[$cat];
+            } else {
+                foreach ($raw as $k => $v) {
+                    if (Participant::canonicalCategory($k) === $cat) {
+                        $val = $v;
+                        break;
+                    }
+                }
+            }
+            $result[$cat] = $val !== null ? max(0, min(self::MAX_SLOTS, (int) $val)) : ($defaults[$cat] ?? 0);
+        }
+
+        return $result;
+    }
+
+    /** Simpan setting kuota lucky draw (Tamu Keluarga CPP [X], dst) */
+    public function saveQuotaSetting(array $quotas): array
+    {
+        $clean = [];
+        $total = 0;
+        foreach (Participant::CATEGORIES as $cat) {
+            $val = 0;
+            if (isset($quotas[$cat])) {
+                $val = (int) $quotas[$cat];
+            } else {
+                foreach ($quotas as $k => $v) {
+                    if (Participant::canonicalCategory($k) === $cat) {
+                        $val = (int) $v;
+                        break;
+                    }
+                }
+            }
+            $val = max(0, min(self::MAX_SLOTS, $val));
+            $clean[$cat] = $val;
+            $total += $val;
+        }
+
+        if ($total < self::MIN_SLOTS) {
+            throw new DomainException('Total pemenang minimal 1 orang.');
+        }
+        if ($total > self::MAX_SLOTS) {
+            throw new DomainException('Total pemenang maksimal '.self::MAX_SLOTS.' orang.');
+        }
+
+        Setting::put(self::QUOTA_KEY, json_encode($clean, JSON_UNESCAPED_UNICODE));
+
+        // Bila sedang idle, perbarui juga slot aktif ke total kuota
+        $raw = $this->raw();
+        if ($raw['status'] === 'idle') {
+            $this->configure($total, array_keys(array_filter($clean, fn ($q) => $q > 0)));
+        }
+
+        return $this->snapshot();
+    }
+
+    /** Status undian saat ini */
     public function state(): array
     {
         $this->finishIfExpired();
@@ -48,12 +126,7 @@ class DoorprizeSpin
         return $this->snapshot();
     }
 
-    /**
-     * Simpan pengaturan slot & kategori saat idle.
-     *
-     * @param  list<string>  $categories
-     * @return array<string, mixed>
-     */
+    /** Simpan pengaturan slot & kategori saat idle */
     public function configure(int $slots, array $categories = []): array
     {
         $slots = max(self::MIN_SLOTS, min(self::MAX_SLOTS, $slots));
@@ -67,42 +140,91 @@ class DoorprizeSpin
                 $raw['status'],
                 $raw['seq'],
                 $raw['winners'],
+                $raw['winner_details'],
                 $raw['ends_at_ms'],
                 $slots,
                 $canonicalCats,
+                $raw['mode'],
+                $raw['quotas'],
             );
         });
     }
 
     /**
-     * Mulai undian dengan jumlah slot dan kategori terpilih.
-     *
-     * @param  list<string>|null  $categories
-     * @return array<string, mixed>
-     *
-     * @throws DomainException bila peserta yang belum menang kurang dari slots
+     * Mulai undian:
+     * - Bila mode = "quota": memakai kuota pemenang per kategori yang di-setting.
+     * - Bila mode = "category": mengundi $slots pemenang dari $categories yang dipilih.
      */
-    public function start(?int $slots = null, ?array $categories = null): array
+    public function start(?int $slots = null, ?array $categories = null, ?string $mode = null, ?array $quotas = null): array
     {
         $this->finishIfExpired();
 
-        return DB::transaction(function () use ($slots, $categories) {
+        return DB::transaction(function () use ($slots, $categories, $mode, $quotas) {
             $this->lock();
             $raw = $this->raw();
 
             if ($raw['status'] === 'spinning') {
-                return $this->snapshot();   // sudah berputar: jangan mulai ulang
+                return $this->snapshot();
             }
 
-            $effectiveSlots = $slots !== null
-                ? max(self::MIN_SLOTS, min(self::MAX_SLOTS, $slots))
-                : $raw['slots'];
+            // Tentukan mode undian: default ke 'category' bila tidak secara khusus minta 'quota'
+            $activeMode = $mode ?? ($quotas !== null ? 'quota' : 'category');
 
-            $effectiveCats = $categories !== null
-                ? $this->canonicalCategories($categories)
-                : $raw['categories'];
+            if ($activeMode === 'quota') {
+                $effectiveQuotas = $quotas ?? $this->getQuotaSetting();
+                $cleanQuotas = [];
+                $totalSlots = 0;
+                $activeCats = [];
 
-            $this->assertEnoughParticipants($effectiveSlots, $effectiveCats);
+                foreach (Participant::CATEGORIES as $cat) {
+                    $cnt = 0;
+                    if (isset($effectiveQuotas[$cat])) {
+                        $cnt = (int) $effectiveQuotas[$cat];
+                    } else {
+                        foreach ($effectiveQuotas as $k => $v) {
+                            if (Participant::canonicalCategory($k) === $cat) {
+                                $cnt = (int) $v;
+                                break;
+                            }
+                        }
+                    }
+                    $cnt = max(0, min(self::MAX_SLOTS, $cnt));
+                    $cleanQuotas[$cat] = $cnt;
+                    if ($cnt > 0) {
+                        $totalSlots += $cnt;
+                        $activeCats[] = $cat;
+
+                        // Validasi peserta cukup di kategori ini
+                        $eligible = $this->eligibleCount([$cat]);
+                        if ($eligible < $cnt) {
+                            $label = Participant::displayLabel($cat);
+                            throw new DomainException("Peserta belum menang pada kategori '{$label}' tidak cukup (dibutuhkan {$cnt}, tersisa {$eligible}). Tambah peserta terlebih dahulu.");
+                        }
+                    }
+                }
+
+                if ($totalSlots < self::MIN_SLOTS) {
+                    throw new DomainException('Total pemenang minimal 1 orang.');
+                }
+                if ($totalSlots > self::MAX_SLOTS) {
+                    throw new DomainException('Total pemenang maksimal '.self::MAX_SLOTS.' orang.');
+                }
+
+                $effectiveSlots = $totalSlots;
+                $effectiveCats = $activeCats;
+                $storedQuotas = $cleanQuotas;
+            } else {
+                $effectiveSlots = $slots !== null
+                    ? max(self::MIN_SLOTS, min(self::MAX_SLOTS, $slots))
+                    : $raw['slots'];
+
+                $effectiveCats = $categories !== null
+                    ? $this->canonicalCategories($categories)
+                    : $raw['categories'];
+
+                $this->assertEnoughParticipants($effectiveSlots, $effectiveCats);
+                $storedQuotas = [];
+            }
 
             $duration = $this->duration();
 
@@ -110,20 +232,17 @@ class DoorprizeSpin
                 'spinning',
                 $raw['seq'] + 1,
                 [],
+                [],
                 $duration > 0 ? now()->getTimestampMs() + $duration * 1000 : null,
                 $effectiveSlots,
                 $effectiveCats,
+                $activeMode,
+                $storedQuotas,
             );
         });
     }
 
-    /**
-     * Hentikan undian dan pilih pemenang.
-     *
-     * @return array<string, mixed>
-     *
-     * @throws DomainException bila belum dimulai atau peserta yang belum menang kurang
-     */
+    /** Hentikan undian dan pilih pemenang sesuai mode aktif */
     public function stop(): array
     {
         return DB::transaction(function () {
@@ -137,37 +256,64 @@ class DoorprizeSpin
                 throw new DomainException('Undian belum dimulai. Klik Start terlebih dahulu.');
             }
 
+            $mode = $raw['mode'] ?? 'category';
             $slots = $raw['slots'];
             $categories = $raw['categories'];
+            $quotas = $raw['quotas'];
 
-            $this->assertEnoughParticipants($slots, $categories);
+            $allPicked = collect();
 
-            $query = Participant::eligible();
-            if (! empty($categories)) {
-                $query->whereIn('category', $categories);
+            if ($mode === 'quota' && ! empty($quotas)) {
+                // Pilih pemenang persis sesuai kuota masing-masing kategori
+                foreach ($quotas as $cat => $count) {
+                    if ($count <= 0) {
+                        continue;
+                    }
+                    $picked = Participant::eligible()
+                        ->inCategory($cat)
+                        ->inRandomOrder()
+                        ->limit($count)
+                        ->get(['id', 'name', 'category']);
+
+                    $allPicked = $allPicked->concat($picked);
+                }
+            } else {
+                $this->assertEnoughParticipants($slots, $categories);
+
+                $query = Participant::eligible();
+                if (! empty($categories)) {
+                    $query->inCategory($categories);
+                }
+
+                $allPicked = $query->inRandomOrder()->limit($slots)->get(['id', 'name', 'category']);
             }
 
-            $picked = $query->inRandomOrder()->limit($slots)->get(['id', 'name']);
+            // Tandai pemenang
+            if ($allPicked->isNotEmpty()) {
+                Participant::whereKey($allPicked->pluck('id'))->update(['won_at' => now()]);
+            }
 
-            // Tersimpan permanen di peserta, jadi statusnya tetap terlihat setelah putaran berikutnya.
-            Participant::whereKey($picked->modelKeys())->update(['won_at' => now()]);
+            $winnerNames = $allPicked->pluck('name')->all();
+            $winnerDetails = $allPicked->map(fn ($p) => [
+                'name' => $p->name,
+                'category' => Participant::displayLabel($p->category),
+            ])->values()->all();
 
             return $this->save(
                 'stopped',
                 $raw['seq'] + 1,
-                $picked->pluck('name')->all(),
+                $winnerNames,
+                $winnerDetails,
                 null,
-                $slots,
+                count($winnerNames),
                 $categories,
+                $mode,
+                $quotas,
             );
         });
     }
 
-    /**
-     * Hapus status pemenang semua peserta (mereka bisa diundi lagi) dan kosongkan layar TV.
-     *
-     * @throws DomainException bila undian sedang berputar
-     */
+    /** Reset semua pemenang dan kembalikan undian ke idle */
     public function reset(): int
     {
         $this->finishIfExpired();
@@ -181,42 +327,42 @@ class DoorprizeSpin
             }
 
             $count = Participant::whereNotNull('won_at')->update(['won_at' => null]);
-            $this->save('idle', $raw['seq'] + 1, [], null, $raw['slots'], $raw['categories']);
+            $this->save('idle', $raw['seq'] + 1, [], [], null, $raw['slots'], $raw['categories'], $raw['mode'], $raw['quotas']);
 
             return $count;
         });
     }
 
-    /** Jumlah peserta yang sudah pernah menang. */
+    /** Jumlah peserta yang sudah pernah menang */
     public function wonCount(): int
     {
         return Participant::whereNotNull('won_at')->count();
     }
 
-    /** Jumlah peserta yang belum pernah menang, opsional difilter kategori. */
+    /** Jumlah peserta yang belum pernah menang */
     public function eligibleCount(?array $categories = null): int
     {
         $query = Participant::eligible();
         $categories = $categories !== null ? $this->canonicalCategories($categories) : [];
         if (! empty($categories)) {
-            $query->whereIn('category', $categories);
+            $query->inCategory($categories);
         }
 
         return $query->count();
     }
 
-    /** Rekap jumlah peserta belum menang per kategori. */
+    /** Rekap jumlah peserta belum menang per kategori */
     public function eligibleByCategory(): array
     {
         $counts = [];
         foreach (Participant::CATEGORIES as $cat) {
-            $counts[$cat] = Participant::eligible()->where('category', $cat)->count();
+            $counts[$cat] = Participant::eligible()->inCategory($cat)->count();
         }
 
         return $counts;
     }
 
-    /** Nama peserta yang boleh diundi; dipakai TV untuk animasi putar. */
+    /** Nama peserta yang boleh diundi; dipakai TV untuk animasi putar */
     public function pool(?array $categories = null): Collection
     {
         $raw = $this->raw();
@@ -226,13 +372,12 @@ class DoorprizeSpin
 
         $query = Participant::eligible();
         if (! empty($effectiveCats)) {
-            $query->whereIn('category', $effectiveCats);
+            $query->inCategory($effectiveCats);
         }
 
         return $query->orderBy('id')->pluck('name');
     }
 
-    /** Validasi apakah peserta cukup untuk jumlah slot dan kategori yang diminta. */
     public function assertEnoughParticipants(int $slots, array $categories = []): void
     {
         $eligible = $this->eligibleCount($categories);
@@ -243,13 +388,11 @@ class DoorprizeSpin
         }
     }
 
-    /** Durasi spin otomatis dalam detik; 0 = berputar sampai Stop diklik. */
     public function duration(): int
     {
         return (int) Setting::get(self::DURATION_KEY, '0');
     }
 
-    /** @throws InvalidArgumentException bila di luar 0..MAX_DURATION */
     public function setDuration(int $seconds): void
     {
         if ($seconds < 0 || $seconds > self::MAX_DURATION) {
@@ -259,7 +402,6 @@ class DoorprizeSpin
         Setting::put(self::DURATION_KEY, $seconds);
     }
 
-    /** Hentikan otomatis bila waktu spin sudah habis. */
     private function finishIfExpired(): void
     {
         $raw = $this->raw();
@@ -271,40 +413,47 @@ class DoorprizeSpin
         try {
             $this->stop();
         } catch (DomainException) {
-            // Peserta tidak cukup lagi selama berputar: kembalikan ke awal supaya TV tidak berputar selamanya.
-            DB::transaction(fn () => $this->save('idle', $raw['seq'] + 1, [], null, $raw['slots'], $raw['categories']));
+            DB::transaction(fn () => $this->save('idle', $raw['seq'] + 1, [], [], null, $raw['slots'], $raw['categories'], $raw['mode'], $raw['quotas']));
         }
     }
 
-    /** @return array{status: string, seq: int, winners: list<string>, slots: int, categories: list<string>, ends_at_ms: int|null} */
     private function raw(): array
     {
         $raw = json_decode(Setting::get(self::KEY) ?? '', true);
+        $quotaSetting = $this->getQuotaSetting();
 
         return [
             'status' => $raw['status'] ?? 'idle',
             'seq' => (int) ($raw['seq'] ?? 0),
             'winners' => array_values($raw['winners'] ?? []),
+            'winner_details' => array_values($raw['winner_details'] ?? []),
             'slots' => max(self::MIN_SLOTS, min(self::MAX_SLOTS, (int) ($raw['slots'] ?? self::DEFAULT_SLOTS))),
             'categories' => isset($raw['categories']) && is_array($raw['categories'])
                 ? array_values(array_filter($raw['categories']))
                 : [],
+            'mode' => $raw['mode'] ?? 'category',
+            'quotas' => isset($raw['quotas']) && is_array($raw['quotas']) ? $raw['quotas'] : $quotaSetting,
             'ends_at_ms' => isset($raw['ends_at_ms']) ? (int) $raw['ends_at_ms'] : null,
         ];
     }
 
-    /** @return array{status: string, seq: int, winners: list<string>, slots: int, categories: list<string>, eligible: int, eligible_total: int, eligible_by_category: array<string, int>, won: int, duration: int, remaining_ms: int|null} */
     private function snapshot(): array
     {
         $raw = $this->raw();
         $spinning = $raw['status'] === 'spinning' && $raw['ends_at_ms'] !== null;
+        $quotaSetting = $this->getQuotaSetting();
 
         return [
             'status' => $raw['status'],
             'seq' => $raw['seq'],
             'winners' => $raw['winners'],
+            'winner_details' => $raw['winner_details'],
             'slots' => $raw['slots'],
             'categories' => $raw['categories'],
+            'mode' => $raw['mode'],
+            'quotas' => $raw['quotas'],
+            'quota_setting' => $quotaSetting,
+            'quota_total' => array_sum($quotaSetting),
             'eligible' => $this->eligibleCount($raw['categories']),
             'eligible_total' => $this->eligibleCount(),
             'eligible_by_category' => $this->eligibleByCategory(),
@@ -314,37 +463,28 @@ class DoorprizeSpin
         ];
     }
 
-    /** Kunci baris status agar dua perintah bersamaan tidak memilih pemenang dua kali. */
     private function lock(): void
     {
         Setting::where('key', self::KEY)->lockForUpdate()->first();
     }
 
-    /**
-     * @param  list<string>  $winners
-     * @param  list<string>  $categories
-     * @return array<string, mixed>
-     */
-    private function save(string $status, int $seq, array $winners, ?int $endsAtMs, int $slots, array $categories): array
+    private function save(string $status, int $seq, array $winners, array $winnerDetails, ?int $endsAtMs, int $slots, array $categories, string $mode, array $quotas): array
     {
         Setting::put(self::KEY, json_encode([
             'status' => $status,
             'seq' => $seq,
             'winners' => $winners,
+            'winner_details' => $winnerDetails,
             'ends_at_ms' => $endsAtMs,
             'slots' => $slots,
             'categories' => $categories,
+            'mode' => $mode,
+            'quotas' => $quotas,
         ], JSON_UNESCAPED_UNICODE));
 
         return $this->snapshot();
     }
 
-    /**
-     * Normalisasi daftar kategori ke penulisan baku.
-     *
-     * @param  list<string>  $categories
-     * @return list<string>
-     */
     private function canonicalCategories(array $categories): array
     {
         $valid = [];
@@ -358,7 +498,6 @@ class DoorprizeSpin
             }
         }
 
-        // Jika semua 5 kategori dicentang, kita simpan list kosong yang berarti "semua"
         if (count($valid) >= count(Participant::CATEGORIES)) {
             return [];
         }

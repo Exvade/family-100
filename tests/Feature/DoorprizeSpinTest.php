@@ -375,5 +375,83 @@ class DoorprizeSpinTest extends TestCase
         ])->assertStatus(422)
             ->assertJsonPath('message', fn ($m) => str_contains($m, 'Minimal 3'));
     }
+
+    public function test_can_save_lucky_draw_quota_settings(): void
+    {
+        $response = $this->postJson(route('doorprize.setting'), [
+            'quotas' => [
+                'Tamu Keluarga CPP' => 1,
+                'Tamu Keluarga CPW' => 2,
+                'Teman CPW' => 1,
+                'Teman CPP' => 1,
+                'Umum' => 1,
+            ],
+        ])->assertOk();
+
+        $response->assertJsonPath('quota_total', 6);
+        $this->assertSame(1, $response->json('quota_setting.Keluarga CPP'));
+        $this->assertSame(2, $response->json('quota_setting.Keluarga CPW'));
+    }
+
+    public function test_refuses_quota_setting_with_zero_or_too_many_total(): void
+    {
+        $this->postJson(route('doorprize.setting'), [
+            'quotas' => [
+                'Keluarga CPP' => 0,
+                'Keluarga CPW' => 0,
+            ],
+        ])->assertStatus(422);
+
+        $this->postJson(route('doorprize.setting'), [
+            'quotas' => [
+                'Keluarga CPP' => 6,
+                'Keluarga CPW' => 6,
+            ],
+        ])->assertStatus(422);
+    }
+
+    public function test_spin_in_quota_mode_draws_exact_number_from_each_configured_category(): void
+    {
+        Participant::factory()->count(5)->create(['category' => 'Keluarga CPP']);
+        Participant::factory()->count(5)->create(['category' => 'Keluarga CPW']);
+        Participant::factory()->count(5)->create(['category' => 'Teman CPW']);
+        Participant::factory()->count(5)->create(['category' => 'Teman CPP']);
+        Participant::factory()->count(5)->create(['category' => 'Umum']);
+
+        // Set kuota: 1 pemenang tiap kategori (Total 5 pemenang sesuai mockup Mas Sarya)
+        $this->postJson(route('doorprize.setting'), [
+            'quotas' => [
+                'Keluarga CPP' => 1,
+                'Keluarga CPW' => 1,
+                'Teman CPW' => 1,
+                'Teman CPP' => 1,
+                'Umum' => 1,
+            ],
+        ])->assertOk();
+
+        // Mulai undian dalam mode quota
+        $this->postJson(route('doorprize.spin.start'), ['mode' => 'quota'])->assertOk();
+
+        // Hentikan undian
+        $stopped = $this->postJson(route('doorprize.spin.stop'))->assertOk()->json();
+
+        $this->assertCount(5, $stopped['winners']);
+        $this->assertCount(5, $stopped['winner_details']);
+
+        $drawnCategories = Participant::whereIn('name', $stopped['winners'])->pluck('category')->all();
+        sort($drawnCategories);
+        $expectedCategories = ['Keluarga CPP', 'Keluarga CPW', 'Teman CPP', 'Teman CPW', 'Umum'];
+        sort($expectedCategories);
+        $this->assertSame($expectedCategories, $drawnCategories);
+    }
+
+    public function test_dashboard_renders_lucky_draw_setting_form_and_triggers(): void
+    {
+        $this->get(route('doorprize'))->assertOk()
+            ->assertSee('SETTING LUCKY DRAW')
+            ->assertSee('setting-lucky-draw-form')
+            ->assertSee('data-trigger-action="start-quota"', false)
+            ->assertSee('data-trigger-category="Keluarga CPP"', false);
+    }
 }
 

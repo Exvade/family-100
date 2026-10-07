@@ -127,7 +127,38 @@ if (root) {
         });
 
         const activeEligible = calculateEligible(selectedCategories);
-        startBtn.disabled = activeEligible < selectedSlots || current.status === 'spinning';
+        if (startBtn) {
+            startBtn.disabled = activeEligible < selectedSlots || current.status === 'spinning';
+        }
+
+        const customSlotsLabel = root.querySelector('[data-custom-slots-label]');
+        if (customSlotsLabel) {
+            customSlotsLabel.textContent = selectedSlots;
+        }
+
+        // Update Trigger Sesuai Kuota button
+        const triggerQuotaBtn = root.querySelector('[data-trigger-action="start-quota"]');
+        if (triggerQuotaBtn) {
+            triggerQuotaBtn.disabled = current.status === 'spinning';
+        }
+
+        // Update Trigger Cepat per Kategori buttons
+        root.querySelectorAll('[data-trigger-category]').forEach((btn) => {
+            const cat = btn.dataset.triggerCategory;
+            const cnt = eligibleByCategory[cat] ?? 0;
+            btn.disabled = current.status === 'spinning' || cnt < 1;
+            const badge = btn.querySelector(`[data-trigger-cat-count="${cat}"]`);
+            if (badge) {
+                badge.textContent = `(${cnt} peserta)`;
+            }
+        });
+
+        // Update Setting form eligible badges
+        document.querySelectorAll('[data-quota-eligible]').forEach((badge) => {
+            const cat = badge.dataset.quotaEligible;
+            badge.textContent = eligibleByCategory[cat] ?? 0;
+        });
+
         hintEl.textContent = hintText();
     }
 
@@ -150,6 +181,16 @@ if (root) {
             eligibleByCategory = state.eligible_by_category;
         }
 
+        if (state.quota_total !== undefined) {
+            const quotaBadge = document.getElementById('quota-total-badge');
+            const quotaDisplay = document.getElementById('quota-total-display');
+            if (quotaBadge) quotaBadge.textContent = `${state.quota_total} Pemenang`;
+            if (quotaDisplay) quotaDisplay.textContent = state.quota_total;
+            document.querySelectorAll('[data-trigger-quota-total]').forEach((el) => {
+                el.textContent = state.quota_total;
+            });
+        }
+
         deadline = state.status === 'spinning' && state.remaining_ms !== null ? Date.now() + state.remaining_ms : null;
         expiryHandled = false;
 
@@ -161,10 +202,14 @@ if (root) {
         resetBtn.disabled = state.won < 1 || state.status === 'spinning';
         resetHint.textContent = state.won > 0 ? `${state.won} peserta berstatus pemenang.` : 'Belum ada pemenang.';
 
-        const winners = state.status === 'stopped' ? state.winners : [];
-        winnersEl.replaceChildren(...winners.map((name, idx) => {
+        const winners = state.status === 'stopped' ? (state.winner_details || state.winners) : [];
+        winnersEl.replaceChildren(...winners.map((w, idx) => {
             const li = document.createElement('li');
-            li.textContent = `#${idx + 1}: ${name}`;
+            if (typeof w === 'object' && w !== null) {
+                li.textContent = `#${idx + 1}: ${w.name} (${w.category || 'Pemenang'})`;
+            } else {
+                li.textContent = `#${idx + 1}: ${w}`;
+            }
             return li;
         }));
         winnersEl.hidden = winners.length === 0;
@@ -191,18 +236,20 @@ if (root) {
         return data;
     }
 
-    async function send(action) {
+    async function send(action, customBody = null) {
         const button = action === 'start' ? startBtn : stopBtn;
-        button.disabled = true;
+        if (button) button.disabled = true;
 
         try {
-            const body = action === 'start'
-                ? { slots: selectedSlots, categories: selectedCategories }
-                : undefined;
+            const body = customBody !== null
+                ? customBody
+                : (action === 'start' ? { mode: 'category', slots: selectedSlots, categories: selectedCategories } : undefined);
             render(await post(root.dataset[`${action}Url`], body));
         } catch (error) {
             Swal.fire({ icon: 'error', title: 'Gagal', text: error.message });
             await refresh();
+        } finally {
+            if (button) button.disabled = false;
         }
     }
 
@@ -213,8 +260,23 @@ if (root) {
         } catch (error) {}
     }
 
-    // Event listener: Klik tombol start/stop
+    // Event listener: Klik tombol start/stop/trigger
     root.addEventListener('click', (event) => {
+        // Trigger sesuai kuota
+        const triggerQuota = event.target.closest('[data-trigger-action="start-quota"]');
+        if (triggerQuota && !triggerQuota.disabled) {
+            send('start', { mode: 'quota' });
+            return;
+        }
+
+        // Trigger cepat per kategori
+        const triggerCat = event.target.closest('[data-trigger-category]');
+        if (triggerCat && !triggerCat.disabled) {
+            const cat = triggerCat.dataset.triggerCategory;
+            send('start', { mode: 'category', slots: 1, categories: [cat] });
+            return;
+        }
+
         const button = event.target.closest('[data-spin-action]');
         if (button && !button.disabled) {
             send(button.dataset.spinAction);
@@ -258,6 +320,74 @@ if (root) {
             }
         }
     });
+
+    // SETTING LUCKY DRAW Form handling
+    const settingForm = document.getElementById('setting-lucky-draw-form');
+    if (settingForm) {
+        function calcQuotaTotal() {
+            let total = 0;
+            settingForm.querySelectorAll('[data-quota-input]').forEach((input) => {
+                total += Math.max(0, parseInt(input.value, 10) || 0);
+            });
+            const badge = document.getElementById('quota-total-badge');
+            const display = document.getElementById('quota-total-display');
+            if (badge) badge.textContent = `${total} Pemenang`;
+            if (display) display.textContent = total;
+            document.querySelectorAll('[data-trigger-quota-total]').forEach((el) => {
+                el.textContent = total;
+            });
+            return total;
+        }
+
+        // Step buttons (+/-)
+        settingForm.addEventListener('click', (event) => {
+            const stepBtn = event.target.closest('[data-quota-step]');
+            if (!stepBtn) return;
+            const cat = stepBtn.dataset.cat;
+            const step = parseInt(stepBtn.dataset.quotaStep, 10);
+            const input = settingForm.querySelector(`[data-quota-input][data-cat="${cat}"]`);
+            if (input) {
+                const currentVal = Math.max(0, parseInt(input.value, 10) || 0);
+                const newVal = Math.max(0, Math.min(10, currentVal + step));
+                input.value = newVal;
+                calcQuotaTotal();
+            }
+        });
+
+        settingForm.addEventListener('input', (event) => {
+            if (event.target.matches('[data-quota-input]')) {
+                calcQuotaTotal();
+            }
+        });
+
+        settingForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const btn = document.getElementById('btn-save-lucky-draw');
+            if (btn) btn.disabled = true;
+
+            const quotas = {};
+            settingForm.querySelectorAll('[data-quota-input]').forEach((input) => {
+                quotas[input.dataset.cat] = Math.max(0, parseInt(input.value, 10) || 0);
+            });
+
+            try {
+                const res = await post(settingForm.dataset.saveUrl, { quotas });
+                render(res);
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Setting Lucky Draw disimpan!',
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: err.message });
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        });
+    }
 
     durationSave.addEventListener('click', async () => {
         durationSave.disabled = true;

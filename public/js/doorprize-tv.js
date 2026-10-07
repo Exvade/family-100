@@ -254,18 +254,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 65);
     }
 
-    function revealBar(index, winner, { celebrate = true } = {}) {
+    function revealBar(index, winner, { category = null, celebrate = true } = {}) {
         const { bar, dots, nameDisplay, statusSub } = barParts(index);
         if (!bar) return;
-        activeWinners[index] = winner;
+        const winnerName = typeof winner === 'object' && winner !== null ? winner.name : winner;
+        const winnerCat = typeof winner === 'object' && winner !== null ? winner.category : category;
+
+        activeWinners[index] = winnerName;
         if (dots) dots.style.display = 'none';
         if (nameDisplay) {
             nameDisplay.style.display = 'block';
-            nameDisplay.textContent = winner;
+            nameDisplay.textContent = winnerName;
         }
         bar.classList.add('revealed');
         if (statusSub) {
-            statusSub.textContent = 'Pemenang Terpilih';
+            statusSub.textContent = winnerCat ? `Pemenang • ${winnerCat}` : 'Pemenang Terpilih';
             statusSub.style.color = '#55efc4';
         }
 
@@ -386,13 +389,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         popupWinnersGrid.innerHTML = '';
         if (winners && winners.length > 0) {
-            winners.forEach((name, idx) => {
+            winners.forEach((w, idx) => {
+                const name = typeof w === 'object' && w !== null ? w.name : w;
+                const cat = typeof w === 'object' && w !== null && w.category ? w.category : 'TAMU TERPILIH';
                 const card = document.createElement('div');
                 card.className = 'winner-card-cell';
                 card.innerHTML = `
                     <div class="winner-card-rank">PEMENANG #${idx + 1}</div>
                     <div class="winner-card-name">${escapeHtml(name)}</div>
-                    <div class="winner-card-tag">TAMU TERPILIH</div>
+                    <div class="winner-card-tag">${escapeHtml(cat)}</div>
                 `;
                 popupWinnersGrid.appendChild(card);
             });
@@ -471,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let idx = 0; idx < currentSlots; idx++) startRolling(idx);
     }
 
-    function remoteStop(winners, { instant = false } = {}) {
+    function remoteStop(winners, { winnerDetails = null, instant = false } = {}) {
         popupCelebrationModal.classList.remove('active');
         isSpinning = true;
 
@@ -479,15 +484,20 @@ document.addEventListener('DOMContentLoaded', () => {
             ensureBars(winners.length);
         }
 
+        const details = Array.isArray(winnerDetails) && winnerDetails.length === winners.length
+            ? winnerDetails
+            : winners.map((w) => (typeof w === 'object' && w !== null ? w : { name: w, category: null }));
+
         winners.forEach((winner, idx) => {
+            const detail = details[idx];
             setTimeout(() => {
                 stopRolling(idx);
-                revealBar(idx, winner, { celebrate: !instant });
+                revealBar(idx, detail?.name || winner, { category: detail?.category, celebrate: !instant });
                 if (idx === winners.length - 1) {
                     isSpinning = false;
                     if (!instant) {
                         setTimeout(playFanfare, 250);
-                        triggerCelebrationPopup([...winners]);
+                        triggerCelebrationPopup(details);
                     }
                 }
             }, instant ? 0 : idx * 300);
@@ -506,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.status === 'spinning') {
             remoteStart();
         } else if (state.status === 'stopped' && Array.isArray(state.winners) && state.winners.length > 0) {
-            remoteStop(state.winners, { instant: initial });
+            remoteStop(state.winners, { winnerDetails: state.winner_details, instant: initial });
         } else if (state.status === 'idle' && !initial) {
             popupCelebrationModal.classList.remove('active');
             for (let idx = 0; idx < currentSlots; idx++) resetBar(idx);

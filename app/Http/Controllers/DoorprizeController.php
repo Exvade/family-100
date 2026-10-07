@@ -22,6 +22,8 @@ class DoorprizeController extends Controller
             'participants' => Participant::orderBy('id')->get(),
             'categories' => Participant::CATEGORIES,
             'spin' => $state,
+            'quotaSetting' => $state['quota_setting'],
+            'quotaTotal' => $state['quota_total'],
             'eligibleCount' => $state['eligible'],
             'eligibleTotal' => $state['eligible_total'],
             'eligibleByCategory' => $state['eligible_by_category'],
@@ -39,7 +41,7 @@ class DoorprizeController extends Controller
         $state = $spin->state();
 
         return view('doorprize-tv', [
-            'participants' => $spin->pool(),   // hanya yang belum menang (sesuai filter kategori aktif bila ada)
+            'participants' => $spin->pool(),
             'spin' => $state,
             'slots' => $state['slots'],
             'categories' => Participant::CATEGORIES,
@@ -47,8 +49,7 @@ class DoorprizeController extends Controller
     }
 
     /**
-     * Status undian. Daftar nama untuk animasi putar hanya ikut dikirim ke TV (yang mengirim ?seq=)
-     * saat ada putaran baru yang belum dikenalnya, supaya polling tiap detik tetap ringan.
+     * Status undian untuk polling TV.
      */
     public function tvState(Request $request, DoorprizeSpin $spin): JsonResponse
     {
@@ -61,18 +62,35 @@ class DoorprizeController extends Controller
         return response()->json($state);
     }
 
+    /** Simpan formulir SETTING LUCKY DRAW (kuota pemenang per kategori) */
+    public function saveSetting(Request $request, DoorprizeSpin $spin): JsonResponse
+    {
+        $data = $request->validate([
+            'quotas' => ['required', 'array'],
+            'quotas.*' => ['integer', 'min:0', 'max:'.DoorprizeSpin::MAX_SLOTS],
+        ]);
+
+        return $this->command(fn () => $spin->saveQuotaSetting($data['quotas']));
+    }
+
+    /** Mulai putaran undian */
     public function start(Request $request, DoorprizeSpin $spin): JsonResponse
     {
         $data = $request->validate([
+            'mode' => ['nullable', 'string', 'in:quota,category'],
             'slots' => ['nullable', 'integer', 'min:'.DoorprizeSpin::MIN_SLOTS, 'max:'.DoorprizeSpin::MAX_SLOTS],
             'categories' => ['nullable', 'array'],
             'categories.*' => ['string'],
+            'quotas' => ['nullable', 'array'],
+            'quotas.*' => ['integer', 'min:0', 'max:'.DoorprizeSpin::MAX_SLOTS],
         ]);
 
+        $mode = $data['mode'] ?? null;
         $slots = isset($data['slots']) ? (int) $data['slots'] : null;
         $categories = isset($data['categories']) ? (array) $data['categories'] : null;
+        $quotas = isset($data['quotas']) ? (array) $data['quotas'] : null;
 
-        return $this->command(fn () => $spin->start($slots, $categories));
+        return $this->command(fn () => $spin->start($slots, $categories, $mode, $quotas));
     }
 
     public function configure(Request $request, DoorprizeSpin $spin): JsonResponse
@@ -91,13 +109,13 @@ class DoorprizeController extends Controller
         return $this->command(fn () => $spin->stop());
     }
 
-    /** Hapus status pemenang semua peserta; `reset` pada respons = jumlah peserta yang direset. */
+    /** Hapus status pemenang semua peserta */
     public function reset(DoorprizeSpin $spin): JsonResponse
     {
         return $this->command(fn () => ['reset' => $spin->reset()] + $spin->state());
     }
 
-    /** Atur lama spin otomatis (detik); berlaku mulai undian berikutnya. */
+    /** Atur lama spin otomatis (detik) */
     public function duration(Request $request, DoorprizeSpin $spin): JsonResponse
     {
         $data = $request->validate([
