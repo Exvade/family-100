@@ -87,72 +87,21 @@
                             <span>DAFTAR PEMENANG DOORPRIZE</span>
                         </div>
 
-                        <!-- 5 Family 100 Answer Bars Stack (Displaying Participant Names!) -->
-                        <div class="bars-vertical-stack">
-                            <!-- Bar 1 -->
-                            <div class="family-participant-bar" id="participantBar-0" data-index="0" title="Klik untuk putar baris ini (Shortcut: Angka 1)">
-                                <div class="sphere-rank-badge">1</div>
-                                <div class="bar-label-container">
-                                    <div class="bar-rank-heading">PEMENANG #1</div>
-                                    <div class="bar-status-sub" id="barStatusSub-0">Siap Diundi</div>
+                        <!-- Dynamic Family 100 Answer Bars Stack (Displaying Participant Names!) -->
+                        <div class="bars-vertical-stack {{ ($slots ?? 5) === 1 ? 'single-winner' : (($slots ?? 5) > 5 ? 'two-columns' : '') }}" id="barsVerticalStack" data-slots="{{ $slots ?? 5 }}">
+                            @for ($i = 0; $i < ($slots ?? 5); $i++)
+                                <div class="family-participant-bar" id="participantBar-{{ $i }}" data-index="{{ $i }}" title="Klik untuk putar baris ini (Shortcut: Angka {{ $i + 1 }})">
+                                    <div class="sphere-rank-badge">{{ $i + 1 }}</div>
+                                    <div class="bar-label-container">
+                                        <div class="bar-rank-heading">PEMENANG #{{ $i + 1 }}</div>
+                                        <div class="bar-status-sub" id="barStatusSub-{{ $i }}">Siap Diundi</div>
+                                    </div>
+                                    <div class="bar-participant-window">
+                                        <div class="slot-dots-unrevealed" id="dotsDisplay-{{ $i }}">••••••••••••••</div>
+                                        <div class="participant-name-text" id="nameDisplay-{{ $i }}" style="display: none;">-</div>
+                                    </div>
                                 </div>
-                                <div class="bar-participant-window">
-                                    <div class="slot-dots-unrevealed" id="dotsDisplay-0">••••••••••••••</div>
-                                    <div class="participant-name-text" id="nameDisplay-0" style="display: none;">-</div>
-                                </div>
-                            </div>
-
-                            <!-- Bar 2 -->
-                            <div class="family-participant-bar" id="participantBar-1" data-index="1" title="Klik untuk putar baris ini (Shortcut: Angka 2)">
-                                <div class="sphere-rank-badge">2</div>
-                                <div class="bar-label-container">
-                                    <div class="bar-rank-heading">PEMENANG #2</div>
-                                    <div class="bar-status-sub" id="barStatusSub-1">Siap Diundi</div>
-                                </div>
-                                <div class="bar-participant-window">
-                                    <div class="slot-dots-unrevealed" id="dotsDisplay-1">••••••••••••••</div>
-                                    <div class="participant-name-text" id="nameDisplay-1" style="display: none;">-</div>
-                                </div>
-                            </div>
-
-                            <!-- Bar 3 -->
-                            <div class="family-participant-bar" id="participantBar-2" data-index="2" title="Klik untuk putar baris ini (Shortcut: Angka 3)">
-                                <div class="sphere-rank-badge">3</div>
-                                <div class="bar-label-container">
-                                    <div class="bar-rank-heading">PEMENANG #3</div>
-                                    <div class="bar-status-sub" id="barStatusSub-2">Siap Diundi</div>
-                                </div>
-                                <div class="bar-participant-window">
-                                    <div class="slot-dots-unrevealed" id="dotsDisplay-2">••••••••••••••</div>
-                                    <div class="participant-name-text" id="nameDisplay-2" style="display: none;">-</div>
-                                </div>
-                            </div>
-
-                            <!-- Bar 4 -->
-                            <div class="family-participant-bar" id="participantBar-3" data-index="3" title="Klik untuk putar baris ini (Shortcut: Angka 4)">
-                                <div class="sphere-rank-badge">4</div>
-                                <div class="bar-label-container">
-                                    <div class="bar-rank-heading">PEMENANG #4</div>
-                                    <div class="bar-status-sub" id="barStatusSub-3">Siap Diundi</div>
-                                </div>
-                                <div class="bar-participant-window">
-                                    <div class="slot-dots-unrevealed" id="dotsDisplay-3">••••••••••••••</div>
-                                    <div class="participant-name-text" id="nameDisplay-3" style="display: none;">-</div>
-                                </div>
-                            </div>
-
-                            <!-- Bar 5 -->
-                            <div class="family-participant-bar" id="participantBar-4" data-index="4" title="Klik untuk putar baris ini (Shortcut: Angka 5)">
-                                <div class="sphere-rank-badge">5</div>
-                                <div class="bar-label-container">
-                                    <div class="bar-rank-heading">PEMENANG #5</div>
-                                    <div class="bar-status-sub" id="barStatusSub-4">Siap Diundi</div>
-                                </div>
-                                <div class="bar-participant-window">
-                                    <div class="slot-dots-unrevealed" id="dotsDisplay-4">••••••••••••••</div>
-                                    <div class="participant-name-text" id="nameDisplay-4" style="display: none;">-</div>
-                                </div>
-                            </div>
+                            @endfor
                         </div>
                     </div>
 

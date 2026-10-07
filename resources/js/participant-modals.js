@@ -2,17 +2,30 @@
 // Tombol dengan data-participant-form membuka form: nilai kosong = tambah, berisi id = edit peserta itu.
 document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-participant-form]');
-    if (!trigger) {
+    if (trigger) {
+        const id = trigger.dataset.participantForm;
+        const category = trigger.dataset.category || null;
+        window.Livewire?.dispatch('open-participant-form', {
+            id: id ? Number(id) : null,
+            category: category,
+        });
         return;
     }
 
-    const id = trigger.dataset.participantForm;
-    window.Livewire.dispatch('open-participant-form', { id: id ? Number(id) : null });
+    const importTrigger = event.target.closest('[data-participant-import]');
+    if (importTrigger) {
+        const category = importTrigger.dataset.category || null;
+        window.Livewire?.dispatch('open-participant-import', { category: category });
+    }
 });
 
 // Server selesai mengisi form -> tampilkan modal.
 window.addEventListener('participant-form-ready', () => {
     globalThis.bootstrap.Modal.getOrCreateInstance(document.getElementById('participant-modal')).show();
+});
+
+window.addEventListener('participant-import-ready', () => {
+    globalThis.bootstrap.Modal.getOrCreateInstance(document.getElementById('participant-import-modal')).show();
 });
 
 document.addEventListener('shown.bs.modal', (event) => {
@@ -24,6 +37,6 @@ document.addEventListener('shown.bs.modal', (event) => {
 // Modal impor dibuka lewat data-bs-toggle; saat ditutup, kosongkan file dan pesan error sebelumnya.
 document.addEventListener('hidden.bs.modal', (event) => {
     if (event.target.id === 'participant-import-modal') {
-        window.Livewire.dispatch('reset-participant-import');
+        window.Livewire?.dispatch('reset-participant-import');
     }
 });

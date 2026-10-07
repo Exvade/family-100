@@ -41,3 +41,4 @@ Route::post('/doorprize/spin/start', [DoorprizeController::class, 'start'])->nam
 Route::post('/doorprize/spin/stop', [DoorprizeController::class, 'stop'])->name('doorprize.spin.stop');
 Route::post('/doorprize/spin/reset', [DoorprizeController::class, 'reset'])->name('doorprize.spin.reset');
 Route::post('/doorprize/spin/duration', [DoorprizeController::class, 'duration'])->name('doorprize.spin.duration');
+Route::post('/doorprize/spin/configure', [DoorprizeController::class, 'configure'])->name('doorprize.spin.configure');

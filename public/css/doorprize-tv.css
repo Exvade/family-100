@@ -688,3 +688,55 @@
             text-transform: uppercase;
             opacity: 0.85;
         }
+
+        /* Dynamic Slots Adaptation (1 to 10 winners) */
+        .bars-vertical-stack.single-winner {
+            justify-content: center;
+        }
+        .bars-vertical-stack.single-winner .family-participant-bar {
+            max-height: 120px;
+            padding: 16px 24px;
+        }
+        .bars-vertical-stack.single-winner .sphere-rank-badge {
+            width: clamp(48px, 4vw, 64px);
+            height: clamp(48px, 4vw, 64px);
+            font-size: clamp(1.6rem, 2vw, 2.2rem);
+        }
+        .bars-vertical-stack.single-winner .bar-rank-heading {
+            font-size: clamp(1rem, 1.2vw, 1.3rem);
+        }
+        .bars-vertical-stack.single-winner .participant-name-text {
+            font-size: clamp(1.8rem, 2.6vw, 3rem);
+        }
+
+        .bars-vertical-stack.two-columns {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-auto-flow: column;
+            grid-template-rows: repeat(5, minmax(0, 1fr));
+            gap: clamp(6px, 1vh, 10px);
+        }
+        .bars-vertical-stack.two-columns .family-participant-bar {
+            max-height: 58px;
+            padding: 4px 10px;
+            border-width: 2px;
+        }
+        .bars-vertical-stack.two-columns .sphere-rank-badge {
+            width: 28px;
+            height: 28px;
+            font-size: 0.92rem;
+        }
+        .bars-vertical-stack.two-columns .bar-rank-heading {
+            font-size: 0.68rem;
+            letter-spacing: 0.8px;
+        }
+        .bars-vertical-stack.two-columns .bar-status-sub {
+            font-size: 0.6rem;
+        }
+        .bars-vertical-stack.two-columns .participant-name-text {
+            font-size: clamp(0.85rem, 1.1vw, 1.15rem);
+        }
+        .bars-vertical-stack.two-columns .slot-dots-unrevealed {
+            font-size: 0.95rem;
+        }
+

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Participant;
 use App\Services\ParticipantSpreadsheet;
 use Illuminate\Contracts\View\View;
 use InvalidArgumentException;
@@ -16,6 +17,16 @@ class ParticipantImport extends Component
 
     public $file = null;
 
+    public string $category = '';
+
+    #[On('open-participant-import')]
+    public function open(?string $category = null): void
+    {
+        $this->resetForm();
+        $this->category = $category ? Participant::canonicalCategory($category) : '';
+        $this->dispatch('participant-import-ready');
+    }
+
     #[On('reset-participant-import')]
     public function resetForm(): void
     {
@@ -27,6 +38,7 @@ class ParticipantImport extends Component
     {
         $this->validate([
             'file' => ['required', 'file', 'mimes:xlsx,csv,txt', 'max:2048'],
+            'category' => ['nullable', 'string'],
         ], [
             'file.required' => 'Pilih file Excel (.xlsx) atau CSV terlebih dahulu.',
             'file.mimes' => 'Format file harus .xlsx atau .csv.',
@@ -34,8 +46,10 @@ class ParticipantImport extends Component
             'file.uploaded' => 'File gagal diunggah. Coba lagi.',
         ]);
 
+        $defaultCat = $this->category !== '' ? Participant::canonicalCategory($this->category) : null;
+
         try {
-            $result = $spreadsheet->import($this->file->getRealPath(), $this->file->getClientOriginalExtension());
+            $result = $spreadsheet->import($this->file->getRealPath(), $this->file->getClientOriginalExtension(), $defaultCat);
         } catch (InvalidArgumentException $e) {
             $this->addError('file', $e->getMessage());
 
@@ -57,6 +71,8 @@ class ParticipantImport extends Component
 
     public function render(): View
     {
-        return view('livewire.participant-import');
+        return view('livewire.participant-import', [
+            'categories' => Participant::CATEGORIES,
+        ]);
     }
 }

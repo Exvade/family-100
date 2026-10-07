@@ -5,6 +5,7 @@
         @forelse ($participants as $participant)
             <div class="m-card" wire:key="card-{{ $participant->id }}">
                 <span class="m-pill">#{{ $numbers[$participant->id] + 1 }}</span>
+                <span class="badge bg-blue-lt ms-1 align-middle">{{ $participant->category }}</span>
                 @if ($participant->isWinner())
                     <span class="badge bg-green-lt ms-1 align-middle">PEMENANG</span>
                 @endif

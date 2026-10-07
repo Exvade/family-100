@@ -16,8 +16,10 @@ class ParticipantForm extends Component
 
     public string $name = '';
 
+    public string $category = Participant::DEFAULT_CATEGORY;
+
     #[On('open-participant-form')]
-    public function open(?int $id = null): void
+    public function open(?int $id = null, ?string $category = null): void
     {
         $this->resetValidation();
 
@@ -25,9 +27,11 @@ class ParticipantForm extends Component
             $participant = Participant::findOrFail($id);
             $this->participantId = $participant->id;
             $this->name = $participant->name;
+            $this->category = $participant->category;
         } else {
             $this->participantId = null;
             $this->name = '';
+            $this->category = $category ? Participant::canonicalCategory($category) : Participant::DEFAULT_CATEGORY;
         }
 
         $this->dispatch('participant-form-ready');
@@ -36,10 +40,15 @@ class ParticipantForm extends Component
     public function save(): void
     {
         $this->name = trim(preg_replace('/\s+/u', ' ', $this->name));
+        $this->category = Participant::canonicalCategory($this->category);
 
-        $this->validate(['name' => ['required', 'string', 'max:255']], [
+        $this->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'category' => ['required', 'string'],
+        ], [
             'name.required' => 'Nama peserta wajib diisi.',
             'name.max' => 'Nama peserta maksimal 255 karakter.',
+            'category.required' => 'Kategori peserta wajib dipilih.',
         ]);
 
         if (Participant::nameTaken($this->name, $this->participantId)) {
@@ -49,10 +58,16 @@ class ParticipantForm extends Component
         }
 
         if ($this->participantId !== null) {
-            Participant::findOrFail($this->participantId)->update(['name' => $this->name]);
+            Participant::findOrFail($this->participantId)->update([
+                'name' => $this->name,
+                'category' => $this->category,
+            ]);
             $message = 'Peserta diperbarui.';
         } else {
-            Participant::create(['name' => $this->name]);
+            Participant::create([
+                'name' => $this->name,
+                'category' => $this->category,
+            ]);
             $message = 'Peserta ditambahkan.';
         }
 
@@ -63,6 +78,8 @@ class ParticipantForm extends Component
 
     public function render(): View
     {
-        return view('livewire.participant-form');
+        return view('livewire.participant-form', [
+            'categories' => Participant::CATEGORIES,
+        ]);
     }
 }

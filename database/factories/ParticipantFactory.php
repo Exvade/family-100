@@ -12,6 +12,9 @@ class ParticipantFactory extends Factory
 {
     public function definition(): array
     {
-        return ['name' => fake()->unique()->name()];
+        return [
+            'name' => fake()->unique()->name(),
+            'category' => fake()->randomElement(Participant::CATEGORIES),
+        ];
     }
 }

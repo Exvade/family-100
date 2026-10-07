@@ -13,7 +13,18 @@ class DoorprizeSpinTest extends TestCase
     public function test_initial_state_is_idle(): void
     {
         $this->getJson(route('doorprize.tv.state'))->assertOk()
-            ->assertExactJson(['status' => 'idle', 'seq' => 0, 'winners' => [], 'eligible' => 0, 'won' => 0, 'duration' => 0, 'remaining_ms' => null]);
+            ->assertJson([
+                'status' => 'idle',
+                'seq' => 0,
+                'winners' => [],
+                'slots' => 5,
+                'categories' => [],
+                'eligible' => 0,
+                'eligible_total' => 0,
+                'won' => 0,
+                'duration' => 0,
+                'remaining_ms' => null,
+            ]);
     }
 
     public function test_start_needs_at_least_five_participants(): void
@@ -318,4 +329,51 @@ class DoorprizeSpinTest extends TestCase
             ->assertSee('data-spin-reset', false)
             ->assertSee(route('doorprize.spin.reset'), false);
     }
+
+    public function test_can_spin_custom_number_of_slots(): void
+    {
+        Participant::factory()->count(10)->create();
+
+        // Undi 3 orang
+        $this->postJson(route('doorprize.spin.start'), ['slots' => 3])
+            ->assertOk()
+            ->assertJsonPath('slots', 3);
+
+        $stopped = $this->postJson(route('doorprize.spin.stop'))->assertOk()->json();
+        $this->assertCount(3, $stopped['winners']);
+        $this->assertSame(3, Participant::whereNotNull('won_at')->count());
+    }
+
+    public function test_can_spin_from_selected_categories(): void
+    {
+        Participant::factory()->count(5)->create(['category' => 'Keluarga CPP']);
+        Participant::factory()->count(5)->create(['category' => 'UMUM']);
+
+        // Undi 2 orang khusus dari Keluarga CPP
+        $this->postJson(route('doorprize.spin.start'), [
+            'slots' => 2,
+            'categories' => ['Keluarga CPP'],
+        ])->assertOk();
+
+        $stopped = $this->postJson(route('doorprize.spin.stop'))->assertOk()->json();
+        $this->assertCount(2, $stopped['winners']);
+
+        // Verifikasi semua pemenang berasal dari Keluarga CPP
+        $winnerCategories = Participant::whereIn('name', $stopped['winners'])->pluck('category')->all();
+        $this->assertSame(['Keluarga CPP', 'Keluarga CPP'], $winnerCategories);
+    }
+
+    public function test_refuses_spin_if_not_enough_participants_in_selected_category(): void
+    {
+        Participant::factory()->count(2)->create(['category' => 'Teman CPW']);
+        Participant::factory()->count(10)->create(['category' => 'UMUM']);
+
+        // Minta undi 3 orang dari Teman CPW padahal cuma ada 2
+        $this->postJson(route('doorprize.spin.start'), [
+            'slots' => 3,
+            'categories' => ['Teman CPW'],
+        ])->assertStatus(422)
+            ->assertJsonPath('message', fn ($m) => str_contains($m, 'Minimal 3'));
+    }
 }
+

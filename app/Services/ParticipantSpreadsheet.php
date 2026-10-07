@@ -25,27 +25,35 @@ class ParticipantSpreadsheet
     private const HEADERS = ['nama', 'nama peserta', 'peserta', 'name'];
 
     /** Tulis template ke file sementara dan kembalikan path-nya. */
-    public function template(): string
+    public function template(?string $defaultCategory = null): string
     {
         $path = tempnam(sys_get_temp_dir(), 'tpl');
 
         $options = new XlsxOptions;
-        $options->setColumnWidth(42, 1);
+        $options->setColumnWidth(36, 1);
+        $options->setColumnWidth(26, 2);
 
         $writer = new XlsxWriter($options);
         $writer->openToFile($path);
 
         $writer->getCurrentSheet()->setName('Peserta');
-        $writer->addRow(Row::fromValuesWithStyle(['Nama Peserta'], (new Style)->withFontBold(true)));
+        $writer->addRow(Row::fromValuesWithStyle(['Nama Peserta', 'Kategori'], (new Style)->withFontBold(true)));
 
         $writer->addNewSheetAndMakeItCurrent()->setName('Petunjuk');
         $writer->addRows(array_map(fn (string $line) => Row::fromValues([$line]), [
-            'Cara mengisi template',
-            '1. Isi satu nama peserta per baris di kolom A pada sheet "Peserta", mulai dari baris 2.',
-            '2. Jangan mengubah judul kolom di baris 1 (baris pertama otomatis dilewati).',
-            '3. Nama yang sama (tanpa membedakan huruf besar/kecil) hanya dihitung satu kali.',
-            '4. Maksimal '.self::MAX_ROWS.' baris dan '.self::MAX_NAME_LENGTH.' karakter per nama.',
-            '5. Hanya sheet pertama yang dibaca. File .csv juga bisa dipakai (nama di kolom pertama).',
+            'Cara mengisi template peserta doorprize:',
+            '1. Kolom A: Nama Peserta (Wajib diisi mulai baris 2).',
+            '2. Kolom B: Kategori (Opsional). Pilihan kategori yang tersedia:',
+            '   - Keluarga CPP',
+            '   - Keluarga CPW',
+            '   - Teman CPP',
+            '   - Teman CPW',
+            '   - UMUM',
+            '3. Jika kolom Kategori dikosongkan, peserta akan dimasukkan ke kategori yang dipilih saat proses upload di web.',
+            '4. Jangan mengubah judul kolom di baris 1 (baris pertama otomatis dilewati).',
+            '5. Nama yang sama (tanpa membedakan huruf besar/kecil) hanya dihitung satu kali.',
+            '6. Maksimal '.self::MAX_ROWS.' baris dan '.self::MAX_NAME_LENGTH.' karakter per nama.',
+            '7. Hanya sheet pertama yang dibaca. File .csv juga bisa dipakai (kolom 1 nama, kolom 2 kategori).',
         ]));
 
         $writer->close();
@@ -58,15 +66,17 @@ class ParticipantSpreadsheet
      *
      * @throws InvalidArgumentException bila file tidak terbaca atau melebihi batas baris
      */
-    public function import(string $path, string $extension): array
+    public function import(string $path, string $extension, ?string $defaultCategory = null): array
     {
         // Semua-atau-tidak-sama-sekali: file yang melebihi batas atau rusak di tengah tidak meninggalkan data setengah jadi.
-        return DB::transaction(fn () => $this->importRows($path, $extension));
+        return DB::transaction(fn () => $this->importRows($path, $extension, $defaultCategory));
     }
 
     /** @return array{added: int, duplicates: int, invalid: int} */
-    private function importRows(string $path, string $extension): array
+    private function importRows(string $path, string $extension, ?string $defaultCategory = null): array
     {
+        $defaultCat = Participant::canonicalCategory($defaultCategory);
+
         $known = Participant::query()->pluck('name')
             ->mapWithKeys(fn (string $name) => [mb_strtolower($name) => true])
             ->all();
@@ -82,8 +92,11 @@ class ParticipantSpreadsheet
             }
         };
 
-        foreach ($this->firstColumn($path, $extension) as $line => $value) {
-            $name = is_scalar($value) ? trim(preg_replace('/\s+/u', ' ', (string) $value)) : '';
+        foreach ($this->rowValues($path, $extension) as $line => $cols) {
+            $nameVal = $cols[0] ?? null;
+            $catVal = $cols[1] ?? null;
+
+            $name = is_scalar($nameVal) ? trim(preg_replace('/\s+/u', ' ', (string) $nameVal)) : '';
 
             if ($name === '') {
                 continue;
@@ -104,8 +117,18 @@ class ParticipantSpreadsheet
                 continue;
             }
 
+            // Tentukan kategori: baca kolom B, jika kosong/invalid pakai defaultCat
+            $category = is_scalar($catVal) && trim((string) $catVal) !== ''
+                ? Participant::canonicalCategory((string) $catVal)
+                : $defaultCat;
+
             $known[$key] = true;
-            $batch[] = ['name' => $name, 'created_at' => $now, 'updated_at' => $now];
+            $batch[] = [
+                'name' => $name,
+                'category' => $category,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
             $added++;
 
             if (count($batch) >= 500) {
@@ -118,8 +141,8 @@ class ParticipantSpreadsheet
         return compact('added', 'duplicates', 'invalid');
     }
 
-    /** @return Generator<int, mixed> nomor baris (mulai 1) => isi kolom A */
-    private function firstColumn(string $path, string $extension): Generator
+    /** @return Generator<int, array{0: mixed, 1: mixed}> nomor baris (mulai 1) => [kolom A, kolom B] */
+    private function rowValues(string $path, string $extension): Generator
     {
         $reader = $this->reader($extension);
 
@@ -134,7 +157,10 @@ class ParticipantSpreadsheet
                         throw new InvalidArgumentException('Jumlah baris melebihi batas '.self::MAX_ROWS.'.');
                     }
 
-                    yield $line => ($row->cells[0] ?? null)?->getValue();
+                    yield $line => [
+                        ($row->cells[0] ?? null)?->getValue(),
+                        ($row->cells[1] ?? null)?->getValue(),
+                    ];
                 }
 
                 break; // hanya sheet pertama

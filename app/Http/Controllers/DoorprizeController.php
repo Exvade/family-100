@@ -16,11 +16,19 @@ class DoorprizeController extends Controller
 {
     public function index(DoorprizeSpin $spin): View
     {
+        $state = $spin->state();
+
         return view('doorprize', [
             'participants' => Participant::orderBy('id')->get(),
-            'spin' => $spin->state(),
-            'eligibleCount' => $spin->eligibleCount(),
-            'slots' => DoorprizeSpin::SLOTS,
+            'categories' => Participant::CATEGORIES,
+            'spin' => $state,
+            'eligibleCount' => $state['eligible'],
+            'eligibleTotal' => $state['eligible_total'],
+            'eligibleByCategory' => $state['eligible_by_category'],
+            'minSlots' => DoorprizeSpin::MIN_SLOTS,
+            'maxSlots' => DoorprizeSpin::MAX_SLOTS,
+            'defaultSlots' => DoorprizeSpin::DEFAULT_SLOTS,
+            'slots' => $state['slots'],
             'maxDuration' => DoorprizeSpin::MAX_DURATION,
         ]);
     }
@@ -28,9 +36,13 @@ class DoorprizeController extends Controller
     /** Halaman spin untuk layar TV; status undian selanjutnya dibaca lewat polling tvState(). */
     public function tv(DoorprizeSpin $spin): View
     {
+        $state = $spin->state();
+
         return view('doorprize-tv', [
-            'participants' => $spin->pool(),   // hanya yang belum menang
-            'spin' => $spin->state(),
+            'participants' => $spin->pool(),   // hanya yang belum menang (sesuai filter kategori aktif bila ada)
+            'spin' => $state,
+            'slots' => $state['slots'],
+            'categories' => Participant::CATEGORIES,
         ]);
     }
 
@@ -43,15 +55,35 @@ class DoorprizeController extends Controller
         $state = $spin->state();
 
         if ($request->has('seq') && (int) $request->query('seq') !== $state['seq'] && $state['status'] === 'spinning') {
-            $state['pool'] = $spin->pool();
+            $state['pool'] = $spin->pool($state['categories'] ?? null);
         }
 
         return response()->json($state);
     }
 
-    public function start(DoorprizeSpin $spin): JsonResponse
+    public function start(Request $request, DoorprizeSpin $spin): JsonResponse
     {
-        return $this->command(fn () => $spin->start());
+        $data = $request->validate([
+            'slots' => ['nullable', 'integer', 'min:'.DoorprizeSpin::MIN_SLOTS, 'max:'.DoorprizeSpin::MAX_SLOTS],
+            'categories' => ['nullable', 'array'],
+            'categories.*' => ['string'],
+        ]);
+
+        $slots = isset($data['slots']) ? (int) $data['slots'] : null;
+        $categories = isset($data['categories']) ? (array) $data['categories'] : null;
+
+        return $this->command(fn () => $spin->start($slots, $categories));
+    }
+
+    public function configure(Request $request, DoorprizeSpin $spin): JsonResponse
+    {
+        $data = $request->validate([
+            'slots' => ['required', 'integer', 'min:'.DoorprizeSpin::MIN_SLOTS, 'max:'.DoorprizeSpin::MAX_SLOTS],
+            'categories' => ['nullable', 'array'],
+            'categories.*' => ['string'],
+        ]);
+
+        return response()->json($spin->configure((int) $data['slots'], $data['categories'] ?? []));
     }
 
     public function stop(DoorprizeSpin $spin): JsonResponse
@@ -82,10 +114,12 @@ class DoorprizeController extends Controller
         return response()->json($spin->state());
     }
 
-    public function template(ParticipantSpreadsheet $spreadsheet): BinaryFileResponse
+    public function template(Request $request, ParticipantSpreadsheet $spreadsheet): BinaryFileResponse
     {
+        $category = $request->query('category');
+
         return response()
-            ->download($spreadsheet->template(), 'template-peserta-doorprize.xlsx')
+            ->download($spreadsheet->template($category), 'template-peserta-doorprize.xlsx')
             ->deleteFileAfterSend();
     }
 

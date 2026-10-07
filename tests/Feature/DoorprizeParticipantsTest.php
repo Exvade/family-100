@@ -225,4 +225,57 @@ class DoorprizeParticipantsTest extends TestCase
             ->set('sort', 'name:desc')
             ->assertViewHas('participants', fn ($p) => $p->first()->name === 'Zainal');
     }
+
+    public function test_manual_add_saves_category(): void
+    {
+        Livewire::test(ParticipantForm::class)
+            ->dispatch('open-participant-form', id: null, category: 'Keluarga CPW')
+            ->assertSet('category', 'Keluarga CPW')
+            ->set('name', 'Paman Budi')
+            ->call('save')
+            ->assertRedirect(route('doorprize'));
+
+        $this->assertDatabaseHas('participants', [
+            'name' => 'Paman Budi',
+            'category' => 'Keluarga CPW',
+        ]);
+    }
+
+    public function test_import_with_category_column(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'test');
+        $writer = new \OpenSpout\Writer\XLSX\Writer;
+        $writer->openToFile($path);
+        $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues(['Nama Peserta', 'Kategori']));
+        $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues(['Siti Aisyah', 'Teman CPP']));
+        $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues(['Joko Anwar', 'Teman CPW']));
+        $writer->close();
+
+        $content = file_get_contents($path);
+        unlink($path);
+        $file = UploadedFile::fake()->createWithContent('peserta.xlsx', $content);
+
+        Livewire::test(ParticipantImport::class)
+            ->set('file', $file)
+            ->call('save')
+            ->assertRedirect(route('doorprize'));
+
+        $this->assertDatabaseHas('participants', ['name' => 'Siti Aisyah', 'category' => 'Teman CPP']);
+        $this->assertDatabaseHas('participants', ['name' => 'Joko Anwar', 'category' => 'Teman CPW']);
+    }
+
+    public function test_import_with_default_category_fallback(): void
+    {
+        $file = $this->xlsx(['Hendra Gunawan', 'Maya Indah']);
+
+        Livewire::test(ParticipantImport::class)
+            ->set('category', 'Keluarga CPP')
+            ->set('file', $file)
+            ->call('save')
+            ->assertRedirect(route('doorprize'));
+
+        $this->assertDatabaseHas('participants', ['name' => 'Hendra Gunawan', 'category' => 'Keluarga CPP']);
+        $this->assertDatabaseHas('participants', ['name' => 'Maya Indah', 'category' => 'Keluarga CPP']);
+    }
 }
+

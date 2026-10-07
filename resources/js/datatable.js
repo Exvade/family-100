@@ -1,4 +1,4 @@
-// Tabel interaktif (search, sort, jumlah baris, pagination) untuk markup `[data-datatable]`.
+// Tabel interaktif (search, sort, jumlah baris, pagination, filter kategori) untuk markup `[data-datatable]`.
 // Baris <tr> membawa nilai lewat atribut data-*, header sort lewat data-dt-sort="<key>"
 // (tambah data-dt-type="number" untuk urutan numerik).
 
@@ -14,11 +14,13 @@ function initDatatable(root) {
     const pagination = root.querySelector('[data-dt-pagination]');
     const sortButtons = Array.from(root.querySelectorAll('[data-dt-sort]'));
     const numeric = new Set(sortButtons.filter((b) => b.dataset.dtType === 'number').map((b) => b.dataset.dtSort));
+    const categoryTabs = Array.from(document.querySelectorAll('[data-dt-category]'));
 
     const state = {
         page: 1,
         length: parseInt(lengthInput.value, 10) || 8,
         query: '',
+        category: '',
         sortKey: sortButtons[0]?.dataset.dtSort,
         sortDir: 'asc',
     };
@@ -49,7 +51,12 @@ function initDatatable(root) {
     function render() {
         const q = state.query.trim().toLowerCase();
         const filtered = rows
-            .filter((r) => !q || Object.values(r.dataset).some((v) => v.toLowerCase().includes(q)))
+            .filter((r) => {
+                if (state.category && r.dataset.category !== state.category) {
+                    return false;
+                }
+                return !q || Object.values(r.dataset).some((v) => v.toLowerCase().includes(q));
+            })
             .sort(compare);
 
         const pages = Math.max(1, Math.ceil(filtered.length / state.length));
@@ -92,6 +99,28 @@ function initDatatable(root) {
         state.sortKey = key;
         render();
     }));
+
+    categoryTabs.forEach((tab) => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            categoryTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            state.category = tab.dataset.dtCategory || '';
+            state.page = 1;
+            render();
+
+            // Sinkronkan tombol aksi di header/kategori bar
+            const catName = tab.dataset.dtCategory || '';
+            document.querySelectorAll('[data-active-category-btn]').forEach(btn => {
+                btn.dataset.category = catName;
+            });
+            const exportLink = document.querySelector('[data-category-template-link]');
+            if (exportLink) {
+                const baseUrl = exportLink.dataset.baseUrl || exportLink.href.split('?')[0];
+                exportLink.href = catName ? `${baseUrl}?category=${encodeURIComponent(catName)}` : baseUrl;
+            }
+        });
+    });
 
     render();
 }

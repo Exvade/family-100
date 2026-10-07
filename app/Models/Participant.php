@@ -12,7 +12,34 @@ class Participant extends Model
     /** @use HasFactory<\Database\Factories\ParticipantFactory> */
     use HasFactory;
 
-    protected $fillable = ['name'];
+    public const CATEGORIES = [
+        'Keluarga CPP',
+        'Keluarga CPW',
+        'Teman CPP',
+        'Teman CPW',
+        'UMUM',
+    ];
+
+    public const DEFAULT_CATEGORY = 'UMUM';
+
+    protected $fillable = ['name', 'category'];
+
+    /** Normalisasi nama kategori ke penulisan baku (case-insensitive) */
+    public static function canonicalCategory(?string $category): string
+    {
+        if ($category === null) {
+            return self::DEFAULT_CATEGORY;
+        }
+
+        $trimmed = trim(preg_replace('/\s+/u', ' ', $category));
+        foreach (self::CATEGORIES as $valid) {
+            if (mb_strtolower($trimmed) === mb_strtolower($valid)) {
+                return $valid;
+            }
+        }
+
+        return self::DEFAULT_CATEGORY;
+    }
 
     protected function casts(): array
     {
@@ -23,6 +50,15 @@ class Participant extends Model
     public function scopeEligible(Builder $query): void
     {
         $query->whereNull('won_at');
+    }
+
+    /** Filter berdasarkan satu atau beberapa kategori peserta. */
+    public function scopeInCategory(Builder $query, array|string $categories): void
+    {
+        $categories = array_filter((array) $categories);
+        if (! empty($categories)) {
+            $query->whereIn('category', $categories);
+        }
     }
 
     /** Pernah terpilih sebagai pemenang undian (diisi saat undian dihentikan). */
