@@ -51,26 +51,17 @@ class Family100Test extends TestCase
         $this->assertSame([1, 2, 3, 4], $question->answers()->orderBy('ranking')->pluck('ranking')->all());
     }
 
-    public function test_many_answers_can_be_added_to_a_question(): void
+    public function test_answers_page_lists_the_answers(): void
     {
         $question = Question::factory()->create();
+        $question->answers()->createMany([['answer' => 'Piring', 'ranking' => 1], ['answer' => 'Sendok', 'ranking' => 2]]);
 
-        foreach (['Piring' => 1, 'Sendok' => 2, 'Panci' => 3] as $name => $rank) {
-            $this->post(route('family-100.answers.store', $question), ['answer' => $name, 'ranking' => $rank])
-                ->assertRedirect(route('family-100.answers.index', $question));
-        }
-
-        $this->assertSame(['Piring', 'Sendok', 'Panci'], $question->answers->pluck('answer')->all());
-        $this->get(route('family-100.answers.index', $question))->assertOk()->assertSee('Sendok');
+        $this->get(route('family-100.answers.index', $question))->assertOk()->assertSee('Piring')->assertSee('Sendok');
     }
 
-    public function test_answer_can_be_updated_and_deleted(): void
+    public function test_answer_can_be_deleted(): void
     {
-        $answer = Answer::factory()->create(['answer' => 'Lama', 'ranking' => 1]);
-
-        $this->put(route('family-100.answers.update', $answer), ['answer' => 'Baru', 'ranking' => 2])
-            ->assertRedirect(route('family-100.answers.index', $answer->question_id));
-        $this->assertSame('Baru', $answer->fresh()->answer);
+        $answer = Answer::factory()->create();
 
         $this->delete(route('family-100.answers.destroy', $answer))
             ->assertRedirect(route('family-100.answers.index', $answer->question_id));
@@ -216,15 +207,11 @@ class Family100Test extends TestCase
     public function test_pages_render(): void
     {
         $question = Question::factory()->hasAnswers(2)->create();
-        $answer = $question->answers()->first();
-
         foreach ([
             route('family-100.questions.index'),
             route('family-100.questions.create'),
             route('family-100.questions.edit', $question),
             route('family-100.answers.index', $question),
-            route('family-100.answers.create', $question),
-            route('family-100.answers.edit', $answer),
         ] as $url) {
             $this->get($url)->assertOk();
         }

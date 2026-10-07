@@ -73,8 +73,391 @@ body {
     margin-top: 4px !important;
 }
 
+/* ===== Responsif / mobile ===== */
 
+/* Brand berupa teks (menggantikan logo) */
+.brand-text {
+    font-weight: 700;
+    letter-spacing: .01em;
+    white-space: normal;
+    line-height: 1.2;
+}
 
+.brand-text a {
+    color: inherit;
+    text-decoration: none;
+}
 
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: .5rem;
+}
 
+.answer-question {
+    word-break: break-word;
+}
 
+@media (min-width: 768px) {
+    .answer-question {
+        font-size: var(--tblr-font-size-h1, 1.75rem);
+    }
+}
+
+@media (max-width: 991.98px) {
+    /* Bar navigasi mobile: tombol menu di kiri, nama aplikasi menyusul di sebelahnya */
+    .navbar-vertical .brand-text {
+        margin: 0 auto 0 .75rem;
+        font-size: 1.125rem;
+        text-align: left;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .page-header {
+        margin-bottom: .5rem;
+    }
+
+    .page-title {
+        font-size: 1.25rem;
+        word-break: break-word;
+    }
+
+    .page-body {
+        margin-top: .75rem;
+    }
+
+    /* Tombol aksi di header halaman: penuh selebar layar, mudah disentuh */
+    .page-actions .btn-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .page-actions .btn-list > .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+        margin: 0;
+    }
+
+    /* Tombol dengan .btn-label jadi tombol ikon persegi 1:1, sejajar dengan judul halaman */
+    .page-actions:has(.btn-label) {
+        flex: 0 0 auto;
+        width: auto;
+    }
+
+    .page-actions .btn-list:has(.btn-label) {
+        flex-wrap: nowrap;
+    }
+
+    .page-actions .btn-list > .btn:has(.btn-label) {
+        flex: 0 0 auto;
+        width: 2.75rem;
+        height: 2.75rem;
+        padding: 0;
+    }
+
+    .page-actions .btn-label {
+        display: none;
+    }
+
+    .page-actions .btn:has(.btn-label) .icon {
+        margin: 0;
+    }
+
+    /* Hindari zoom otomatis iOS saat fokus ke input */
+    .form-control,
+    .form-select {
+        font-size: 1rem;
+    }
+
+    /* Tombol preset jumlah jawaban lebih besar agar mudah disentuh */
+    [data-set-limit] {
+        min-width: 2.75rem;
+        padding: .5rem .75rem;
+        font-size: .875rem;
+    }
+
+    /* Form: tombol bertumpuk selebar layar */
+    .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ===== Daftar mobile (komponen Livewire; hanya dirender di bawah breakpoint md) ===== */
+
+.m-bar {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.m-filter {
+    position: relative;
+    flex: 0 0 auto;
+    width: 2.875rem;
+    height: 2.875rem;
+    padding: 0;
+    border-radius: .875rem;
+    background: var(--tblr-bg-surface, #fff);
+    color: var(--tblr-primary, #0054a6);
+    box-shadow: 0 1px 3px rgba(24, 36, 51, .08);
+}
+
+.m-filter-dot {
+    position: absolute;
+    top: .375rem;
+    right: .375rem;
+    width: .625rem;
+    height: .625rem;
+    box-sizing: content-box;
+    border: 2px solid var(--tblr-bg-surface, #fff);
+    border-radius: 50%;
+    background: var(--tblr-primary, #0054a6);
+}
+
+.m-search {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.m-search .form-control {
+    height: 2.875rem;
+    padding-right: 2.75rem;
+    border-radius: .875rem;
+    box-shadow: 0 1px 3px rgba(24, 36, 51, .08);
+}
+
+.m-search .form-control::-webkit-search-cancel-button {
+    display: none;
+}
+
+.m-search .icon {
+    position: absolute;
+    top: 50%;
+    right: .875rem;
+    transform: translateY(-50%);
+    color: var(--tblr-primary, #0054a6);
+    pointer-events: none;
+}
+
+.m-offcanvas.offcanvas-bottom {
+    height: auto;
+    max-height: 85vh;
+    border-radius: 1rem 1rem 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.m-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.m-card {
+    padding: 1.25rem;
+    background: var(--tblr-bg-surface, #fff);
+    border: 1px solid var(--tblr-border-color-translucent, rgba(4, 32, 69, .1));
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 24px rgba(24, 36, 51, .08);
+}
+
+.m-pill {
+    display: inline-block;
+    padding: .375rem .875rem;
+    border-radius: 999px;
+    background: var(--tblr-primary-lt, #e6effa);
+    color: var(--tblr-primary, #0054a6);
+    font-size: .8125rem;
+    font-weight: 600;
+}
+
+.m-title {
+    margin: .75rem 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.m-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .625rem 1.125rem;
+}
+
+.m-info {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 600;
+}
+
+.m-info .icon {
+    color: var(--tblr-secondary-color, #667382);
+}
+
+.m-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-left: auto;
+}
+
+/* "Opsi" tampil sebagai tautan beraksen, bukan tombol berbingkai */
+.m-actions .dropdown > .btn {
+    padding: .5rem .25rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--tblr-primary, #0054a6);
+    font-weight: 600;
+}
+
+.m-actions .m-mark {
+    padding: .5rem 1.125rem;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+/* Menu opsi rata ke tepi kanan kartu (menimpa geser 32px untuk tabel desktop) */
+.m-card .dropdown-menu.dropdown-menu-end {
+    right: 0 !important;
+    left: auto !important;
+    min-width: 12rem;
+}
+
+.m-card .dropdown-item {
+    padding-top: .625rem;
+    padding-bottom: .625rem;
+}
+
+.m-more,
+.m-empty {
+    padding: .5rem 0 1rem;
+    text-align: center;
+    color: var(--tblr-secondary-color, #667382);
+}
+
+.m-empty {
+    padding: 2rem 0;
+}
+
+/* ===== Kontrol undian doorprize ===== */
+
+.spin-control-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.spin-control-actions {
+    display: flex;
+    gap: .75rem;
+}
+
+.spin-control-actions .btn {
+    min-width: 8.5rem;
+    justify-content: center;
+}
+
+.spin-winners {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: winner;
+}
+
+.spin-winners[hidden] {
+    display: none;
+}
+
+.spin-winners li {
+    counter-increment: winner;
+    padding: .375rem .875rem;
+    border-radius: 999px;
+    background: var(--tblr-primary-lt, #e6effa);
+    color: var(--tblr-primary, #0054a6);
+    font-weight: 600;
+}
+
+.spin-winners li::before {
+    content: counter(winner) '. ';
+    opacity: .7;
+}
+
+@media (max-width: 767.98px) {
+    .spin-control-actions {
+        flex: 1 1 100%;
+    }
+
+    .spin-control-actions .btn {
+        flex: 1 1 0;
+        min-height: 3rem;
+    }
+}
+
+.spin-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--tblr-border-color);
+}
+
+.spin-duration {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem 1rem;
+    flex: 1 1 28rem;
+    max-width: 40rem;
+}
+
+.spin-duration .form-hint {
+    flex: 1 1 100%;
+}
+
+.spin-reset {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: .25rem;
+    margin-left: auto;
+    text-align: right;
+}
+
+.spin-duration-field {
+    flex: 0 1 17rem;
+}
+
+@media (max-width: 767.98px) {
+    .spin-duration-field {
+        flex: 1 1 100%;
+    }
+
+    .spin-reset {
+        flex: 1 1 100%;
+        align-items: stretch;
+        text-align: left;
+    }
+}

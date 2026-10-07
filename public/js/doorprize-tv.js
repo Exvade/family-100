@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Anisa Rahmawati', 'Bambang Tri', 'Dian Sastrowardoyo', 'Guruh Soekarno', 'Wulan Guritno'
             ];
 
-            const participantPool = (Array.isArray(window.doorprizeParticipants) && window.doorprizeParticipants.length > 0)
+            let participantPool = (Array.isArray(window.doorprizeParticipants) && window.doorprizeParticipants.length > 0)
                 ? window.doorprizeParticipants
                 : defaultDummyGuests;
 
@@ -162,17 +162,87 @@ document.addEventListener('DOMContentLoaded', () => {
                 return participantPool[Math.floor(Math.random() * participantPool.length)] || 'Tamu Undangan';
             }
 
-            function spinSlotBar(index, chosenName, onComplete) {
-                const bar = document.getElementById(`participantBar-${index}`);
-                const dots = document.getElementById(`dotsDisplay-${index}`);
-                const nameDisplay = document.getElementById(`nameDisplay-${index}`);
-                const statusSub = document.getElementById(`barStatusSub-${index}`);
+            // Timer putar tiap bar disimpan agar tidak pernah ada dua timer di bar yang sama
+            // (klik ganda, atau reset saat bar masih berputar).
+            const rollers = [null, null, null, null, null];
 
+            function barParts(index) {
+                return {
+                    bar: document.getElementById(`participantBar-${index}`),
+                    dots: document.getElementById(`dotsDisplay-${index}`),
+                    nameDisplay: document.getElementById(`nameDisplay-${index}`),
+                    statusSub: document.getElementById(`barStatusSub-${index}`),
+                };
+            }
+
+            function stopRolling(index) {
+                clearInterval(rollers[index]);
+                rollers[index] = null;
+            }
+
+            function showRolling(index) {
+                const { bar, dots, nameDisplay, statusSub } = barParts(index);
                 bar.classList.remove('revealed');
                 dots.style.display = 'none';
                 nameDisplay.style.display = 'block';
                 statusSub.textContent = 'Mengundi Nama...';
                 statusSub.style.color = '#fde68a';
+            }
+
+            // Nama acak berganti terus sampai dihentikan (dipakai kendali jarak jauh dari dasbor)
+            function startRolling(index) {
+                stopRolling(index);
+                showRolling(index);
+                const { nameDisplay } = barParts(index);
+                rollers[index] = setInterval(() => {
+                    nameDisplay.textContent = participantPool[Math.floor(Math.random() * participantPool.length)];
+                    playTick();
+                }, 65);
+            }
+
+            function revealBar(index, winner, { celebrate = true } = {}) {
+                const { bar, dots, nameDisplay, statusSub } = barParts(index);
+                activeWinners[index] = winner;
+                dots.style.display = 'none';
+                nameDisplay.style.display = 'block';
+                nameDisplay.textContent = winner;
+                bar.classList.add('revealed');
+                statusSub.textContent = 'Pemenang Terpilih';
+                statusSub.style.color = '#55efc4';
+
+                if (!celebrate) return;
+                playChime(index);
+
+                // Confetti burst on this bar
+                try {
+                    const rect = bar.getBoundingClientRect();
+                    confetti({
+                        particleCount: 30,
+                        spread: 55,
+                        origin: {
+                            x: (rect.left + rect.width / 2) / window.innerWidth,
+                            y: (rect.top + rect.height / 2) / window.innerHeight
+                        }
+                    });
+                } catch(e) {}
+            }
+
+            function resetBar(index) {
+                const { bar, dots, nameDisplay, statusSub } = barParts(index);
+                stopRolling(index);
+                bar.classList.remove('revealed');
+                dots.style.display = 'block';
+                nameDisplay.style.display = 'none';
+                statusSub.textContent = 'Siap Diundi';
+                statusSub.style.color = '#93c5fd';
+                activeWinners[index] = null;
+            }
+
+            function spinSlotBar(index, chosenName, onComplete) {
+                const { nameDisplay } = barParts(index);
+
+                stopRolling(index);
+                showRolling(index);
 
                 let rolls = 0;
                 const maxRolls = 18 + index * 5;
@@ -183,27 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     rolls++;
 
                     if (rolls >= maxRolls) {
-                        clearInterval(interval);
+                        stopRolling(index);
                         const winner = chosenName || pickRandomCandidate();
-                        activeWinners[index] = winner;
-                        nameDisplay.textContent = winner;
-                        bar.classList.add('revealed');
-                        statusSub.textContent = 'Pemenang Terpilih';
-                        statusSub.style.color = '#55efc4';
-                        playChime(index);
-
-                        // Confetti burst on this bar
-                        try {
-                            const rect = bar.getBoundingClientRect();
-                            confetti({
-                                particleCount: 30,
-                                spread: 55,
-                                origin: {
-                                    x: (rect.left + rect.width / 2) / window.innerWidth,
-                                    y: (rect.top + rect.height / 2) / window.innerHeight
-                                }
-                            });
-                        } catch(e) {}
+                        revealBar(index, winner);
 
                         if (onComplete) {
                             onComplete(winner);
@@ -219,6 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 }, 65);
+                rollers[index] = interval;
             }
 
             // 5. Spin All 5 Bars Sequentially
@@ -345,16 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (e.key === 'r' || e.key === 'R') {
                     if (isSpinning) return;
                     for (let idx = 0; idx < 5; idx++) {
-                        const bar = document.getElementById(`participantBar-${idx}`);
-                        const dots = document.getElementById(`dotsDisplay-${idx}`);
-                        const nameDisplay = document.getElementById(`nameDisplay-${idx}`);
-                        const statusSub = document.getElementById(`barStatusSub-${idx}`);
-                        bar.classList.remove('revealed');
-                        dots.style.display = 'block';
-                        nameDisplay.style.display = 'none';
-                        statusSub.textContent = 'Siap Diundi';
-                        statusSub.style.color = '#93c5fd';
-                        activeWinners[idx] = null;
+                        resetBar(idx);
                     }
                 } else if (e.key === 'c' || e.key === 'C') {
                     // Shortcut C untuk membuka kembali pop-up pemenang jika kelima nama sudah terundi
@@ -365,4 +409,63 @@ document.addEventListener('DOMContentLoaded', () => {
                     popupCelebrationModal.classList.remove('active');
                 }
             });
+
+            // 8. Kendali jarak jauh dari dasbor /doorprize (Start / Stop), dibaca lewat polling seperti Family 100.
+            //    Start -> semua slot berputar terus; Stop -> slot berhenti berurutan dan menampilkan pemenang dari server.
+            const remote = window.doorprizeSpin || null;
+            let remoteSeq = remote ? remote.seq : 0;
+
+            function remoteStart() {
+                popupCelebrationModal.classList.remove('active');
+                isSpinning = true;
+                for (let idx = 0; idx < 5; idx++) startRolling(idx);
+            }
+
+            function remoteStop(winners, { instant = false } = {}) {
+                popupCelebrationModal.classList.remove('active');
+                isSpinning = true;
+                winners.forEach((winner, idx) => {
+                    setTimeout(() => {
+                        stopRolling(idx);
+                        revealBar(idx, winner, { celebrate: !instant });
+                        if (idx === winners.length - 1) {
+                            isSpinning = false;
+                            if (!instant) {
+                                setTimeout(playFanfare, 250);
+                                triggerCelebrationPopup([...winners]);
+                            }
+                        }
+                    }, instant ? 0 : idx * 340);
+                });
+            }
+
+            function applyRemote(state, { initial = false } = {}) {
+                if (Array.isArray(state.pool) && state.pool.length > 0) participantPool = state.pool;
+
+                if (state.status === 'spinning') {
+                    remoteStart();
+                } else if (state.status === 'stopped' && state.winners.length === 5) {
+                    remoteStop(state.winners, { instant: initial });   // TV baru dibuka: tampilkan hasil tanpa efek ulang
+                } else if (state.status === 'idle' && !initial) {
+                    popupCelebrationModal.classList.remove('active');
+                    for (let idx = 0; idx < 5; idx++) resetBar(idx);
+                    isSpinning = false;
+                }
+            }
+
+            if (remote) {
+                applyRemote(remote, { initial: true });
+
+                const stateUrl = window.doorprizeSpinStateUrl;
+                setInterval(async () => {
+                    try {
+                        const response = await fetch(`${stateUrl}?seq=${remoteSeq}`, { headers: { 'Accept': 'application/json' } });
+                        const state = await response.json();
+                        if (state.seq !== remoteSeq) {
+                            remoteSeq = state.seq;
+                            applyRemote(state);
+                        }
+                    } catch (e) { /* jaringan putus sebentar: coba lagi di polling berikutnya */ }
+                }, 1000);
+            }
         });
