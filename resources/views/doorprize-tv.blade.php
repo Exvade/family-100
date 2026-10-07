@@ -231,6 +231,8 @@
     <script>
         window.doorprizeParticipants = @json($participants ?? []);
         window.doorprizeWedding = @json($wedding ?? null);
+        window.doorprizeSpin = @json($spin ?? null);
+        window.doorprizeSpinStateUrl = @json(route('doorprize.tv.state'));
     </script>
     <!-- Interactive TV Script -->
     <script src="{{ asset('js/doorprize-tv.js') }}"></script>
