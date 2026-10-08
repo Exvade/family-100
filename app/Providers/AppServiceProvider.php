@@ -23,13 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Tombol "Salah" hanya boleh sekali per 5 detik untuk satu pertanyaan, dari siapa pun yang menekan.
+        // Tombol "Salah" mengizinkan host menekan responsif selama permainan berlangsung
         RateLimiter::for('wrong-answer', function (Request $request) {
-            // Throttle berjalan sebelum route model binding, jadi parameter bisa berupa ID atau model.
             $question = $request->route('question');
             $id = $question instanceof Model ? $question->getKey() : $question;
 
-            return Limit::perSecond(1, 5)->by('wrong-answer:'.$id);
+            return Limit::perMinute(120)->by('wrong-answer:'.$id);
         });
     }
 }

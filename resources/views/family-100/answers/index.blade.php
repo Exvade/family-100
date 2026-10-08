@@ -112,9 +112,17 @@
                 </div>
                 <div class="col-lg-4 text-lg-end">
                     <div class="text-secondary small text-uppercase fw-bold mb-1">Kontrol Efek TV</div>
-                    <button type="button" class="btn btn-danger btn-lg px-3 px-md-4 py-3 shadow-sm w-100" data-wrong-url="{{ route('family-100.questions.wrong', $question) }}">
+                    <button type="button" class="btn btn-danger btn-lg px-3 px-md-4 py-3 shadow-sm w-100 mb-2" data-wrong-url="{{ route('family-100.questions.wrong', $question) }}" id="btn-strike">
                         <span class="fs-2 me-2 align-middle">❌</span>
-                        <span class="fw-bold fs-4 align-middle">Tombol Salah (Strike)</span>
+                        <span class="fw-bold fs-3 align-middle">Tombol Salah (Strike)</span>
+                    </button>
+                    <div class="d-flex align-items-center justify-content-between bg-danger-subtle text-danger border border-danger-subtle rounded px-3 py-2 mb-2">
+                        <span class="fw-semibold small">Jumlah Salah di Layar TV:</span>
+                        <span class="badge bg-danger text-white fs-4 fw-bold px-3 py-1"><span data-wrong-count-badge>{{ $question->wrong_count }}</span>x</span>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 fw-bold py-2 shadow-sm" data-reset-round-url="{{ route('family-100.questions.reset', $question) }}" id="btn-reset-round" title="Tutup kembali semua jawaban dan kembalikan salah ke 0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.95 11a8 8 0 1 0 -.5 4m.5 5v-5h-5" /></svg>
+                        Reset Babak (Tutup Jawaban & Salah)
                     </button>
                 </div>
             </div>

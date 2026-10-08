@@ -217,6 +217,19 @@ class QuestionController extends Controller
         return response()->json(['wrong_count' => $question->wrong_count]);
     }
 
+    /** Reset seluruh jawaban (tutup kembali) dan reset penghitung salah ke 0 untuk babak ini. */
+    public function resetRound(Question $question): JsonResponse
+    {
+        $question->answers()->update(['is_answered' => false]);
+        $question->update(['wrong_count' => 0]);
+
+        return response()->json([
+            'status' => 'success',
+            'wrong_count' => 0,
+            'message' => 'Babak berhasil direset. Semua jawaban ditutup kembali dan hitungan salah kembali ke 0.',
+        ]);
+    }
+
     public function timer(Question $question, string $action): JsonResponse
     {
         match ($action) {

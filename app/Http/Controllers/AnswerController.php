@@ -13,7 +13,15 @@ class AnswerController extends Controller
 {
     public function index(Question $question): View
     {
-        Setting::put(Setting::ACTIVE_QUESTION, $question->id);
+        $activeId = Setting::get(Setting::ACTIVE_QUESTION);
+        $isSwitching = ($activeId != $question->id);
+
+        if ($isSwitching) {
+            // Ketika berpindah pertanyaan, tutup semua jawaban dan reset hitungan salah
+            $question->answers()->update(['is_answered' => false]);
+            $question->update(['wrong_count' => 0]);
+            Setting::put(Setting::ACTIVE_QUESTION, $question->id);
+        }
 
         $answers = $question->answers()->get();
         $onTvIds = $answers->take($question->display_limit)->pluck('id');

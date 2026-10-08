@@ -275,6 +275,53 @@
             text-align: center;
             font-style: italic;
         }
+
+        /* Indikator Tanda X Persisten di Panggung TV ("X doang" seperti popup pertama) */
+        .tv-strikes-container {
+            position: fixed;
+            bottom: 2.2vh;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(0.5rem, 1.1vw, 1.2rem);
+            z-index: 25;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .tv-strike-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            animation: strikeMarkPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .tv-strike-mark svg {
+            width: clamp(2.4rem, 4.8vh, 3.8rem);
+            height: clamp(2.4rem, 4.8vh, 3.8rem);
+            color: #ef4444;
+            filter: drop-shadow(0 0 10px #dc2626) drop-shadow(0 0 22px #b91c1c);
+        }
+
+        .tv-strike-mark-extra {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.2rem, 2.4vh, 1.8rem);
+            font-weight: 900;
+            color: #ef4444;
+            filter: drop-shadow(0 0 8px #dc2626) drop-shadow(0 0 16px #b91c1c);
+            margin-left: 0.3rem;
+            animation: strikeMarkPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes strikeMarkPop {
+            0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+            70% { transform: scale(1.15) rotate(4deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -316,6 +363,9 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
     </div>
 
+    <!-- Indikator Salah (X) Persisten di Panggung TV (Maksimal 10 tanda X yang ditampilkan) -->
+    <div class="tv-strikes-container" data-tv-strikes style="display: none;" aria-label="Indikator Jawaban Salah"></div>
+
     <!-- Tombol Suara TV -->
     <button type="button" class="tv-sound-btn" data-tv-sound title="Klik untuk mengaktifkan / mematikan suara (atau tekan X untuk tes salah, C untuk tes benar)">
         <span class="tv-sound-icon">🔊</span>
@@ -327,6 +377,38 @@
         let wrongSeen = {{ $question?->wrong_count ?? 0 }};
         const stateUrl = @js(route('family-100.tv.state'));
         const screenContainer = document.querySelector('.tv-screen-container');
+        const strikesContainer = document.querySelector('[data-tv-strikes]');
+        let currentDisplayedStrikes = -1;
+        const strikeMarkSvg = `<span class="tv-strike-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></span>`;
+
+        function updateStrikes(count) {
+            if (!strikesContainer) return;
+            const num = Math.max(0, Number(count) || 0);
+
+            if (num <= 0) {
+                strikesContainer.style.display = 'none';
+                strikesContainer.innerHTML = '';
+                currentDisplayedStrikes = 0;
+                return;
+            }
+
+            if (num === currentDisplayedStrikes) return;
+            currentDisplayedStrikes = num;
+
+            strikesContainer.style.display = 'flex';
+            const displayCount = Math.min(num, 10);
+            let html = '';
+            for (let i = 0; i < displayCount; i++) {
+                html += strikeMarkSvg;
+            }
+            if (num > 10) {
+                html += `<span class="tv-strike-mark-extra">+${num - 10}</span>`;
+            }
+            strikesContainer.innerHTML = html;
+        }
+
+        // Inisialisasi awal indikator X
+        updateStrikes({{ $question?->wrong_count ?? 0 }});
 
         function escapeHtml(str) {
             if (!str) return '';
@@ -382,6 +464,7 @@
                     currentQuestionId = data.question_id;
                     wrongSeen = data.wrong_count ?? 0;
                     renderBoard(data);
+                    updateStrikes(wrongSeen);
                     return;
                 }
 
@@ -395,7 +478,8 @@
                 });
                 if (newlyRevealed) { playCorrect(); }
                 if (data.wrong_count > wrongSeen) { strike(); }
-                wrongSeen = data.wrong_count ?? wrongSeen;
+                wrongSeen = data.wrong_count ?? 0;
+                updateStrikes(wrongSeen);
             } catch (error) {
                 // Koneksi putus sesaat: tampilan terakhir dipertahankan
             }

@@ -19,6 +19,7 @@ Route::prefix('family-100')->name('family-100.')->group(function () {
 
     Route::get('pertanyaan/{question}/tv/state', [QuestionController::class, 'tvState'])->name('questions.tv.state');
     Route::post('pertanyaan/{question}/salah', [QuestionController::class, 'wrong'])->middleware('throttle:wrong-answer')->name('questions.wrong');
+    Route::post('pertanyaan/{question}/reset', [QuestionController::class, 'resetRound'])->name('questions.reset');
     Route::post('pertanyaan/{question}/timer/{action}', [QuestionController::class, 'timer'])
         ->whereIn('action', ['start', 'pause', 'reset'])
         ->name('questions.timer');
