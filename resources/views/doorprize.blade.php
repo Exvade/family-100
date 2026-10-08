@@ -9,10 +9,24 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M16 3l-4 4l-4 -4" /></svg>
         <span class="btn-label">Buka TV ↗</span>
     </a>
-    <a href="{{ route('doorprize.template') }}" class="btn" title="Unduh template Excel" aria-label="Unduh template Excel" data-category-template-link data-base-url="{{ route('doorprize.template') }}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
-        <span class="btn-label">Template Excel</span>
-    </a>
+    <div class="dropdown">
+        <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Unduh template Excel" aria-label="Unduh template Excel">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
+            <span class="btn-label">Template Excel</span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-end shadow-sm">
+            <a class="dropdown-item fw-bold" href="{{ route('doorprize.template') }}" data-category-template-link data-base-url="{{ route('doorprize.template') }}">
+                Template Multi-Sheet (5 Kategori)
+            </a>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-header text-uppercase small text-secondary">Template Per Kategori (Hanya Nama):</div>
+            @foreach ($categories as $cat)
+                <a class="dropdown-item" href="{{ route('doorprize.template', ['category' => $cat]) }}">
+                    {{ \App\Models\Participant::displayLabel($cat) }}
+                </a>
+            @endforeach
+        </div>
+    </div>
     <button type="button" class="btn" data-participant-import data-active-category-btn title="Upload Excel" aria-label="Upload Excel">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 9l5 -5l5 5" /><path d="M12 4l0 12" /></svg>
         <span class="btn-label">Upload Excel</span>
@@ -169,48 +183,53 @@
                             </h2>
                             <div id="collapseCustom" class="accordion-collapse collapse" aria-labelledby="headingCustom">
                                 <div class="accordion-body p-3 bg-body-tertiary">
-                                    <div class="row g-3">
-                                        <div class="col-12 col-md-5">
-                                            <label class="form-label fw-bold small text-uppercase text-secondary mb-2">
-                                                Jumlah Pemenang (1 s/d 10)
-                                            </label>
-                                            <div class="btn-group w-100" role="group">
-                                                @for ($s = 1; $s <= 10; $s++)
-                                                    <button type="button" class="btn {{ $slots === $s ? 'btn-primary' : 'btn-outline-secondary' }}" data-spin-slot="{{ $s }}">
+                                    <!-- 1. Pilihan Jumlah Pemenang (1 s/d 10) - Grid responsif anti-overflow -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold small text-uppercase text-secondary mb-2">
+                                            Jumlah Pemenang per Putaran (1 s/d 10 Orang)
+                                        </label>
+                                        <div class="row row-cols-5 row-cols-sm-10 g-1" role="group" aria-label="Jumlah pemenang">
+                                            @for ($s = 1; $s <= 10; $s++)
+                                                <div class="col">
+                                                    <button type="button" class="btn w-100 {{ $slots === $s ? 'btn-primary' : 'btn-outline-secondary' }} px-1 py-2 fw-bold" data-spin-slot="{{ $s }}">
                                                         {{ $s }}
                                                     </button>
-                                                @endfor
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-md-7">
-                                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                                <label class="form-label fw-bold small text-uppercase text-secondary m-0">
-                                                    Kategori yang Diundi
-                                                </label>
-                                                <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" data-spin-all-categories>
-                                                    Pilih Semua
-                                                </button>
-                                            </div>
-                                            <div class="d-flex flex-wrap gap-2">
-                                                @foreach ($categories as $cat)
-                                                    @php
-                                                        $catCount = $eligibleByCategory[$cat] ?? 0;
-                                                        $isChecked = empty($spin['categories']) || in_array($cat, $spin['categories']);
-                                                    @endphp
-                                                    <label class="form-selectgroup-item flex-fill">
-                                                        <input type="checkbox" name="spin_categories" value="{{ $cat }}" class="form-selectgroup-input" data-spin-category {{ $isChecked ? 'checked' : '' }}>
-                                                        <span class="form-selectgroup-label d-flex align-items-center justify-content-between px-2 py-1">
-                                                            <span class="small fw-semibold">{{ \App\Models\Participant::displayLabel($cat) }}</span>
-                                                            <span class="badge bg-secondary-lt ms-2" data-cat-count>{{ $catCount }}</span>
-                                                        </span>
-                                                    </label>
-                                                @endforeach
-                                            </div>
+                                                </div>
+                                            @endfor
                                         </div>
                                     </div>
+
+                                    <!-- 2. Pilihan Kategori yang Diundi -->
+                                    <div class="mb-3">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <label class="form-label fw-bold small text-uppercase text-secondary m-0">
+                                                Kategori yang Diundi
+                                            </label>
+                                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" data-spin-all-categories>
+                                                Pilih Semua
+                                            </button>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach ($categories as $cat)
+                                                @php
+                                                    $catCount = $eligibleByCategory[$cat] ?? 0;
+                                                    $isChecked = empty($spin['categories']) || in_array($cat, $spin['categories']);
+                                                @endphp
+                                                <label class="form-selectgroup-item flex-fill">
+                                                    <input type="checkbox" name="spin_categories" value="{{ $cat }}" class="form-selectgroup-input" data-spin-category {{ $isChecked ? 'checked' : '' }}>
+                                                    <span class="form-selectgroup-label d-flex align-items-center justify-content-between px-3 py-2">
+                                                        <span class="small fw-semibold">{{ \App\Models\Participant::displayLabel($cat) }}</span>
+                                                        <span class="badge bg-secondary-lt ms-2" data-cat-count>{{ $catCount }}</span>
+                                                    </span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    <!-- 3. Tombol Start Putaran Kustom -->
                                     <div class="mt-3">
-                                        <button type="button" class="btn btn-success w-100 fw-bold" data-spin-action="start">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 4v16l13 -8z" /></svg>
+                                        <button type="button" class="btn btn-success w-100 fw-bold py-2 shadow-sm" data-spin-action="start">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 4v16l13 -8z" /></svg>
                                             Putar Undian Kustom (<span data-custom-slots-label>{{ $slots }}</span> Pemenang)
                                         </button>
                                     </div>

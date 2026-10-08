@@ -30,31 +30,63 @@ class ParticipantSpreadsheet
         $path = tempnam(sys_get_temp_dir(), 'tpl');
 
         $options = new XlsxOptions;
-        $options->setColumnWidth(36, 1);
-        $options->setColumnWidth(26, 2);
+        $options->setColumnWidth(40, 1);
 
         $writer = new XlsxWriter($options);
         $writer->openToFile($path);
 
-        $writer->getCurrentSheet()->setName('Peserta');
-        $writer->addRow(Row::fromValuesWithStyle(['Nama Peserta', 'Kategori'], (new Style)->withFontBold(true)));
+        $boldStyle = (new Style)->withFontBold(true);
 
-        $writer->addNewSheetAndMakeItCurrent()->setName('Petunjuk');
-        $writer->addRows(array_map(fn (string $line) => Row::fromValues([$line]), [
-            'Cara mengisi template peserta doorprize:',
-            '1. Kolom A: Nama Peserta (Wajib diisi mulai baris 2).',
-            '2. Kolom B: Kategori (Opsional). Pilihan kategori yang tersedia:',
-            '   - Keluarga CPP',
-            '   - Keluarga CPW',
-            '   - Teman CPP',
-            '   - Teman CPW',
-            '   - UMUM',
-            '3. Jika kolom Kategori dikosongkan, peserta akan dimasukkan ke kategori yang dipilih saat proses upload di web.',
-            '4. Jangan mengubah judul kolom di baris 1 (baris pertama otomatis dilewati).',
-            '5. Nama yang sama (tanpa membedakan huruf besar/kecil) hanya dihitung satu kali.',
-            '6. Maksimal '.self::MAX_ROWS.' baris dan '.self::MAX_NAME_LENGTH.' karakter per nama.',
-            '7. Hanya sheet pertama yang dibaca. File .csv juga bisa dipakai (kolom 1 nama, kolom 2 kategori).',
-        ]));
+        if ($defaultCategory !== null && trim($defaultCategory) !== '') {
+            $catLabel = Participant::displayLabel($defaultCategory);
+            $sheetName = mb_substr($catLabel, 0, 31);
+
+            $writer->getCurrentSheet()->setName($sheetName);
+            $writer->addRow(Row::fromValuesWithStyle(['Nama Peserta'], $boldStyle));
+
+            $writer->addNewSheetAndMakeItCurrent()->setName('Petunjuk');
+            $writer->addRows(array_map(fn (string $line) => Row::fromValues([$line]), [
+                "Petunjuk Pengisian Template - {$catLabel}:",
+                '1. Kolom A: Tulis nama peserta di sheet "'.$sheetName.'" mulai baris ke-2.',
+                '2. Tidak perlu mengisi kategori, semua nama di file ini otomatis masuk ke: '.$catLabel.'.',
+                '3. Jangan mengubah judul kolom di baris 1.',
+                '4. Nama yang sama (tanpa membedakan huruf besar/kecil) hanya dihitung satu kali.',
+                '5. Maksimal '.self::MAX_ROWS.' baris dan '.self::MAX_NAME_LENGTH.' karakter per nama.',
+            ]));
+        } else {
+            // Template Multi-Sheet per Kategori (Tiap kategori punya sheet sendiri)
+            $categories = Participant::CATEGORIES;
+            $first = true;
+
+            foreach ($categories as $cat) {
+                $catLabel = Participant::displayLabel($cat);
+                $sheetName = mb_substr($catLabel, 0, 31);
+
+                if ($first) {
+                    $writer->getCurrentSheet()->setName($sheetName);
+                    $first = false;
+                } else {
+                    $writer->addNewSheetAndMakeItCurrent()->setName($sheetName);
+                }
+
+                $writer->addRow(Row::fromValuesWithStyle(['Nama Peserta'], $boldStyle));
+            }
+
+            $writer->addNewSheetAndMakeItCurrent()->setName('Petunjuk');
+            $writer->addRows(array_map(fn (string $line) => Row::fromValues([$line]), [
+                'Petunjuk Pengisian Template Per Kategori:',
+                '1. Setiap kategori sudah memiliki Sheet tersendiri di file Excel ini:',
+                '   - Sheet "Tamu Keluarga CPP"',
+                '   - Sheet "Tamu Keluarga CPW"',
+                '   - Sheet "Teman CPW"',
+                '   - Sheet "Teman CPP"',
+                '   - Sheet "Umum"',
+                '2. Masukkan nama peserta di sheet kategori masing-masing mulai baris ke-2.',
+                '3. Anda TIDAK PERLU mengetik nama kategori di dalam sheet, sehingga 100% bebas dari resiko salah ketik / typo.',
+                '4. Nama yang sama (tanpa membedakan huruf besar/kecil) hanya dihitung satu kali.',
+                '5. Maksimal '.self::MAX_ROWS.' baris dan '.self::MAX_NAME_LENGTH.' karakter per nama.',
+            ]));
+        }
 
         $writer->close();
 
@@ -75,7 +107,8 @@ class ParticipantSpreadsheet
     /** @return array{added: int, duplicates: int, invalid: int} */
     private function importRows(string $path, string $extension, ?string $defaultCategory = null): array
     {
-        $defaultCat = Participant::canonicalCategory($defaultCategory);
+        $hasExplicitCategory = $defaultCategory !== null && trim($defaultCategory) !== '';
+        $defaultCat = $hasExplicitCategory ? Participant::canonicalCategory($defaultCategory) : Participant::DEFAULT_CATEGORY;
 
         $known = Participant::query()->pluck('name')
             ->mapWithKeys(fn (string $name) => [mb_strtolower($name) => true])
@@ -95,13 +128,15 @@ class ParticipantSpreadsheet
         foreach ($this->rowValues($path, $extension) as $line => $cols) {
             $nameVal = $cols[0] ?? null;
             $catVal = $cols[1] ?? null;
+            $sheetCat = $cols['sheet_category'] ?? null;
+            $lineInSheet = $cols['line_in_sheet'] ?? $line;
 
             $name = is_scalar($nameVal) ? trim(preg_replace('/\s+/u', ' ', (string) $nameVal)) : '';
 
             if ($name === '') {
                 continue;
             }
-            if ($line === 1 && in_array(mb_strtolower($name), self::HEADERS, true)) {
+            if ($lineInSheet === 1 && in_array(mb_strtolower($name), self::HEADERS, true)) {
                 continue;
             }
             if (mb_strlen($name) > self::MAX_NAME_LENGTH) {
@@ -117,10 +152,20 @@ class ParticipantSpreadsheet
                 continue;
             }
 
-            // Tentukan kategori: baca kolom B, jika kosong/invalid pakai defaultCat
-            $category = is_scalar($catVal) && trim((string) $catVal) !== ''
-                ? Participant::canonicalCategory((string) $catVal)
-                : $defaultCat;
+            // Tentukan kategori:
+            // 1. Bila user memilih kategori spesifik saat upload, gunakan kategori tersebut.
+            // 2. Bila sheet bernama kategori (mode multi-sheet), gunakan kategori sheet.
+            // 3. Bila ada kolom B (file model lama), baca kolom B.
+            // 4. Fallback ke Umum.
+            if ($hasExplicitCategory) {
+                $category = $defaultCat;
+            } elseif ($sheetCat !== null) {
+                $category = $sheetCat;
+            } elseif (is_scalar($catVal) && trim((string) $catVal) !== '') {
+                $category = Participant::canonicalCategory((string) $catVal);
+            } else {
+                $category = $defaultCat;
+            }
 
             $known[$key] = true;
             $batch[] = [
@@ -141,7 +186,7 @@ class ParticipantSpreadsheet
         return compact('added', 'duplicates', 'invalid');
     }
 
-    /** @return Generator<int, array{0: mixed, 1: mixed}> nomor baris (mulai 1) => [kolom A, kolom B] */
+    /** @return Generator<int, array{0: mixed, 1: mixed, sheet_category?: string|null, line_in_sheet?: int}> */
     private function rowValues(string $path, string $extension): Generator
     {
         $reader = $this->reader($extension);
@@ -149,21 +194,41 @@ class ParticipantSpreadsheet
         try {
             $reader->open($path);
 
+            $line = 0;
             foreach ($reader->getSheetIterator() as $sheet) {
-                $line = 0;
+                $sheetName = trim($sheet->getName());
+                // Lewati sheet petunjuk
+                if (in_array(mb_strtolower($sheetName), ['petunjuk', 'instruction', 'instructions', 'guide'], true)) {
+                    continue;
+                }
+
+                $sheetCatLower = mb_strtolower($sheetName);
+                $isRecognizedCategory = in_array($sheetCatLower, [
+                    'tamu keluarga cpp', 'keluarga cpp', 'tamu keluarga cpw', 'keluarga cpw',
+                    'teman cpw', 'teman cpp', 'teman cpk', 'teman cpp (cpk)', 'umum', 'tamu umum'
+                ], true);
+
+                $sheetCategory = $isRecognizedCategory ? Participant::canonicalCategory($sheetName) : null;
+                $lineInSheet = 0;
 
                 foreach ($sheet->getRowIterator() as $row) {
-                    if (++$line > self::MAX_ROWS + 1) {   // +1: baris judul
+                    $lineInSheet++;
+                    $line++;
+                    if ($line > self::MAX_ROWS + 50) {
                         throw new InvalidArgumentException('Jumlah baris melebihi batas '.self::MAX_ROWS.'.');
                     }
 
                     yield $line => [
-                        ($row->cells[0] ?? null)?->getValue(),
-                        ($row->cells[1] ?? null)?->getValue(),
+                        0 => ($row->cells[0] ?? null)?->getValue(),
+                        1 => ($row->cells[1] ?? null)?->getValue(),
+                        'sheet_category' => $sheetCategory,
+                        'line_in_sheet' => $lineInSheet,
                     ];
                 }
 
-                break; // hanya sheet pertama
+                if ($extension === 'csv' || $extension === 'txt') {
+                    break;
+                }
             }
         } catch (InvalidArgumentException $e) {
             throw $e;

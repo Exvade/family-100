@@ -39,14 +39,14 @@ class Participant extends Model
         };
     }
 
-    /** Label ramah tampilan sesuai permintaan Mas Sarya */
+    /** Label ramah tampilan */
     public static function displayLabel(string $category): string
     {
         return match (self::canonicalCategory($category)) {
             'Keluarga CPP' => 'Tamu Keluarga CPP',
             'Keluarga CPW' => 'Tamu Keluarga CPW',
             'Teman CPW' => 'Teman CPW',
-            'Teman CPP' => 'Teman CPP (CPK)',
+            'Teman CPP' => 'Teman CPP',
             'Umum' => 'Umum',
             default => $category,
         };
