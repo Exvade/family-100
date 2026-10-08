@@ -22,6 +22,7 @@ class DoorprizeController extends Controller
             'participants' => Participant::orderBy('id')->get(),
             'categories' => Participant::CATEGORIES,
             'spin' => $state,
+            'winnersHistory' => $state['winners_history'],
             'quotaSetting' => $state['quota_setting'],
             'quotaTotal' => $state['quota_total'],
             'eligibleCount' => $state['eligible'],
@@ -138,6 +139,14 @@ class DoorprizeController extends Controller
 
         return response()
             ->download($spreadsheet->template($category), 'template-peserta-doorprize.xlsx')
+            ->deleteFileAfterSend();
+    }
+
+    /** Unduh berkas Excel daftar semua pemenang doorprize */
+    public function exportWinners(ParticipantSpreadsheet $spreadsheet): BinaryFileResponse
+    {
+        return response()
+            ->download($spreadsheet->exportWinners(), 'daftar-pemenang-doorprize.xlsx')
             ->deleteFileAfterSend();
     }
 

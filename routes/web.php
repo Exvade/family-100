@@ -34,6 +34,7 @@ Route::put('family-100/pengaturan', [SettingController::class, 'update'])->name(
 
 Route::get('/doorprize', [DoorprizeController::class, 'index'])->name('doorprize');
 Route::get('/doorprize/template', [DoorprizeController::class, 'template'])->name('doorprize.template');
+Route::get('/doorprize/winners/export', [DoorprizeController::class, 'exportWinners'])->name('doorprize.winners.export');
 Route::delete('/doorprize/peserta/{participant}', [DoorprizeController::class, 'destroy'])->name('doorprize.participants.destroy');
 Route::get('/doorprize/tv', [DoorprizeController::class, 'tv'])->name('doorprize.tv');
 Route::get('/doorprize/tv/state', [DoorprizeController::class, 'tvState'])->name('doorprize.tv.state');

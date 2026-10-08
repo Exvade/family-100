@@ -27,6 +27,10 @@
             @endforeach
         </div>
     </div>
+    <a href="{{ route('doorprize.winners.export') }}" class="btn btn-outline-success" id="btn-export-winners" title="Unduh Daftar Pemenang (.xlsx)" {{ $spin['won'] < 1 ? 'hidden' : '' }}>
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
+        <span class="btn-label">Unduh Pemenang</span>
+    </a>
     <button type="button" class="btn" data-participant-import data-active-category-btn title="Upload Excel" aria-label="Upload Excel">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 9l5 -5l5 5" /><path d="M12 4l0 12" /></svg>
         <span class="btn-label">Upload Excel</span>
@@ -264,6 +268,63 @@
         </div>
     </div>
 
+    <!-- CARD RIWAYAT SEMUA PEMENANG -->
+    <div class="card mb-3 shadow-sm border-success" id="winners-history-card" {{ $spin['won'] < 1 ? 'style=display:none;' : '' }}>
+        <div class="card-header bg-success-lt d-flex align-items-center justify-content-between py-2">
+            <div>
+                <h3 class="card-title text-success fw-bold m-0 d-flex align-items-center gap-1">
+                    <span>🏆</span> Riwayat Semua Pemenang Doorprize
+                </h3>
+                <div class="text-secondary small">Daftar seluruh peserta yang telah berhasil memenangkan undian</div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success text-white fs-6 px-2 py-1" id="winners-history-total-badge">{{ $spin['won'] }} Pemenang</span>
+                <a href="{{ route('doorprize.winners.export') }}" class="btn btn-sm btn-success fw-semibold" id="btn-card-export-winners">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
+                    Unduh Excel
+                </a>
+            </div>
+        </div>
+        <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+            <table class="table table-vcenter table-striped card-table">
+                <thead class="sticky-top bg-body">
+                    <tr>
+                        <th class="w-1">No</th>
+                        <th>Nama Pemenang</th>
+                        <th>Kategori</th>
+                        <th>Waktu Menang</th>
+                    </tr>
+                </thead>
+                <tbody id="winners-history-tbody">
+                    @forelse ($winnersHistory as $w)
+                        @php
+                            $badgeColor = match($w['category']) {
+                                'Keluarga CPP' => 'indigo',
+                                'Keluarga CPW' => 'pink',
+                                'Teman CPP' => 'cyan',
+                                'Teman CPW' => 'purple',
+                                default => 'azure',
+                            };
+                        @endphp
+                        <tr>
+                            <td class="text-secondary fw-bold">#{{ $w['no'] }}</td>
+                            <td class="fw-bold text-dark">{{ $w['name'] }}</td>
+                            <td><span class="badge bg-{{ $badgeColor }}-lt">{{ $w['category_label'] }}</span></td>
+                            <td class="text-secondary small">
+                                <span title="{{ $w['won_at_formatted'] }}">{{ $w['won_at_human'] }}</span>
+                                <span class="d-block text-muted" style="font-size: 0.75rem;">{{ $w['won_at_formatted'] }}</span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr id="winners-history-empty-row">
+                            <td colspan="4" class="text-center text-muted py-3">Belum ada pemenang yang tercatat.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="alert alert-info py-2 px-3 small mb-3" role="alert">
         Nama peserta di sini dipakai halaman <a href="{{ route('doorprize.tv') }}" class="alert-link" target="_blank" rel="noopener">layar TV doorprize</a>.
         Buka halaman TV dulu sebelum menekan Start. TV akan memperbarui daftar peserta dan kategori secara otomatis saat Start ditekan.
@@ -295,6 +356,11 @@
                         </a>
                     </li>
                 @endforeach
+                <li class="nav-item ms-md-auto">
+                    <a href="#" class="nav-link text-success fw-bold" data-dt-category="PEMENANG" id="tab-winners-history" title="Lihat hanya peserta yang sudah menang">
+                        🏆 Riwayat Pemenang <span class="badge bg-success text-white ms-1" id="tab-winners-count">{{ $spin['won'] }}</span>
+                    </a>
+                </li>
             </ul>
         </div>
     </div>

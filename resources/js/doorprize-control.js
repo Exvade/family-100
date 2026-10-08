@@ -21,6 +21,17 @@ if (root) {
 
     const csrf = () => document.querySelector('meta[name="csrf-token"]').content;
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, (m) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;',
+        }[m]));
+    }
+
     const labels = {
         idle: 'Siap memulai undian',
         spinning: 'Slot sedang berputar...',
@@ -64,6 +75,7 @@ if (root) {
         });
 
         window.Livewire?.dispatch('participants-changed');
+        window.dispatchEvent(new CustomEvent('datatable:refresh'));
     }
 
     function unmarkWinners() {
@@ -76,6 +88,7 @@ if (root) {
         });
 
         window.Livewire?.dispatch('participants-changed');
+        window.dispatchEvent(new CustomEvent('datatable:refresh'));
     }
 
     function hintText() {
@@ -213,6 +226,78 @@ if (root) {
             return li;
         }));
         winnersEl.hidden = winners.length === 0;
+
+        // Update riwayat pemenang (Tab count, Export buttons, Card table)
+        const winnersCount = state.won ?? (Array.isArray(state.winners_history) ? state.winners_history.length : 0);
+        const winnersTabBadge = document.getElementById('tab-winners-count');
+        if (winnersTabBadge) {
+            winnersTabBadge.textContent = winnersCount;
+        }
+
+        const exportWinnersBtn = document.getElementById('btn-export-winners');
+        if (exportWinnersBtn) {
+            exportWinnersBtn.hidden = winnersCount < 1;
+        }
+
+        const winnersCard = document.getElementById('winners-history-card');
+        const winnersCardBadge = document.getElementById('winners-history-total-badge');
+        if (winnersCardBadge) {
+            winnersCardBadge.textContent = `${winnersCount} Pemenang`;
+        }
+        if (winnersCard) {
+            winnersCard.style.display = winnersCount > 0 ? '' : 'none';
+        }
+
+        const winnersTbody = document.getElementById('winners-history-tbody');
+        if (winnersTbody && Array.isArray(state.winners_history)) {
+            if (state.winners_history.length === 0) {
+                winnersTbody.innerHTML = '<tr id="winners-history-empty-row"><td colspan="4" class="text-center text-muted py-3">Belum ada pemenang yang tercatat.</td></tr>';
+            } else {
+                winnersTbody.innerHTML = state.winners_history.map((w) => {
+                    const badgeColor = w.category === 'Keluarga CPP' ? 'indigo'
+                        : w.category === 'Keluarga CPW' ? 'pink'
+                        : w.category === 'Teman CPP' ? 'cyan'
+                        : w.category === 'Teman CPW' ? 'purple'
+                        : 'azure';
+                    return `
+                        <tr>
+                            <td class="text-secondary fw-bold">#${w.no}</td>
+                            <td class="fw-bold text-dark">${escapeHtml(w.name)}</td>
+                            <td><span class="badge bg-${badgeColor}-lt">${escapeHtml(w.category_label || w.category)}</span></td>
+                            <td class="text-secondary small">
+                                <span title="${escapeHtml(w.won_at_formatted || '')}">${escapeHtml(w.won_at_human || '-')}</span>
+                                <span class="d-block text-muted" style="font-size: 0.75rem;">${escapeHtml(w.won_at_formatted || '')}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        if (Array.isArray(state.winners_history)) {
+            const winnerNames = state.winners_history.map(w => w.name);
+            let anyChange = false;
+            document.querySelectorAll('[data-datatable] tr[data-row]').forEach((row) => {
+                const isWinner = winnerNames.includes(row.dataset.name);
+                if (isWinner && row.dataset.status !== 'PEMENANG') {
+                    row.dataset.status = 'PEMENANG';
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-green-lt';
+                    badge.textContent = 'PEMENANG';
+                    const statusCell = row.querySelector('[data-col-status]') || row.children[3] || row.children[2];
+                    statusCell.replaceChildren(badge);
+                    anyChange = true;
+                } else if (!isWinner && row.dataset.status === 'PEMENANG') {
+                    row.dataset.status = '';
+                    const statusCell = row.querySelector('[data-col-status]') || row.children[3] || row.children[2];
+                    statusCell.replaceChildren();
+                    anyChange = true;
+                }
+            });
+            if (anyChange) {
+                window.dispatchEvent(new CustomEvent('datatable:refresh'));
+            }
+        }
 
         updateControlsUI();
     }

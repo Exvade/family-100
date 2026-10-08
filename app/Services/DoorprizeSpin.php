@@ -339,6 +339,29 @@ class DoorprizeSpin
         return Participant::whereNotNull('won_at')->count();
     }
 
+    /** Daftar riwayat seluruh pemenang doorprize yang pernah menang */
+    public function winnersHistory(): array
+    {
+        return Participant::whereNotNull('won_at')
+            ->orderBy('won_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($p, $idx) {
+                return [
+                    'no' => $idx + 1,
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'category' => $p->category,
+                    'category_label' => Participant::displayLabel($p->category),
+                    'won_at' => $p->won_at?->toIso8601String(),
+                    'won_at_human' => $p->won_at?->diffForHumans() ?? '-',
+                    'won_at_formatted' => $p->won_at?->translatedFormat('d M Y, H:i') ?? '-',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
     /** Jumlah peserta yang belum pernah menang */
     public function eligibleCount(?array $categories = null): int
     {
@@ -458,6 +481,7 @@ class DoorprizeSpin
             'eligible_total' => $this->eligibleCount(),
             'eligible_by_category' => $this->eligibleByCategory(),
             'won' => $this->wonCount(),
+            'winners_history' => $this->winnersHistory(),
             'duration' => $this->duration(),
             'remaining_ms' => $spinning ? max(0, $raw['ends_at_ms'] - now()->getTimestampMs()) : null,
         ];

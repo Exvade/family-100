@@ -93,6 +93,51 @@ class ParticipantSpreadsheet
         return $path;
     }
 
+    /** Ekspor daftar seluruh pemenang undian ke file Excel */
+    public function exportWinners(): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'win');
+
+        $options = new XlsxOptions;
+        $options->setColumnWidth(8, 1);
+        $options->setColumnWidth(35, 2);
+        $options->setColumnWidth(25, 3);
+        $options->setColumnWidth(25, 4);
+
+        $writer = new XlsxWriter($options);
+        $writer->openToFile($path);
+
+        $writer->getCurrentSheet()->setName('Pemenang Doorprize');
+
+        $boldStyle = (new Style)->withFontBold(true);
+
+        $writer->addRow(Row::fromValuesWithStyle([
+            'No',
+            'Nama Pemenang',
+            'Kategori',
+            'Waktu Menang',
+        ], $boldStyle));
+
+        $winners = Participant::whereNotNull('won_at')
+            ->orderBy('won_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $num = 1;
+        foreach ($winners as $winner) {
+            $writer->addRow(Row::fromValues([
+                $num++,
+                $winner->name,
+                Participant::displayLabel($winner->category),
+                $winner->won_at?->translatedFormat('d F Y, H:i:s') ?? '-',
+            ]));
+        }
+
+        $writer->close();
+
+        return $path;
+    }
+
     /**
      * @return array{added: int, duplicates: int, invalid: int}
      *

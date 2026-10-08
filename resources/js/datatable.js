@@ -52,7 +52,11 @@ function initDatatable(root) {
         const q = state.query.trim().toLowerCase();
         const filtered = rows
             .filter((r) => {
-                if (state.category && r.dataset.category !== state.category) {
+                if (state.category === 'PEMENANG') {
+                    if (r.dataset.status !== 'PEMENANG') {
+                        return false;
+                    }
+                } else if (state.category && r.dataset.category !== state.category) {
                     return false;
                 }
                 return !q || Object.values(r.dataset).some((v) => v.toLowerCase().includes(q));
@@ -112,14 +116,18 @@ function initDatatable(root) {
             // Sinkronkan tombol aksi di header/kategori bar
             const catName = tab.dataset.dtCategory || '';
             document.querySelectorAll('[data-active-category-btn]').forEach(btn => {
-                btn.dataset.category = catName;
+                btn.dataset.category = catName === 'PEMENANG' ? '' : catName;
             });
             const exportLink = document.querySelector('[data-category-template-link]');
             if (exportLink) {
                 const baseUrl = exportLink.dataset.baseUrl || exportLink.href.split('?')[0];
-                exportLink.href = catName ? `${baseUrl}?category=${encodeURIComponent(catName)}` : baseUrl;
+                exportLink.href = (catName && catName !== 'PEMENANG') ? `${baseUrl}?category=${encodeURIComponent(catName)}` : baseUrl;
             }
         });
+    });
+
+    window.addEventListener('datatable:refresh', () => {
+        render();
     });
 
     render();
