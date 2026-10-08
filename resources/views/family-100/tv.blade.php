@@ -285,7 +285,7 @@
 
     <!-- Area Papan Jawaban (Tepat di dalam bingkai panggung) -->
     <main class="tv-screen-container">
-        @if ($answers->isEmpty())
+        @if (! $question || $answers->isEmpty())
             <div class="tv-empty-state">Menunggu babak dimulai...</div>
         @else
             <div class="tv-board {{ $answers->count() >= 8 ? 'tv-board-dense' : '' }}">
@@ -323,29 +323,85 @@
     </button>
 
     <script>
-        const slots = document.querySelectorAll('[data-slot]');
-        const stateUrl = @js(route('family-100.questions.tv.state', $question));
+        let currentQuestionId = {{ $question?->id ?? 'null' }};
+        let wrongSeen = {{ $question?->wrong_count ?? 0 }};
+        const stateUrl = @js(route('family-100.tv.state'));
+        const screenContainer = document.querySelector('.tv-screen-container');
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, (m) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            }[m]));
+        }
+
+        function renderBoard(data) {
+            if (!screenContainer) return;
+
+            if (!data.question_id || !data.answers || data.answers.length === 0) {
+                screenContainer.innerHTML = '<div class="tv-empty-state">Menunggu babak dimulai...</div>';
+                return;
+            }
+
+            const isDense = data.answers.length >= 8;
+            const slotsHtml = data.answers.map((a, idx) => `
+                <div class="tv-slot ${a.is_answered ? 'revealed' : ''}" data-slot="${a.id}">
+                    <div class="tv-card-inner">
+                        <div class="tv-card-front">
+                            <span class="tv-rank">${idx + 1}</span>
+                            <div class="tv-shutter"></div>
+                            <span class="tv-empty-badge"></span>
+                        </div>
+                        <div class="tv-card-back">
+                            <span class="tv-rank">${idx + 1}</span>
+                            <span class="tv-answer-text">${escapeHtml(a.answer)}</span>
+                            <span class="tv-answer-badge">✓</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            screenContainer.innerHTML = `
+                <div class="tv-board ${isDense ? 'tv-board-dense' : ''}">
+                    ${slotsHtml}
+                </div>
+            `;
+        }
 
         async function sync() {
             try {
                 const response = await fetch(stateUrl, { headers: { 'Accept': 'application/json' } });
-                const { answered, wrong_count: wrongCount } = await response.json();
+                const data = await response.json();
+
+                // Bila pertanyaan di dashboard berpindah (next / prev / jump)
+                if (data.question_id && data.question_id !== currentQuestionId) {
+                    currentQuestionId = data.question_id;
+                    wrongSeen = data.wrong_count ?? 0;
+                    renderBoard(data);
+                    return;
+                }
+
+                // Cek reveal & strike untuk pertanyaan aktif
+                const slots = document.querySelectorAll('[data-slot]');
                 let newlyRevealed = false;
                 slots.forEach((slot) => {
-                    const reveal = answered.includes(Number(slot.dataset.slot));
+                    const reveal = (data.answered || []).includes(Number(slot.dataset.slot));
                     newlyRevealed ||= reveal && !slot.classList.contains('revealed');
                     slot.classList.toggle('revealed', reveal);
                 });
                 if (newlyRevealed) { playCorrect(); }
-                if (wrongCount > wrongSeen) { strike(); }
-                wrongSeen = wrongCount;
+                if (data.wrong_count > wrongSeen) { strike(); }
+                wrongSeen = data.wrong_count ?? wrongSeen;
             } catch (error) {
                 // Koneksi putus sesaat: tampilan terakhir dipertahankan
             }
         }
 
         // Jawaban salah: X merah besar + buzzer
-        let wrongSeen = {{ $question->wrong_count }};
         const strikeEl = document.querySelector('[data-tv-strike]');
         let strikeTimeout = null;
 

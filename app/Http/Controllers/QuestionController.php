@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Question;
+use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -134,8 +135,47 @@ class QuestionController extends Controller
             ->with('status', 'Pertanyaan dihapus.');
     }
 
+    public function universalTv(): View
+    {
+        $activeId = Setting::get(Setting::ACTIVE_QUESTION);
+        $question = ($activeId ? Question::find($activeId) : null) ?? Question::orderBy('id')->first();
+
+        if (! $question) {
+            return view('family-100.tv', [
+                'question' => null,
+                'answers' => collect(),
+                'total' => 0,
+                'timer' => ['status' => 'idle', 'remaining_ms' => Setting::timerDuration() * 1000, 'duration_ms' => Setting::timerDuration() * 1000],
+            ]);
+        }
+
+        return $this->tv($question);
+    }
+
+    public function universalTvState(): JsonResponse
+    {
+        $activeId = Setting::get(Setting::ACTIVE_QUESTION);
+        $question = ($activeId ? Question::find($activeId) : null) ?? Question::orderBy('id')->first();
+
+        if (! $question) {
+            return response()->json([
+                'question_id' => null,
+                'question' => null,
+                'display_limit' => 0,
+                'answered' => [],
+                'answers' => [],
+                'timer' => ['status' => 'idle', 'remaining_ms' => Setting::timerDuration() * 1000, 'duration_ms' => Setting::timerDuration() * 1000],
+                'wrong_count' => 0,
+            ]);
+        }
+
+        return $this->tvState($question);
+    }
+
     public function tv(Question $question): View
     {
+        Setting::put(Setting::ACTIVE_QUESTION, $question->id);
+
         $answers = $question->answers()->limit($question->display_limit)->get();
 
         return view('family-100.tv', [
@@ -148,13 +188,22 @@ class QuestionController extends Controller
 
     public function tvState(Question $question): JsonResponse
     {
+        $answers = $question->answers()->limit($question->display_limit)->get();
+
         return response()->json([
-            'answered' => $question->answers()
-                ->limit($question->display_limit)
-                ->get()
+            'question_id' => $question->id,
+            'question' => $question->question,
+            'display_limit' => $question->display_limit,
+            'answered' => $answers
                 ->where('is_answered', true)
                 ->pluck('id')
                 ->values(),
+            'answers' => $answers->map(fn ($a, $idx) => [
+                'id' => $a->id,
+                'rank' => $idx + 1,
+                'answer' => $a->answer,
+                'is_answered' => (bool) $a->is_answered,
+            ])->values(),
             'timer' => $question->timerState(),
             'wrong_count' => $question->wrong_count,
         ]);

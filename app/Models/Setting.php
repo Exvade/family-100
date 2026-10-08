@@ -8,6 +8,8 @@ class Setting extends Model
 {
     public const TIMER_DURATION = 'family_100_timer_duration';
 
+    public const ACTIVE_QUESTION = 'family_100_active_question_id';
+
     public const DEFAULT_TIMER_DURATION = 60;
 
     protected $fillable = ['key', 'value'];

@@ -13,6 +13,8 @@ Route::prefix('family-100')->name('family-100.')->group(function () {
         ->parameters(['pertanyaan' => 'question'])
         ->except('show')
         ->names('questions');
+    Route::get('tv', [QuestionController::class, 'universalTv'])->name('tv');
+    Route::get('tv/state', [QuestionController::class, 'universalTvState'])->name('tv.state');
     Route::get('pertanyaan/{question}/tv', [QuestionController::class, 'tv'])->name('questions.tv');
 
     Route::get('pertanyaan/{question}/tv/state', [QuestionController::class, 'tvState'])->name('questions.tv.state');
