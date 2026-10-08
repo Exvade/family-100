@@ -2,14 +2,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let isSpinning = false;
     let soundEnabled = true;
 
-    // 0. Proportional 16:9 Stage Auto-Scaler (Menjamin rasio sempurna saat zoom Ctrl - / Ctrl +)
+    // 0. Proportional 16:9 Stage Auto-Scaler & Mobile Responsive Detector
     function fitTvStage() {
         const canvas = document.getElementById('stageCanvas');
         if (!canvas) return;
         const w = window.innerWidth;
         const h = window.innerHeight;
-        const scale = Math.min(w / 1600, h / 900);
-        canvas.style.transform = `scale(${scale})`;
+        const isMobile = w < 1024 || (w < 1200 && h > w);
+
+        if (isMobile) {
+            document.body.classList.add('mobile-responsive-mode');
+            canvas.style.transform = 'none';
+        } else {
+            document.body.classList.remove('mobile-responsive-mode');
+            const scale = Math.min(w / 1600, h / 900);
+            canvas.style.transform = `scale(${scale})`;
+        }
     }
     window.addEventListener('resize', fitTvStage);
     fitTvStage();
@@ -34,6 +42,94 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeWinners = Array(currentSlots).fill(null);
     let activeWinnerDetails = Array(currentSlots).fill(null);
     let slotLocked = Array(currentSlots).fill(false);
+
+    // Dynamic Slot Layout Manager (Mendukung 1 s/d 10 Pemenang & Kategori BE)
+    function updateSlotsLayout(newSlots, activeCategories = []) {
+        newSlots = Math.max(1, Math.min(10, Number(newSlots) || 5));
+        currentSlots = newSlots;
+
+        if (idleBarsStack) idleBarsStack.dataset.slots = newSlots;
+        if (resultBarsStack) resultBarsStack.dataset.slots = newSlots;
+
+        [idleBarsStack, resultBarsStack].forEach(stack => {
+            if (!stack) return;
+            stack.classList.remove('single-slot', 'two-cols');
+            if (newSlots === 1) {
+                stack.classList.add('single-slot');
+            } else if (newSlots > 5) {
+                stack.classList.add('two-cols');
+            }
+        });
+
+        const gachaCard = document.querySelector('.gacha-mockup-card');
+        if (gachaCard) {
+            gachaCard.classList.remove('slots-1', 'slots-2', 'slots-3', 'slots-4', 'slots-5', 'slots-multi');
+            if (newSlots > 5) {
+                gachaCard.classList.add('slots-multi');
+            } else {
+                gachaCard.classList.add(`slots-${newSlots}`);
+            }
+        }
+
+        const rowHeights = { 1: 180, 2: 170, 3: 150, 4: 135, 5: 128 };
+        const topOffsets = { 1: 230, 2: 130, 3: 75, 4: 30, 5: 10 };
+        const rowSpacing = { 1: 0, 2: 210, 3: 175, 4: 145, 5: 128 };
+
+        for (let i = 0; i < 10; i++) {
+            const idleBar = document.getElementById(`idleBar-${i}`);
+            const resultBar = document.getElementById(`winnerBar-${i}`);
+            const gachaRow = document.getElementById(`gachaLineRow-${i}`);
+            const divider = document.querySelector(`.div-line-${i}`);
+
+            const isVisible = i < newSlots;
+
+            if (idleBar) idleBar.style.display = isVisible ? 'flex' : 'none';
+            if (resultBar) resultBar.style.display = isVisible ? 'flex' : 'none';
+            if (gachaRow) {
+                gachaRow.style.display = isVisible ? 'flex' : 'none';
+                if (newSlots <= 5) {
+                    const h = rowHeights[newSlots] || 128;
+                    const top = (topOffsets[newSlots] || 10) + i * (rowSpacing[newSlots] || 128);
+                    gachaRow.style.top = `${top}px`;
+                    gachaRow.style.height = `${h}px`;
+                    gachaRow.dataset.col = "0";
+                } else {
+                    const col = i < 5 ? 0 : 1;
+                    const rowInCol = i % 5;
+                    const top = 15 + rowInCol * 125;
+                    gachaRow.style.top = `${top}px`;
+                    gachaRow.style.height = `120px`;
+                    gachaRow.dataset.col = String(col);
+                }
+            }
+
+            if (divider) {
+                divider.style.display = (i > 0 && i < newSlots && newSlots <= 5) ? 'block' : 'none';
+                if (newSlots === 5) {
+                    divider.style.top = `${10 + i * 128}px`;
+                } else if (newSlots === 4) {
+                    divider.style.top = `${30 + i * 145}px`;
+                } else if (newSlots === 3) {
+                    divider.style.top = `${75 + i * 175}px`;
+                } else if (newSlots === 2) {
+                    divider.style.top = `${130 + i * 210}px`;
+                }
+            }
+        }
+
+        const badgeTextEl = document.getElementById('gachaBadgeText');
+        if (badgeTextEl) {
+            let catText = '';
+            if (Array.isArray(activeCategories) && activeCategories.length === 1) {
+                catText = ` (${activeCategories[0]})`;
+            }
+            badgeTextEl.textContent = `Mengacak ${newSlots} Nama Pemenang${catText}...`;
+        }
+
+        slotLocked = Array(newSlots).fill(false);
+        activeWinners = Array(newSlots).fill(null);
+        activeWinnerDetails = Array(newSlots).fill(null);
+    }
 
     // View Containers
     const viewIdle = document.getElementById('viewIdle');
@@ -277,6 +373,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayResults(winners, { winnerDetails = null, instant = false } = {}) {
         if (!Array.isArray(winners) || winners.length === 0) return;
 
+        if (winners.length !== currentSlots) {
+            updateSlotsLayout(winners.length);
+        }
+
         activeWinners = [...winners];
         activeWinnerDetails = winnerDetails ? [...winnerDetails] : Array(winners.length).fill(null);
 
@@ -465,9 +565,21 @@ document.addEventListener('DOMContentLoaded', () => {
             participantPool = state.pool;
         }
 
+        const targetSlots = Number(state.slots) || currentSlots || 5;
+        const targetCats = Array.isArray(state.categories) ? state.categories : [];
+
+        if (targetSlots !== currentSlots || initial) {
+            updateSlotsLayout(targetSlots, targetCats);
+        }
+
         if (state.status === 'spinning') {
             if (!isSpinning) {
                 startSpinningAnimation();
+            }
+            if (typeof state.remaining_ms === 'number' && state.remaining_ms > 0 && gachaBadgeText) {
+                const sec = Math.ceil(state.remaining_ms / 1000);
+                const catText = targetCats.length === 1 ? ` (${targetCats[0]})` : '';
+                gachaBadgeText.textContent = `Mengacak ${targetSlots} Nama Pemenang${catText} [${sec}s]...`;
             }
         } else if (state.status === 'stopped' && Array.isArray(state.winners) && state.winners.length > 0) {
             displayResults(state.winners, {
@@ -477,6 +589,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (state.status === 'idle' && !initial) {
             resetToIdle();
         }
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('slots')) {
+        updateSlotsLayout(Number(urlParams.get('slots')));
     }
 
     const isPreviewParam = window.location.search.includes('preview=');

@@ -26,10 +26,13 @@
         if ($previewMode === 'result') {
             $currentStatus = 'stopped';
         }
-        $defaultPreviewWinners = ['Rizky Pratama', 'Siti Aulia', 'Dimas Arya', 'Nadya Putri', 'Fauzan Hakim'];
+        $defaultPreviewWinners = [
+            'Rizky Pratama', 'Siti Aulia', 'Dimas Arya', 'Nadya Putri', 'Fauzan Hakim',
+            'Budi Santoso', 'Rina Marlina', 'Eko Prasetyo', 'Citra Dewi', 'Hendra Gunawan'
+        ];
         $winnersList = (!empty($spin['winners']) && is_array($spin['winners'])) ? $spin['winners'] : $defaultPreviewWinners;
         $winnerDetailsList = $spin['winner_details'] ?? [];
-        $slotCount = $slots ?? 5;
+        $slotCount = request()->has('slots') ? max(1, min(10, (int) request('slots'))) : max(1, min(10, (int) ($slots ?? 5)));
     @endphp
 
     <!-- OUTER VIEWPORT SHELL (Centers and clips stage) -->
@@ -99,8 +102,9 @@
                     <!-- ==================== 1. IDLE / STANDBY STATE ==================== -->
                     <div class="view-panel view-panel-idle {{ $currentStatus === 'idle' ? 'active' : '' }}" id="viewIdle">
                         <div class="bars-vertical-stack {{ $slotCount === 1 ? 'single-slot' : ($slotCount > 5 ? 'two-cols' : '') }}" id="idleBarsStack" data-slots="{{ $slotCount }}">
-                            @for ($i = 0; $i < $slotCount; $i++)
-                                <div class="winner-entry-bar standby" id="idleBar-{{ $i }}" data-index="{{ $i }}">
+                            @for ($i = 0; $i < 10; $i++)
+                                @php $isVisible = $i < $slotCount; @endphp
+                                <div class="winner-entry-bar standby" id="idleBar-{{ $i }}" data-index="{{ $i }}" style="{{ $isVisible ? '' : 'display: none;' }}">
                                     <div class="bar-rank-badge">{{ $i + 1 }}</div>
                                     <div class="bar-name-card standby-card">
                                         <div class="standby-text-wrap">
@@ -144,7 +148,7 @@
 
                     <!-- ==================== 2. SPINNING / GACHA STATE (5 LINES ROULETTE WITH DEDICATED ARROWS) ==================== -->
                     <div class="view-panel view-panel-spinning {{ $currentStatus === 'spinning' ? 'active' : '' }}" id="viewSpinning">
-                        <div class="gacha-mockup-card gacha-card-5lines">
+                        <div class="gacha-mockup-card gacha-card-5lines {{ $slotCount > 5 ? 'slots-multi' : 'slots-' . $slotCount }}">
 
                             <!-- Top Header Badge: [ 🔀 ] Mengacak 5 Nama Pemenang... ─ -->
                             <div class="gacha-top-badge">
@@ -161,74 +165,83 @@
                                 <span class="badge-gold-dash"></span>
                             </div>
 
-                            <!-- Horizontal Dividers Between Lines -->
-                            @for ($d = 1; $d < $slotCount; $d++)
-                                <div class="gacha-h-divider div-line-{{ $d }}" style="top: {{ 10 + $d * 128 }}px;"></div>
+                            <!-- Vertical Divider for 2-column mode (slots > 5) -->
+                            <div class="gacha-v-divider" id="gachaVDivider"></div>
+
+                            <!-- Horizontal Dividers Between Lines (Up to 9 dividers) -->
+                            @for ($d = 1; $d < 10; $d++)
+                                @php $isDivVisible = $d < $slotCount && $slotCount <= 5; @endphp
+                                <div class="gacha-h-divider div-line-{{ $d }}" style="top: {{ 10 + $d * 128 }}px; {{ $isDivVisible ? '' : 'display: none;' }}"></div>
                             @endfor
 
-                            <!-- 5 Horizontal Lines with Dedicated Target Slots & 3D Gold Arrows -->
-                            @for ($i = 0; $i < $slotCount; $i++)
-                                @php
-                                    $defaultName = $winnersList[$i] ?? ('Pemenang #' . ($i + 1));
-                                    $isLocked = $previewLocked && ($i < 3);
-                                @endphp
-                                <div class="gacha-line-row line-{{ $i }} {{ $isLocked ? 'locked' : '' }}" id="gachaLineRow-{{ $i }}" style="top: {{ 10 + $i * 128 }}px; height: 128px;" data-index="{{ $i }}">
+                            <!-- Up to 10 Horizontal Lines with Dedicated Target Slots & 3D Gold Arrows -->
+                            <div class="gacha-lines-viewport" id="gachaLinesStack">
+                                @for ($i = 0; $i < 10; $i++)
+                                    @php
+                                        $defaultName = $winnersList[$i] ?? ('Pemenang #' . ($i + 1));
+                                        $isLocked = $previewLocked && ($i < min(3, $slotCount));
+                                        $isVisible = $i < $slotCount;
+                                        $col = $i < 5 ? 0 : 1;
+                                        $rowInCol = $i % 5;
+                                    @endphp
+                                    <div class="gacha-line-row line-{{ $i }} {{ $isLocked ? 'locked' : '' }}" id="gachaLineRow-{{ $i }}" style="top: {{ 10 + $rowInCol * 128 }}px; height: 128px; {{ $isVisible ? '' : 'display: none;' }}" data-index="{{ $i }}" data-col="{{ $col }}">
 
-                                    <!-- Subtle Luxury Gold Rank Badge -->
-                                    <div class="line-gold-badge" id="lineBadge-{{ $i }}">{{ $i + 1 }}</div>
+                                        <!-- Subtle Luxury Gold Rank Badge -->
+                                        <div class="line-gold-badge" id="lineBadge-{{ $i }}">{{ $i + 1 }}</div>
 
-                                    <!-- Left Flanking Name Stream -->
-                                    <div class="line-side-pills side-left {{ $i % 2 === 0 ? 'dir-rtl' : 'dir-ltr' }}">
-                                        <div class="name-pill pill-edge" id="rPillLeftEdge-{{ $i }}">Tamu Undangan</div>
-                                        <div class="name-pill pill-normal" id="rPillLeft-{{ $i }}">Calon Pemenang</div>
-                                    </div>
-
-                                    <!-- Center Target Slot with Dedicated Pointers (▼ & ▲) -->
-                                    <div class="line-target-slot-container" id="lineSlot-{{ $i }}">
-
-                                        <!-- 3D Gold Down Pointer (▼) -->
-                                        <div class="line-pointer line-pointer-down" id="ptrDown-{{ $i }}">
-                                            <svg viewBox="0 0 44 32" width="28" height="18" fill="none">
-                                                <defs>
-                                                    <linearGradient id="facetDownL-{{ $i }}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#fde68a"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
-                                                    <linearGradient id="facetDownR-{{ $i }}" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="60%" stop-color="#d4af37"/><stop offset="100%" stop-color="#78350f"/></linearGradient>
-                                                    <filter id="glowDownArrow-{{ $i }}"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#f59e0b" flood-opacity="0.9"/></filter>
-                                                </defs>
-                                                <polygon points="22,29 3,5 22,5" fill="url(#facetDownL-{{ $i }})"/>
-                                                <polygon points="22,29 22,5 41,5" fill="url(#facetDownR-{{ $i }})"/>
-                                                <line x1="22" y1="5" x2="22" y2="29" stroke="#ffffff" stroke-width="1.2" opacity="0.9"/>
-                                            </svg>
+                                        <!-- Left Flanking Name Stream -->
+                                        <div class="line-side-pills side-left {{ $i % 2 === 0 ? 'dir-rtl' : 'dir-ltr' }}">
+                                            <div class="name-pill pill-edge" id="rPillLeftEdge-{{ $i }}">Tamu Undangan</div>
+                                            <div class="name-pill pill-normal" id="rPillLeft-{{ $i }}">Calon Pemenang</div>
                                         </div>
 
-                                        <!-- The Golden Target Winner Pill -->
-                                        <div class="name-pill pill-target-center {{ $isLocked ? 'winner-locked' : '' }}" id="rPillCenter-{{ $i }}">
-                                            <span class="target-name-txt" id="rTargetName-{{ $i }}">{{ $defaultName }}</span>
+                                        <!-- Center Target Slot with Dedicated Pointers (▼ & ▲) -->
+                                        <div class="line-target-slot-container" id="lineSlot-{{ $i }}">
+
+                                            <!-- 3D Gold Down Pointer (▼) -->
+                                            <div class="line-pointer line-pointer-down" id="ptrDown-{{ $i }}">
+                                                <svg viewBox="0 0 44 32" width="28" height="18" fill="none">
+                                                    <defs>
+                                                        <linearGradient id="facetDownL-{{ $i }}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#fde68a"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
+                                                        <linearGradient id="facetDownR-{{ $i }}" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="60%" stop-color="#d4af37"/><stop offset="100%" stop-color="#78350f"/></linearGradient>
+                                                        <filter id="glowDownArrow-{{ $i }}"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#f59e0b" flood-opacity="0.9"/></filter>
+                                                    </defs>
+                                                    <polygon points="22,29 3,5 22,5" fill="url(#facetDownL-{{ $i }})"/>
+                                                    <polygon points="22,29 22,5 41,5" fill="url(#facetDownR-{{ $i }})"/>
+                                                    <line x1="22" y1="5" x2="22" y2="29" stroke="#ffffff" stroke-width="1.2" opacity="0.9"/>
+                                                </svg>
+                                            </div>
+
+                                            <!-- The Golden Target Winner Pill -->
+                                            <div class="name-pill pill-target-center {{ $isLocked ? 'winner-locked' : '' }}" id="rPillCenter-{{ $i }}">
+                                                <span class="target-name-txt" id="rTargetName-{{ $i }}">{{ $defaultName }}</span>
+                                            </div>
+
+                                            <!-- 3D Gold Up Pointer (▲) -->
+                                            <div class="line-pointer line-pointer-up" id="ptrUp-{{ $i }}">
+                                                <svg viewBox="0 0 44 32" width="28" height="18" fill="none">
+                                                    <defs>
+                                                        <linearGradient id="facetUpL-{{ $i }}" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#fde68a"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
+                                                        <linearGradient id="facetUpR-{{ $i }}" x1="1" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#fde68a"/><stop offset="60%" stop-color="#d4af37"/><stop offset="100%" stop-color="#78350f"/></linearGradient>
+                                                        <filter id="glowUpArrow-{{ $i }}"><feDropShadow dx="0" dy="-2" stdDeviation="3" flood-color="#f59e0b" flood-opacity="0.9"/></filter>
+                                                    </defs>
+                                                    <polygon points="22,3 3,27 22,27" fill="url(#facetUpL-{{ $i }})"/>
+                                                    <polygon points="22,3 22,27 41,27" fill="url(#facetUpR-{{ $i }})"/>
+                                                    <line x1="22" y1="27" x2="22" y2="3" stroke="#ffffff" stroke-width="1.2" opacity="0.9"/>
+                                                </svg>
+                                            </div>
+
                                         </div>
 
-                                        <!-- 3D Gold Up Pointer (▲) -->
-                                        <div class="line-pointer line-pointer-up" id="ptrUp-{{ $i }}">
-                                            <svg viewBox="0 0 44 32" width="28" height="18" fill="none">
-                                                <defs>
-                                                    <linearGradient id="facetUpL-{{ $i }}" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#fde68a"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
-                                                    <linearGradient id="facetUpR-{{ $i }}" x1="1" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#fde68a"/><stop offset="60%" stop-color="#d4af37"/><stop offset="100%" stop-color="#78350f"/></linearGradient>
-                                                    <filter id="glowUpArrow-{{ $i }}"><feDropShadow dx="0" dy="-2" stdDeviation="3" flood-color="#f59e0b" flood-opacity="0.9"/></filter>
-                                                </defs>
-                                                <polygon points="22,3 3,27 22,27" fill="url(#facetUpL-{{ $i }})"/>
-                                                <polygon points="22,3 22,27 41,27" fill="url(#facetUpR-{{ $i }})"/>
-                                                <line x1="22" y1="27" x2="22" y2="3" stroke="#ffffff" stroke-width="1.2" opacity="0.9"/>
-                                            </svg>
+                                        <!-- Right Flanking Name Stream -->
+                                        <div class="line-side-pills side-right {{ $i % 2 === 0 ? 'dir-rtl' : 'dir-ltr' }}">
+                                            <div class="name-pill pill-normal" id="rPillRight-{{ $i }}">Calon Pemenang</div>
+                                            <div class="name-pill pill-edge" id="rPillRightEdge-{{ $i }}">Tamu Undangan</div>
                                         </div>
 
                                     </div>
-
-                                    <!-- Right Flanking Name Stream -->
-                                    <div class="line-side-pills side-right {{ $i % 2 === 0 ? 'dir-rtl' : 'dir-ltr' }}">
-                                        <div class="name-pill pill-normal" id="rPillRight-{{ $i }}">Calon Pemenang</div>
-                                        <div class="name-pill pill-edge" id="rPillRightEdge-{{ $i }}">Tamu Undangan</div>
-                                    </div>
-
-                                </div>
-                            @endfor
+                                @endfor
+                            </div>
 
                         </div>
                     </div>
@@ -236,16 +249,19 @@
                     <!-- ==================== 3. RESULT STATE (REPLIKA IMAGE 2) ==================== -->
                     <div class="view-panel view-panel-result {{ $currentStatus === 'stopped' ? 'active' : '' }}" id="viewResult">
                         <div class="bars-vertical-stack {{ $slotCount === 1 ? 'single-slot' : ($slotCount > 5 ? 'two-cols' : '') }}" id="resultBarsStack" data-slots="{{ $slotCount }}">
-                            @for ($i = 0; $i < $slotCount; $i++)
+                            @for ($i = 0; $i < 10; $i++)
                                 @php
                                     $initWinner = $winnersList[$i] ?? '-';
+                                    $initDetail = $winnerDetailsList[$i] ?? null;
+                                    $initCat = is_array($initDetail) ? ($initDetail['category'] ?? '') : '';
+                                    $isVisible = $i < $slotCount;
                                 @endphp
-                                <div class="winner-entry-bar revealed" id="winnerBar-{{ $i }}" data-index="{{ $i }}">
+                                <div class="winner-entry-bar revealed" id="winnerBar-{{ $i }}" data-index="{{ $i }}" style="{{ $isVisible ? '' : 'display: none;' }}">
                                     <div class="bar-rank-badge">{{ $i + 1 }}</div>
                                     <div class="bar-name-card">
                                         <div class="winner-name-wrap">
                                             <div class="winner-person-name" id="winnerName-{{ $i }}">{{ $initWinner }}</div>
-                                            <div class="winner-cat-badge" id="winnerCat-{{ $i }}"></div>
+                                            <div class="winner-cat-badge {{ $initCat ? 'visible' : '' }}" id="winnerCat-{{ $i }}">{{ $initCat }}</div>
                                         </div>
 
                                         <!-- Botanical Leaf Watermark on Right -->
