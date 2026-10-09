@@ -339,16 +339,25 @@
             align-items: center;
             justify-content: space-between;
             padding: clamp(0.8rem, 2.2vh, 1.8rem) clamp(1.2rem, 3vw, 3.5rem);
-            background: #0d0103 url("{{ asset('images/bg-burgundy-clean.jpg') }}") no-repeat center center;
-            background-size: cover;
+            background: #0d0103;
             overflow: hidden;
+        }
+
+        .gift-bg-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
         }
 
         #stageGiftWrapper::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at 50% 45%, rgba(84, 10, 24, 0.4) 0%, rgba(35, 5, 14, 0.78) 60%, rgba(13, 1, 3, 0.96) 100%);
+            background: radial-gradient(circle at 50% 45%, rgba(84, 10, 24, 0.25) 0%, rgba(35, 5, 14, 0.6) 60%, rgba(13, 1, 3, 0.9) 100%);
             pointer-events: none;
             z-index: 2;
         }
@@ -944,6 +953,11 @@
          LAYER 2: PANGGUNG HADIAH 3D (BURGUNDY & GOLD - DOORPRIZE THEME)
          ======================================================== -->
     <div id="stageGiftWrapper" class="tv-stage-layer gift-stage-burgundy" style="{{ ($tvMode ?? 'quiz') === 'gift' ? 'display: flex;' : 'display: none;' }}">
+        <!-- Background Video Hadiah Panggung (Muted & Loop) -->
+        <video class="gift-bg-video" autoplay loop muted playsinline preload="auto" poster="{{ asset('images/bg-burgundy-clean.jpg') }}">
+            <source src="{{ asset('videos/background-hadiah-quiz.mp4') }}" type="video/mp4">
+        </video>
+
         <!-- 1. ORNATE DOUBLE GOLD BORDERS -->
         <div class="stage-border-outer"></div>
         <div class="stage-border-inner"></div>
@@ -1578,11 +1592,15 @@
             if (mode === 'gift') {
                 stageQuizWrapper.style.display = 'none';
                 stageGiftWrapper.style.display = 'flex';
+                const giftVideoEl = document.querySelector('.gift-bg-video');
+                if (giftVideoEl) giftVideoEl.play().catch(() => {});
                 document.getElementById('stageModeIcon').innerHTML = svgTvSmall;
                 document.getElementById('stageModeText').textContent = 'Mode Kuis';
             } else {
                 stageGiftWrapper.style.display = 'none';
                 stageQuizWrapper.style.display = 'block';
+                const quizVideoEl = document.querySelector('.tv-bg-video');
+                if (quizVideoEl) quizVideoEl.play().catch(() => {});
                 document.getElementById('stageModeIcon').innerHTML = svgGiftSmall;
                 document.getElementById('stageModeText').textContent = 'Mode Hadiah';
             }
@@ -1714,6 +1732,21 @@
             startBgVideo();
             window.addEventListener('click', startBgVideo, { once: true });
             window.addEventListener('keydown', startBgVideo, { once: true });
+        }
+
+        // Video background Hadiah TV: selalu muted & looping
+        const giftBgVideo = document.querySelector('.gift-bg-video');
+        if (giftBgVideo) {
+            giftBgVideo.muted = true;
+            giftBgVideo.defaultMuted = true;
+            giftBgVideo.loop = true;
+            const startGiftBgVideo = () => {
+                giftBgVideo.muted = true;
+                giftBgVideo.play().catch(() => {});
+            };
+            startGiftBgVideo();
+            window.addEventListener('click', startGiftBgVideo, { once: true });
+            window.addEventListener('keydown', startGiftBgVideo, { once: true });
         }
     </script>
 </body>

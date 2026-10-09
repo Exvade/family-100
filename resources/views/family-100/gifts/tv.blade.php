@@ -24,8 +24,7 @@
         }
 
         body {
-            background: #0d0103 url("{{ asset('images/bg-burgundy-clean.jpg') }}") no-repeat center center;
-            background-size: cover;
+            background: #0d0103;
             color: #ffffff;
             font-family: 'Montserrat', sans-serif;
             overflow: hidden;
@@ -34,11 +33,22 @@
             position: relative;
         }
 
+        /* Video background panggung Hadiah TV (Muted & Loop) */
+        .tv-bg-video {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+
         body::before {
             content: '';
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at 50% 45%, rgba(84, 10, 24, 0.4) 0%, rgba(35, 5, 14, 0.78) 60%, rgba(13, 1, 3, 0.96) 100%);
+            background: radial-gradient(circle at 50% 45%, rgba(84, 10, 24, 0.25) 0%, rgba(35, 5, 14, 0.6) 60%, rgba(13, 1, 3, 0.9) 100%);
             pointer-events: none;
             z-index: 2;
         }
@@ -585,6 +595,11 @@
     </style>
 </head>
 <body>
+    <!-- Background Video Panggung Hadiah TV (Muted & Loop) -->
+    <video class="tv-bg-video" autoplay loop muted playsinline preload="auto" poster="{{ asset('images/bg-burgundy-clean.jpg') }}">
+        <source src="{{ asset('videos/background-hadiah-quiz.mp4') }}" type="video/mp4">
+    </video>
+
     <!-- 1. ORNATE DOUBLE GOLD BORDERS (Doorprize wedding borders) -->
     <div class="stage-border-outer"></div>
     <div class="stage-border-inner"></div>
@@ -994,7 +1009,13 @@
             bgVideo.muted = true;
             bgVideo.defaultMuted = true;
             bgVideo.loop = true;
-            bgVideo.play().catch(() => {});
+            const startBgVideo = () => {
+                bgVideo.muted = true;
+                bgVideo.play().catch(() => {});
+            };
+            startBgVideo();
+            window.addEventListener('click', startBgVideo, { once: true });
+            window.addEventListener('keydown', startBgVideo, { once: true });
         }
     </script>
 </body>
