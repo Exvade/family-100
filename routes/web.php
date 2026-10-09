@@ -39,6 +39,7 @@ Route::prefix('family-100')->name('family-100.')->group(function () {
     Route::post('hadiah/{gift}/open', [GiftController::class, 'open'])->name('gifts.open');
     Route::post('hadiah/reset', [GiftController::class, 'reset'])->name('gifts.reset');
     Route::post('hadiah/bulk', [GiftController::class, 'bulkUpdate'])->name('gifts.bulk');
+    Route::post('hadiah/acak', [GiftController::class, 'shuffle'])->name('gifts.shuffle');
     Route::post('hadiah/jumlah', [GiftController::class, 'updateCount'])->name('gifts.count');
     Route::post('tv/mode', [GiftController::class, 'switchTvMode'])->name('tv.mode');
 

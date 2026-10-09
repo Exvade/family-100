@@ -90,6 +90,49 @@ class GiftController extends Controller
     }
 
     /**
+     * Acak (shuffle) nomor/posisi seluruh hadiah yang aktif.
+     */
+    public function shuffle(): JsonResponse|RedirectResponse
+    {
+        $giftCount = Setting::giftCount();
+        $gifts = Gift::where('number', '<=', $giftCount)->get();
+
+        if ($gifts->count() > 1) {
+            $payloads = $gifts->map(fn ($g) => [
+                'name' => $g->name,
+                'description' => $g->description,
+            ])->shuffle()->values();
+
+            DB::transaction(function () use ($gifts, $payloads) {
+                foreach ($gifts as $index => $gift) {
+                    $gift->update([
+                        'name' => $payloads[$index]['name'],
+                        'description' => $payloads[$index]['description'],
+                    ]);
+                }
+            });
+        }
+
+        if (request()->wantsJson()) {
+            $refreshedGifts = Gift::where('number', '<=', $giftCount)->orderBy('number')->get()->map(fn ($g) => [
+                'id' => $g->id,
+                'number' => $g->number,
+                'name' => $g->name,
+                'description' => $g->description,
+                'is_opened' => (bool) $g->is_opened,
+            ]);
+
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Posisi seluruh hadiah berhasil diacak.',
+                'gifts' => $refreshedGifts,
+            ]);
+        }
+
+        return back()->with('status', 'Posisi seluruh hadiah berhasil diacak.');
+    }
+
+    /**
      * Buka / tutup sebuah kotak hadiah (toggle).
      */
     public function toggle(Gift $gift): JsonResponse

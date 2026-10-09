@@ -345,6 +345,10 @@
                             </div>
                         </div>
                         <div class="col-md-4 text-md-end d-flex align-items-center justify-content-md-end gap-2 flex-wrap">
+                            <button type="button" class="btn btn-warning text-dark btn-sm fw-bold shadow-sm d-inline-flex align-items-center gap-1" id="btnShuffleGiftsDirectTab" data-url="{{ route('family-100.gifts.shuffle') }}" title="Acak posisi atau urutan nomor seluruh hadiah yang ada">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 4l3 3l-3 3" /><path d="M18 20l3 -3l-3 -3" /><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" /><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1.018m-4.004 7.964a4.978 4.978 0 0 1 -2.996 1.018h-3" /></svg>
+                                <span>Acak Hadiah</span>
+                            </button>
                             <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalBulkEditGifts" id="btnOpenBulkEditGiftsTab">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /><path d="M9 4h10" /><path d="M14 8h5" /></svg>
                                 <span>Edit Semua Hadiah (List)</span>
@@ -813,6 +817,105 @@ document.addEventListener('DOMContentLoaded', () => {
                 Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal menutup semua kotak hadiah.' });
             } finally {
                 btnResetAll.disabled = false;
+            }
+        });
+    }
+
+    // Acak Posisi Hadiah Langsung dari Toolbar Tab 2
+    const btnShuffleDirectTab = document.getElementById('btnShuffleGiftsDirectTab');
+    if (btnShuffleDirectTab) {
+        btnShuffleDirectTab.addEventListener('click', async () => {
+            if (window.Swal) {
+                const result = await Swal.fire({
+                    title: 'Acak Posisi Hadiah?',
+                    text: 'Nomor kotak seluruh hadiah yang aktif akan diacak secara acak.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f59e0b',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Acak Sekarang',
+                    cancelButtonText: 'Batal'
+                });
+                if (!result.isConfirmed) return;
+            }
+
+            btnShuffleDirectTab.disabled = true;
+            try {
+                const res = await fetch(btnShuffleDirectTab.dataset.url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                if (Array.isArray(data.gifts)) {
+                    data.gifts.forEach(g => {
+                        const cardCol = document.querySelector(`[data-gift-card="${g.id}"]`);
+                        if (cardCol) {
+                            const nameEl = cardCol.querySelector('[data-gift-name]');
+                            if (nameEl) {
+                                nameEl.textContent = g.name || `Hadiah #${g.number}`;
+                                nameEl.title = g.name || `Hadiah #${g.number}`;
+                            }
+
+                            let descEl = cardCol.querySelector('[data-gift-desc]');
+                            if (g.description) {
+                                if (!descEl) {
+                                    descEl = document.createElement('p');
+                                    descEl.className = 'text-secondary small mb-1 text-truncate';
+                                    descEl.setAttribute('data-gift-desc', '');
+                                    const winnerEl = cardCol.querySelector('[data-gift-winner]');
+                                    if (winnerEl) winnerEl.parentNode.insertBefore(descEl, winnerEl);
+                                }
+                                descEl.textContent = g.description;
+                                descEl.title = g.description;
+                                descEl.style.display = '';
+                            } else if (descEl) {
+                                descEl.textContent = '';
+                                descEl.style.display = 'none';
+                            }
+
+                            const editBtn = cardCol.querySelector('[data-bs-target="#modalEditGift"]');
+                            if (editBtn) {
+                                editBtn.dataset.name = g.name;
+                                editBtn.dataset.description = g.description || '';
+                            }
+
+                            const card = cardCol.querySelector('.card');
+                            if (card) {
+                                card.style.transition = 'all 0.35s ease';
+                                card.style.transform = 'scale(1.03)';
+                                card.style.boxShadow = '0 0 12px rgba(245, 158, 11, 0.4)';
+                                setTimeout(() => {
+                                    card.style.transform = '';
+                                    card.style.boxShadow = '';
+                                }, 600);
+                            }
+                        }
+                    });
+                }
+
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: data.message || 'Posisi seluruh hadiah berhasil diacak!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            } catch (err) {
+                if (window.Swal) {
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal mengacak posisi hadiah.' });
+                }
+            } finally {
+                btnShuffleDirectTab.disabled = false;
             }
         });
     }
