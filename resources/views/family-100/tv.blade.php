@@ -353,15 +353,6 @@
             pointer-events: none;
         }
 
-        #stageGiftWrapper::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 50% 45%, rgba(84, 10, 24, 0.25) 0%, rgba(35, 5, 14, 0.6) 60%, rgba(13, 1, 3, 0.9) 100%);
-            pointer-events: none;
-            z-index: 2;
-        }
-
         /* Ornate Double Gold Borders (seperti Doorprize TV) */
         .stage-border-outer {
             position: absolute;
@@ -379,52 +370,6 @@
             border-radius: 4px;
             pointer-events: none;
             z-index: 6;
-        }
-
-        /* Corner Florals Elegan (Doorprize wedding florals) */
-        .stage-floral {
-            position: absolute;
-            pointer-events: none;
-            z-index: 7;
-            filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.75));
-        }
-
-        .stage-floral-tl {
-            top: -10px;
-            left: -10px;
-            width: clamp(130px, 16vw, 260px);
-        }
-
-        .stage-floral-tr {
-            top: -10px;
-            right: -10px;
-            width: clamp(130px, 15vw, 240px);
-            opacity: 0.9;
-        }
-
-        .stage-floral-bl {
-            bottom: -10px;
-            left: -10px;
-            width: clamp(140px, 16vw, 270px);
-            z-index: 8;
-        }
-
-        .stage-floral-br {
-            bottom: -10px;
-            right: -10px;
-            width: clamp(130px, 15vw, 250px);
-            opacity: 0.9;
-        }
-
-        .stage-velvet-drape {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 160px;
-            background: radial-gradient(ellipse 110% 100% at 50% 100%, rgba(13, 1, 3, 0.95) 0%, rgba(35, 5, 14, 0.6) 50%, transparent 100%);
-            pointer-events: none;
-            z-index: 5;
         }
 
         /* Header Panggung Hadiah Burgundy */
@@ -961,15 +906,6 @@
         <!-- 1. ORNATE DOUBLE GOLD BORDERS -->
         <div class="stage-border-outer"></div>
         <div class="stage-border-inner"></div>
-
-        <!-- 2. CORNER FLORALS (Doorprize wedding florals) -->
-        <img src="{{ asset('images/floral-tl.png') }}" class="stage-floral stage-floral-tl" alt="Floral TL" />
-        <img src="{{ asset('images/floral-tr.png') }}" class="stage-floral stage-floral-tr" alt="Floral TR" />
-        <img src="{{ asset('images/floral-bl.png') }}" class="stage-floral stage-floral-bl" alt="Floral BL" />
-        <img src="{{ asset('images/floral-br.png') }}" class="stage-floral stage-floral-br" alt="Floral BR" />
-
-        <!-- 3. BOTTOM VELVET DRAPERY SHADOW -->
-        <div class="stage-velvet-drape"></div>
 
         <!-- Header Panggung Hadiah Burgundy -->
         <header class="gift-stage-header">
