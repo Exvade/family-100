@@ -351,11 +351,20 @@ function initDoorprizeTv() {
                     gachaRow.style.height = `${h}px`;
                     gachaRow.dataset.col = "0";
                 } else {
-                    const col = i < 5 ? 0 : 1;
-                    const rowInCol = i % 5;
-                    const top = 15 + rowInCol * 125;
+                    const half = Math.ceil(newSlots / 2);
+                    const col = i < half ? 0 : 1;
+                    const rowInCol = col === 0 ? i : (i - half);
+                    let top = 15 + rowInCol * 125;
+                    let h = 120;
+                    if (half === 3) {
+                        top = 90 + rowInCol * 170;
+                        h = 145;
+                    } else if (half === 4) {
+                        top = 40 + rowInCol * 145;
+                        h = 135;
+                    }
                     gachaRow.style.top = `${top}px`;
-                    gachaRow.style.height = `120px`;
+                    gachaRow.style.height = `${h}px`;
                     gachaRow.dataset.col = String(col);
                 }
             }

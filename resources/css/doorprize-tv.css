@@ -242,9 +242,9 @@ html, body {
 .tv-prize-spotlight-zone {
     position: absolute;
     left: 535px;
-    top: 8px;
+    top: 6px;
     width: 1015px;
-    height: 350px;
+    height: 396px;
     z-index: 10;
     display: flex;
     flex-direction: column;
@@ -340,10 +340,10 @@ html, body {
 
 /* Card Styling inside Running Marquee (Foto Ekstra Besar untuk Audiens Panggung) */
 .prize-marquee-track .prize-card-chip {
-    flex: 0 0 290px !important;
-    width: 290px !important;
-    max-width: 290px !important;
-    height: 304px !important;
+    flex: 0 0 305px !important;
+    width: 305px !important;
+    max-width: 305px !important;
+    height: 346px !important;
     padding: 8px 8px 10px !important;
     box-sizing: border-box !important;
     cursor: default;
@@ -368,8 +368,8 @@ html, body {
 /* WADAH FOTO BESAR MENGISI SEBAGIAN BESAR KARTU TANPA RUANG KOSONG */
 .prize-marquee-track .prize-card-chip .prize-chip-img-box {
     width: 100% !important;
-    height: 240px !important;
-    flex: 0 0 240px !important;
+    height: 280px !important;
+    flex: 0 0 280px !important;
     border-radius: 16px !important;
     border: 1.8px solid #eab308 !important;
     background: radial-gradient(circle at 50% 30%, #380611 0%, #1c0207 70%, #0d0103 100%) !important;
@@ -397,7 +397,7 @@ html, body {
 }
 
 .prize-marquee-track .prize-card-chip .prize-chip-icon {
-    font-size: 88px !important;
+    font-size: 96px !important;
     filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8)) !important;
 }
 
@@ -452,21 +452,21 @@ html, body {
     outline: 1.5px solid rgba(253, 230, 138, 0.55);
     outline-offset: 3px;
     border-radius: 24px;
-    padding: 12px 36px 12px 16px;
+    padding: 14px 40px 14px 20px;
     box-shadow: 
         0 16px 45px rgba(0, 0, 0, 0.85),
         0 0 35px rgba(212, 175, 55, 0.45),
         inset 0 1px 2px rgba(255, 248, 220, 0.4);
-    max-width: 950px;
+    max-width: 960px;
     width: auto;
-    height: 290px;
-    gap: 28px;
+    height: 345px;
+    gap: 32px;
     transition: all 0.4s ease;
 }
 .prize-hero-img-box {
     position: relative;
-    width: 320px;
-    height: 260px;
+    width: 390px;
+    height: 305px;
     border-radius: 20px;
     border: 2px solid #eab308;
     background: radial-gradient(circle at 50% 30%, #450817 0%, #1d0208 65%, #0c0103 100%);
@@ -565,7 +565,7 @@ html, body {
     flex: 1 1 0px;
     min-width: 90px;
     max-width: 480px;
-    height: 295px;
+    height: 345px;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 .prize-card-chip:hover {
@@ -575,7 +575,7 @@ html, body {
 .prize-chip-img-box {
     position: relative;
     width: 100%;
-    height: 235px;
+    height: 280px;
     border-radius: 16px;
     border: 1.8px solid #eab308;
     background: radial-gradient(circle at 50% 30%, #380611 0%, #1c0207 70%, #0d0103 100%);
@@ -639,19 +639,19 @@ html, body {
 }
 
 /* Penyesuaian Ukuran Dinamis Berdasarkan Jumlah Hadiah Unik */
-/* 2 Hadiah Unik: Kartu Lebar 470px & Foto Raksasa 235px (Sangat Jelas Terlihat dari Panggung) */
+/* 2 Hadiah Unik: Kartu Lebar 480px & Foto Raksasa 280px (Sangat Jelas Terlihat dari Panggung) */
 .prize-cards-grid[data-count="2"] {
     gap: 24px;
     max-width: 980px;
 }
 .prize-cards-grid[data-count="2"] .prize-card-chip {
-    max-width: 470px;
-    height: 295px;
+    max-width: 480px;
+    height: 345px;
     padding: 8px 10px 10px;
 }
 .prize-cards-grid[data-count="2"] .prize-chip-img-box {
     width: 100%;
-    height: 235px;
+    height: 280px;
 }
 .prize-cards-grid[data-count="2"] .prize-chip-name {
     font-size: 16px;
@@ -663,19 +663,19 @@ html, body {
     padding: 4px 12px;
 }
 
-/* 3 Hadiah Unik: Foto 235px & Card Lebar 315px */
+/* 3 Hadiah Unik: Foto 280px & Card Lebar 325px */
 .prize-cards-grid[data-count="3"] {
     gap: 16px;
     max-width: 990px;
 }
 .prize-cards-grid[data-count="3"] .prize-card-chip {
-    max-width: 315px;
-    height: 295px;
+    max-width: 325px;
+    height: 345px;
     padding: 8px 8px 10px;
 }
 .prize-cards-grid[data-count="3"] .prize-chip-img-box {
     width: 100%;
-    height: 235px;
+    height: 280px;
 }
 .prize-cards-grid[data-count="3"] .prize-chip-name {
     font-size: 14px;
@@ -846,8 +846,8 @@ html, body {
     position: absolute;
     left: 535px;
     width: 1015px;
-    top: 366px;
-    bottom: 20px;
+    top: 410px;
+    bottom: 14px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -978,8 +978,8 @@ html, body {
 
 /* 5 Slot (Multi-Winner 5 Orang: Terdistribusi Merata) */
 .bars-vertical-stack[data-slots="5"] {
-    justify-content: space-between;
-    gap: 0;
+    justify-content: center;
+    gap: 12px;
     height: 100%;
 }
 .bars-vertical-stack[data-slots="5"] .winner-entry-bar {
@@ -1000,6 +1000,7 @@ html, body {
     grid-template-columns: 1fr 1fr;
     grid-auto-flow: column;
     grid-template-rows: repeat(5, 1fr);
+    align-items: center;
     gap: 10px 16px;
     height: 100%;
 }
@@ -1024,6 +1025,67 @@ html, body {
     width: 80px;
     height: 50px;
     opacity: 0.35;
+}
+
+/* 6 Slot (3 baris per kolom: seimbang 3 kiri & 3 kanan, tanpa gap kosong) */
+.bars-vertical-stack.two-cols[data-slots="6"] {
+    grid-template-rows: repeat(3, 1fr);
+    gap: 14px 16px;
+}
+.bars-vertical-stack.two-cols[data-slots="6"] .winner-entry-bar {
+    height: 78px;
+    gap: 12px;
+}
+.bars-vertical-stack.two-cols[data-slots="6"] .bar-rank-badge {
+    width: 72px;
+    font-size: 28px;
+}
+.bars-vertical-stack.two-cols[data-slots="6"] .winner-person-name {
+    font-size: 26px;
+    max-width: 290px;
+}
+
+/* 7 & 8 Slot (4 baris per kolom: seimbang 4 kiri & 4 kanan untuk 8 slot, tanpa gap kosong di bawah bar 8) */
+.bars-vertical-stack.two-cols[data-slots="7"],
+.bars-vertical-stack.two-cols[data-slots="8"] {
+    grid-template-rows: repeat(4, 1fr);
+    gap: 12px 16px;
+}
+.bars-vertical-stack.two-cols[data-slots="7"] .winner-entry-bar,
+.bars-vertical-stack.two-cols[data-slots="8"] .winner-entry-bar {
+    height: 74px;
+    gap: 12px;
+}
+.bars-vertical-stack.two-cols[data-slots="7"] .bar-rank-badge,
+.bars-vertical-stack.two-cols[data-slots="8"] .bar-rank-badge {
+    width: 66px;
+    font-size: 26px;
+}
+.bars-vertical-stack.two-cols[data-slots="7"] .winner-person-name,
+.bars-vertical-stack.two-cols[data-slots="8"] .winner-person-name {
+    font-size: 24px;
+    max-width: 290px;
+}
+
+/* 9 & 10 Slot (5 baris per kolom) */
+.bars-vertical-stack.two-cols[data-slots="9"],
+.bars-vertical-stack.two-cols[data-slots="10"] {
+    grid-template-rows: repeat(5, 1fr);
+    gap: 8px 16px;
+}
+.bars-vertical-stack.two-cols[data-slots="9"] .winner-entry-bar,
+.bars-vertical-stack.two-cols[data-slots="10"] .winner-entry-bar {
+    height: 64px;
+    gap: 10px;
+}
+.bars-vertical-stack.two-cols[data-slots="9"] .bar-rank-badge,
+.bars-vertical-stack.two-cols[data-slots="10"] .bar-rank-badge {
+    width: 58px;
+    font-size: 24px;
+}
+.bars-vertical-stack.two-cols[data-slots="9"] .winner-person-name,
+.bars-vertical-stack.two-cols[data-slots="10"] .winner-person-name {
+    font-size: 22px;
 }
 
 .winner-entry-bar {
