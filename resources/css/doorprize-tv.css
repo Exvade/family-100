@@ -242,9 +242,9 @@ html, body {
 .tv-prize-spotlight-zone {
     position: absolute;
     left: 535px;
-    top: 14px;
+    top: 8px;
     width: 1015px;
-    height: 214px;
+    height: 350px;
     z-index: 10;
     display: flex;
     flex-direction: column;
@@ -269,11 +269,12 @@ html, body {
     background: radial-gradient(ellipse at center, rgba(55, 6, 16, 0.9) 0%, rgba(20, 2, 5, 0.95) 100%);
     border: 1.2px solid rgba(212, 175, 55, 0.6);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(253, 230, 138, 0.4);
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
 }
 .prize-zone-badge .badge-title {
     font-family: 'Cinzel', serif;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 2.2px;
     color: #fde68a;
@@ -281,19 +282,168 @@ html, body {
 }
 .prize-zone-badge .badge-sparkle {
     color: #fde68a;
-    font-size: 11px;
+    font-size: 12px;
     filter: drop-shadow(0 0 4px #d4af37);
 }
 
 .tv-prizes-showcase-deck {
     width: 100%;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.5s ease;
+    overflow: hidden;
 }
 
-/* 1 Hero Prize Card (Foto Ekstra Besar & Elegan, Tight Gap untuk 1 Barang) */
+/* ==================== CONTINUOUS RUNNING MARQUEE (REEL) UNTUK 4+ HADIAH ==================== */
+.prize-marquee-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    mask-image: linear-gradient(to right, transparent 0%, black 48px, black calc(100% - 48px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 48px, black calc(100% - 48px), transparent 100%);
+}
+
+.prize-marquee-track {
+    display: flex;
+    width: max-content;
+    user-select: none;
+    align-items: center;
+}
+
+.marquee-group {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding-right: 18px; /* Must equal gap for perfectly seamless loop */
+    flex-shrink: 0;
+    will-change: transform;
+    animation: marqueeGroupScroll var(--marquee-duration, 40s) linear infinite;
+}
+
+.prize-marquee-viewport:hover .marquee-group {
+    animation-play-state: paused;
+}
+
+@keyframes marqueeGroupScroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* Card Styling inside Running Marquee (Foto Ekstra Besar untuk Audiens Panggung) */
+.prize-marquee-track .prize-card-chip {
+    flex: 0 0 290px !important;
+    width: 290px !important;
+    max-width: 290px !important;
+    height: 304px !important;
+    padding: 8px 8px 10px !important;
+    box-sizing: border-box !important;
+    cursor: default;
+    border-radius: 20px !important;
+    background: radial-gradient(ellipse at 50% 15%, #4c0716 0%, #26030b 70%, #110103 100%) !important;
+    border: 1.8px solid #dfa732 !important;
+    outline: 1.2px solid rgba(253, 230, 138, 0.45) !important;
+    outline-offset: 2.5px !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.75), 0 0 20px rgba(212, 175, 55, 0.35) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+}
+
+.prize-marquee-track .prize-card-chip:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.9), 0 0 30px rgba(212, 175, 55, 0.6) !important;
+}
+
+/* WADAH FOTO BESAR MENGISI SEBAGIAN BESAR KARTU TANPA RUANG KOSONG */
+.prize-marquee-track .prize-card-chip .prize-chip-img-box {
+    width: 100% !important;
+    height: 240px !important;
+    flex: 0 0 240px !important;
+    border-radius: 16px !important;
+    border: 1.8px solid #eab308 !important;
+    background: radial-gradient(circle at 50% 30%, #380611 0%, #1c0207 70%, #0d0103 100%) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.85), 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+    position: relative !important;
+}
+
+.prize-marquee-track .prize-card-chip .prize-chip-img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    padding: 2px !important;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.85)) !important;
+    transition: transform 0.35s ease !important;
+}
+
+.prize-marquee-track .prize-card-chip:hover .prize-chip-img {
+    transform: scale(1.05) !important;
+}
+
+.prize-marquee-track .prize-card-chip .prize-chip-icon {
+    font-size: 88px !important;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8)) !important;
+}
+
+/* PIN NOMOR DI ATAS FOTO */
+.prize-marquee-track .prize-card-chip .prize-chip-pin {
+    position: absolute !important;
+    top: 6px !important;
+    left: 6px !important;
+    z-index: 2 !important;
+    background: linear-gradient(135deg, #fffbeb 0%, #fde68a 35%, #d4af37 75%, #a16207 100%) !important;
+    color: #3b020c !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    padding: 3px 10px !important;
+    border-radius: 7px !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7) !important;
+    border: 1px solid #fffdfa !important;
+    letter-spacing: 0.6px !important;
+    white-space: nowrap !important;
+}
+
+/* NAMA HADIAH DI BAWAH FOTO */
+.prize-marquee-track .prize-card-chip .prize-chip-name {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #fffbeb !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 260px !important;
+    width: auto !important;
+    letter-spacing: 0.3px !important;
+    margin: 0 !important;
+    background: rgba(18, 1, 4, 0.85) !important;
+    border: 1px solid rgba(212, 175, 55, 0.45) !important;
+    border-radius: 9999px !important;
+    padding: 4px 18px !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+
+/* 1 Hero Prize Card (Foto Ekstra Besar & Elegan, Ekstra Menonjol untuk Audience Panggung) */
 .prize-card-hero {
     display: flex;
     align-items: center;
@@ -301,22 +451,23 @@ html, body {
     border: 2px solid #dfa732;
     outline: 1.5px solid rgba(253, 230, 138, 0.55);
     outline-offset: 3px;
-    border-radius: 22px;
-    padding: 8px 36px 8px 14px;
+    border-radius: 24px;
+    padding: 12px 36px 12px 16px;
     box-shadow: 
-        0 14px 40px rgba(0, 0, 0, 0.85),
+        0 16px 45px rgba(0, 0, 0, 0.85),
         0 0 35px rgba(212, 175, 55, 0.45),
         inset 0 1px 2px rgba(255, 248, 220, 0.4);
-    max-width: 860px;
+    max-width: 950px;
     width: auto;
-    gap: 18px;
+    height: 290px;
+    gap: 28px;
     transition: all 0.4s ease;
 }
 .prize-hero-img-box {
     position: relative;
-    width: 156px;
-    height: 156px;
-    border-radius: 18px;
+    width: 320px;
+    height: 260px;
+    border-radius: 20px;
     border: 2px solid #eab308;
     background: radial-gradient(circle at 50% 30%, #450817 0%, #1d0208 65%, #0c0103 100%);
     overflow: hidden;
@@ -324,24 +475,24 @@ html, body {
     align-items: center;
     justify-content: center;
     box-shadow: 
-        0 8px 24px rgba(0, 0, 0, 0.8), 
+        0 8px 26px rgba(0, 0, 0, 0.8), 
         inset 0 0 20px rgba(0, 0, 0, 0.85),
-        0 0 20px rgba(212, 175, 55, 0.4);
+        0 0 22px rgba(212, 175, 55, 0.45);
     flex-shrink: 0;
 }
 .prize-hero-img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 8px;
+    padding: 2px;
     filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.85));
     transition: transform 0.35s ease;
 }
 .prize-hero-img-box:hover .prize-hero-img {
-    transform: scale(1.06);
+    transform: scale(1.05);
 }
 .prize-hero-icon-fallback {
-    font-size: 74px;
+    font-size: 110px;
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.8));
 }
 .prize-hero-info {
@@ -354,14 +505,14 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 3.5px 14px;
+    padding: 4px 16px;
     border-radius: 9999px;
     background: rgba(220, 38, 38, 0.18);
     border: 1.2px solid rgba(212, 175, 55, 0.65);
     width: fit-content;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     font-family: 'Cinzel', serif;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 1.8px;
     color: #fde68a;
@@ -370,95 +521,98 @@ html, body {
 }
 .prize-hero-badge-pill .badge-sparkle {
     color: #fde68a;
-    font-size: 10px;
+    font-size: 11px;
     filter: drop-shadow(0 0 4px #d4af37);
 }
 .prize-hero-title {
     font-family: 'Playfair Display', serif;
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 34px;
+    font-weight: 800;
     letter-spacing: 0.8px;
     background: linear-gradient(135deg, #ffffff 0%, #fffdfa 25%, #fde68a 55%, #eab308 85%, #d97706 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.95));
     line-height: 1.25;
-    max-width: 490px;
+    max-width: 550px;
 }
 
-/* Multi Prizes Grid (Foto Diperbesar, Pin Nomor Mini) */
+/* Multi Prizes Grid (Foto Diperbesar untuk Audiens Panggung, Pin Nomor Jelas) */
 .prize-cards-grid {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 16px;
     width: 100%;
+    height: 100%;
     flex-wrap: nowrap;
 }
 .prize-card-chip {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
     background: radial-gradient(ellipse at 50% 15%, #4c0716 0%, #26030b 70%, #110103 100%);
-    border: 1.5px solid #dfa732;
-    outline: 1px solid rgba(253, 230, 138, 0.4);
-    outline-offset: 2px;
-    border-radius: 16px;
-    padding: 6px 8px 8px;
+    border: 1.8px solid #dfa732;
+    outline: 1.2px solid rgba(253, 230, 138, 0.45);
+    outline-offset: 2.5px;
+    border-radius: 20px;
+    padding: 8px 10px 10px;
     box-shadow: 
-        0 8px 22px rgba(0, 0, 0, 0.65),
-        0 0 18px rgba(212, 175, 55, 0.3),
+        0 10px 26px rgba(0, 0, 0, 0.7),
+        0 0 22px rgba(212, 175, 55, 0.35),
         inset 0 1px 1px rgba(255, 248, 220, 0.3);
     flex: 1 1 0px;
     min-width: 90px;
-    max-width: 175px;
+    max-width: 480px;
+    height: 295px;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 .prize-card-chip:hover {
     transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.8), 0 0 24px rgba(212, 175, 55, 0.55);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.85), 0 0 28px rgba(212, 175, 55, 0.55);
 }
 .prize-chip-img-box {
     position: relative;
-    width: 104px;
-    height: 104px;
-    border-radius: 14px;
-    border: 1.5px solid #eab308;
+    width: 100%;
+    height: 235px;
+    border-radius: 16px;
+    border: 1.8px solid #eab308;
     background: radial-gradient(circle at 50% 30%, #380611 0%, #1c0207 70%, #0d0103 100%);
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.6);
+    box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.8), 0 4px 14px rgba(0, 0, 0, 0.6);
     flex-shrink: 0;
 }
 .prize-chip-img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 6px;
+    padding: 2px;
     filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
     transition: transform 0.3s ease;
 }
 .prize-chip-img-box:hover .prize-chip-img {
-    transform: scale(1.08);
+    transform: scale(1.05);
 }
 .prize-chip-icon {
-    font-size: 46px;
+    font-size: 72px;
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
 }
 .prize-chip-pin {
     position: absolute;
-    top: 5px;
-    left: 5px;
+    top: 6px;
+    left: 6px;
     z-index: 2;
     background: linear-gradient(135deg, #fffbeb 0%, #fde68a 35%, #d4af37 75%, #a16207 100%);
     color: #3b020c;
     font-family: 'Cinzel', serif;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 900;
-    padding: 2px 8px;
-    border-radius: 6px;
+    padding: 3px 10px;
+    border-radius: 7px;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
     border: 1px solid #fffdfa;
     letter-spacing: 0.6px;
@@ -466,111 +620,125 @@ html, body {
 }
 .prize-chip-name {
     font-family: 'Montserrat', sans-serif;
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 700;
     color: #fffbeb;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 140px;
+    max-width: 100%;
     letter-spacing: 0.3px;
-    margin-top: 6px;
+    margin-top: 8px;
     background: rgba(18, 1, 4, 0.85);
     border: 1px solid rgba(212, 175, 55, 0.45);
     border-radius: 9999px;
-    padding: 3px 12px;
+    padding: 4px 18px;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 /* Penyesuaian Ukuran Dinamis Berdasarkan Jumlah Hadiah Unik */
-/* 2 Hadiah Unik: Tampilan Lebar & Foto Besar 132px */
+/* 2 Hadiah Unik: Kartu Lebar 470px & Foto Raksasa 235px (Sangat Jelas Terlihat dari Panggung) */
 .prize-cards-grid[data-count="2"] {
     gap: 24px;
+    max-width: 980px;
 }
 .prize-cards-grid[data-count="2"] .prize-card-chip {
-    max-width: 270px;
-    padding: 8px 16px 10px;
+    max-width: 470px;
+    height: 295px;
+    padding: 8px 10px 10px;
 }
 .prize-cards-grid[data-count="2"] .prize-chip-img-box {
-    width: 132px;
-    height: 132px;
+    width: 100%;
+    height: 235px;
 }
 .prize-cards-grid[data-count="2"] .prize-chip-name {
-    font-size: 13px;
-    max-width: 230px;
-    padding: 4px 16px;
+    font-size: 16px;
+    max-width: 380px;
+    padding: 5px 24px;
+}
+.prize-cards-grid[data-count="2"] .prize-chip-pin {
+    font-size: 14px;
+    padding: 4px 12px;
 }
 
-/* 3 Hadiah Unik: Foto 120px & Card Sedang */
+/* 3 Hadiah Unik: Foto 235px & Card Lebar 315px */
 .prize-cards-grid[data-count="3"] {
     gap: 16px;
+    max-width: 990px;
 }
 .prize-cards-grid[data-count="3"] .prize-card-chip {
-    max-width: 220px;
-    padding: 7px 12px 9px;
+    max-width: 315px;
+    height: 295px;
+    padding: 8px 8px 10px;
 }
 .prize-cards-grid[data-count="3"] .prize-chip-img-box {
-    width: 120px;
-    height: 120px;
+    width: 100%;
+    height: 235px;
 }
 .prize-cards-grid[data-count="3"] .prize-chip-name {
-    font-size: 12px;
-    max-width: 180px;
-    padding: 3px 14px;
+    font-size: 14px;
+    max-width: 270px;
+    padding: 4px 18px;
 }
 
-/* Jika Lebih Dari 3 Produk Berbeda: Kecilkan Nama Agar Gambar Tetap Terlihat Jelas */
-.prize-cards-grid.compact-names,
-.prize-cards-grid[data-count="4"],
+/* 4 Hadiah Unik: Foto 230px & Card Lebar 235px */
+.prize-cards-grid[data-count="4"] {
+    gap: 12px;
+    max-width: 1000px;
+}
+.prize-cards-grid[data-count="4"] .prize-card-chip {
+    max-width: 235px;
+    height: 290px;
+    padding: 6px 6px 8px;
+}
+.prize-cards-grid[data-count="4"] .prize-chip-img-box {
+    width: 100%;
+    height: 230px;
+}
+.prize-cards-grid[data-count="4"] .prize-chip-name {
+    font-size: 12px;
+    max-width: 210px;
+    padding: 3px 12px;
+}
+
+/* 5 Hadiah Unik: Foto 225px & Card Lebar 190px */
 .prize-cards-grid[data-count="5"] {
     gap: 10px;
+    max-width: 1010px;
 }
-.prize-cards-grid.compact-names .prize-card-chip,
-.prize-cards-grid[data-count="4"] .prize-card-chip,
 .prize-cards-grid[data-count="5"] .prize-card-chip {
-    max-width: 170px;
-    padding: 6px 7px 7px;
+    max-width: 190px;
+    height: 285px;
+    padding: 6px 6px 8px;
 }
-.prize-cards-grid.compact-names .prize-chip-img-box,
-.prize-cards-grid[data-count="4"] .prize-chip-img-box,
 .prize-cards-grid[data-count="5"] .prize-chip-img-box {
-    width: 104px;
-    height: 104px;
+    width: 100%;
+    height: 225px;
 }
-.prize-cards-grid.compact-names .prize-chip-name,
-.prize-cards-grid[data-count="4"] .prize-chip-name,
 .prize-cards-grid[data-count="5"] .prize-chip-name {
-    font-size: 10px;
-    max-width: 120px;
-    line-height: 1.15;
-    white-space: normal;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    word-break: break-word;
-    margin-top: 4px;
-    padding: 2px 8px;
-    border-radius: 8px;
+    font-size: 11px;
+    max-width: 170px;
+    padding: 3px 10px;
 }
 
-/* Jika Lebih Dari 5 Produk Berbeda (6 s/d 10 Item): Compact Grid Ekstra */
+/* 6 s/d 10 Produk Berbeda: Compact Grid */
 .prize-cards-grid[data-count="6"],
 .prize-cards-grid[data-count="7"],
 .prize-cards-grid[data-count="8"],
 .prize-cards-grid[data-count="9"],
 .prize-cards-grid[data-count="10"] {
-    gap: 6px;
+    gap: 8px;
 }
 .prize-cards-grid[data-count="6"] .prize-card-chip,
 .prize-cards-grid[data-count="7"] .prize-card-chip,
 .prize-cards-grid[data-count="8"] .prize-card-chip,
 .prize-cards-grid[data-count="9"] .prize-card-chip,
 .prize-cards-grid[data-count="10"] .prize-card-chip {
-    max-width: 104px;
-    min-width: 78px;
+    max-width: 125px;
+    min-width: 82px;
+    height: 220px;
     padding: 4px 4px 6px;
 }
 .prize-cards-grid[data-count="6"] .prize-chip-img-box,
@@ -578,43 +746,40 @@ html, body {
 .prize-cards-grid[data-count="8"] .prize-chip-img-box,
 .prize-cards-grid[data-count="9"] .prize-chip-img-box,
 .prize-cards-grid[data-count="10"] .prize-chip-img-box {
-    width: 74px;
-    height: 74px;
+    width: 100%;
+    height: 165px;
 }
 .prize-cards-grid[data-count="6"] .prize-chip-name,
 .prize-cards-grid[data-count="7"] .prize-chip-name,
 .prize-cards-grid[data-count="8"] .prize-chip-name,
 .prize-cards-grid[data-count="9"] .prize-chip-name,
 .prize-cards-grid[data-count="10"] .prize-chip-name {
-    font-size: 9px;
-    max-width: 84px;
-    line-height: 1.1;
-    -webkit-line-clamp: 2;
-    padding: 1px 4px;
-    border-radius: 4px;
+    font-size: 10px;
+    max-width: 110px;
+    padding: 2px 6px;
 }
 
-/* Fallback jika data-slots digunakan tanpa data-count */
-.tv-prizes-showcase-deck[data-slots="6"]:not(:has([data-count])) .prize-chip-img-box,
-.tv-prizes-showcase-deck[data-slots="7"]:not(:has([data-count])) .prize-chip-img-box,
-.tv-prizes-showcase-deck[data-slots="8"]:not(:has([data-count])) .prize-chip-img-box,
-.tv-prizes-showcase-deck[data-slots="9"]:not(:has([data-count])) .prize-chip-img-box,
-.tv-prizes-showcase-deck[data-slots="10"]:not(:has([data-count])) .prize-chip-img-box {
-    width: 68px;
-    height: 68px;
+/* Fallback jika data-slots digunakan tanpa data-count (HANYA untuk static grid, BUKAN marquee) */
+.tv-prizes-showcase-deck[data-slots="6"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="7"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="8"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="9"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="10"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-img-box {
+    width: 100%;
+    height: 120px;
 }
-.tv-prizes-showcase-deck[data-slots="6"]:not(:has([data-count])) .prize-cards-grid,
-.tv-prizes-showcase-deck[data-slots="7"]:not(:has([data-count])) .prize-cards-grid,
-.tv-prizes-showcase-deck[data-slots="8"]:not(:has([data-count])) .prize-cards-grid,
-.tv-prizes-showcase-deck[data-slots="9"]:not(:has([data-count])) .prize-cards-grid,
-.tv-prizes-showcase-deck[data-slots="10"]:not(:has([data-count])) .prize-cards-grid {
+.tv-prizes-showcase-deck[data-slots="6"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]),
+.tv-prizes-showcase-deck[data-slots="7"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]),
+.tv-prizes-showcase-deck[data-slots="8"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]),
+.tv-prizes-showcase-deck[data-slots="9"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]),
+.tv-prizes-showcase-deck[data-slots="10"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) {
     gap: 6px;
 }
-.tv-prizes-showcase-deck[data-slots="6"]:not(:has([data-count])) .prize-chip-name,
-.tv-prizes-showcase-deck[data-slots="7"]:not(:has([data-count])) .prize-chip-name,
-.tv-prizes-showcase-deck[data-slots="8"]:not(:has([data-count])) .prize-chip-name,
-.tv-prizes-showcase-deck[data-slots="9"]:not(:has([data-count])) .prize-chip-name,
-.tv-prizes-showcase-deck[data-slots="10"]:not(:has([data-count])) .prize-chip-name {
+.tv-prizes-showcase-deck[data-slots="6"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="7"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="8"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="9"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="10"]:not(:has(.prize-marquee-viewport)) .prize-cards-grid:not([data-count]) .prize-chip-name {
     font-size: 10px;
     max-width: 85px;
 }
@@ -681,8 +846,8 @@ html, body {
     position: absolute;
     left: 535px;
     width: 1015px;
-    top: 236px;
-    bottom: 44px;
+    top: 366px;
+    bottom: 20px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -723,31 +888,110 @@ html, body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 16px;
 }
 
 /* 1 Slot (Pemenang Tunggal / Grand Prize) */
-.bars-vertical-stack.single-slot {
+.bars-vertical-stack.single-slot,
+.bars-vertical-stack[data-slots="1"] {
     justify-content: center;
     align-items: center;
+    gap: 0;
     height: 100%;
 }
-.bars-vertical-stack.single-slot .winner-entry-bar {
-    height: 130px;
+.bars-vertical-stack.single-slot .winner-entry-bar,
+.bars-vertical-stack[data-slots="1"] .winner-entry-bar {
+    height: 100px;
     max-width: 960px;
-    gap: 22px;
+    gap: 20px;
 }
-.bars-vertical-stack.single-slot .bar-rank-badge {
-    width: 140px;
-    font-size: 58px;
-    border-radius: 18px;
+.bars-vertical-stack.single-slot .bar-rank-badge,
+.bars-vertical-stack[data-slots="1"] .bar-rank-badge {
+    width: 110px;
+    font-size: 48px;
+    border-radius: 16px;
 }
-.bars-vertical-stack.single-slot .bar-name-card {
-    padding: 0 36px;
-    border-radius: 18px;
+.bars-vertical-stack.single-slot .bar-name-card,
+.bars-vertical-stack[data-slots="1"] .bar-name-card {
+    padding: 0 32px;
+    border-radius: 16px;
 }
-.bars-vertical-stack.single-slot .winner-person-name {
-    font-size: 46px;
+.bars-vertical-stack.single-slot .winner-person-name,
+.bars-vertical-stack[data-slots="1"] .winner-person-name {
+    font-size: 40px;
+}
+
+/* 2 Slot (Multi-Winner 2 Orang: Berdekatan Elegan, Menghilangkan Gap Raksasa) */
+.bars-vertical-stack[data-slots="2"] {
+    justify-content: center;
+    gap: 24px;
+    height: 100%;
+}
+.bars-vertical-stack[data-slots="2"] .winner-entry-bar {
+    height: 84px;
+    gap: 14px;
+}
+.bars-vertical-stack[data-slots="2"] .bar-rank-badge {
+    width: 84px;
+    font-size: 36px;
+}
+.bars-vertical-stack[data-slots="2"] .winner-person-name {
+    font-size: 34px;
+}
+
+/* 3 Slot (Multi-Winner 3 Orang) */
+.bars-vertical-stack[data-slots="3"] {
+    justify-content: center;
+    gap: 18px;
+    height: 100%;
+}
+.bars-vertical-stack[data-slots="3"] .winner-entry-bar {
+    height: 80px;
+    gap: 14px;
+}
+.bars-vertical-stack[data-slots="3"] .bar-rank-badge {
+    width: 80px;
+    font-size: 34px;
+}
+.bars-vertical-stack[data-slots="3"] .winner-person-name {
+    font-size: 32px;
+}
+
+/* 4 Slot (Multi-Winner 4 Orang) */
+.bars-vertical-stack[data-slots="4"] {
+    justify-content: center;
+    gap: 14px;
+    height: 100%;
+}
+.bars-vertical-stack[data-slots="4"] .winner-entry-bar {
+    height: 76px;
+    gap: 12px;
+}
+.bars-vertical-stack[data-slots="4"] .bar-rank-badge {
+    width: 76px;
+    font-size: 32px;
+}
+.bars-vertical-stack[data-slots="4"] .winner-person-name {
+    font-size: 30px;
+}
+
+/* 5 Slot (Multi-Winner 5 Orang: Terdistribusi Merata) */
+.bars-vertical-stack[data-slots="5"] {
+    justify-content: space-between;
+    gap: 0;
+    height: 100%;
+}
+.bars-vertical-stack[data-slots="5"] .winner-entry-bar {
+    height: 74px;
+    gap: 12px;
+}
+.bars-vertical-stack[data-slots="5"] .bar-rank-badge {
+    width: 74px;
+    font-size: 30px;
+}
+.bars-vertical-stack[data-slots="5"] .winner-person-name {
+    font-size: 28px;
 }
 
 /* 6 s/d 10 Slot (Multi-Winner 2 Kolom) */
@@ -756,25 +1000,25 @@ html, body {
     grid-template-columns: 1fr 1fr;
     grid-auto-flow: column;
     grid-template-rows: repeat(5, 1fr);
-    gap: 10px 18px;
+    gap: 10px 16px;
     height: 100%;
 }
 .bars-vertical-stack.two-cols .winner-entry-bar {
-    height: 74px;
+    height: 64px;
     gap: 10px;
 }
 .bars-vertical-stack.two-cols .bar-rank-badge {
-    width: 65px;
-    font-size: 28px;
+    width: 58px;
+    font-size: 24px;
     border-radius: 10px;
 }
 .bars-vertical-stack.two-cols .bar-name-card {
-    padding: 0 16px;
+    padding: 0 14px;
     border-radius: 10px;
 }
 .bars-vertical-stack.two-cols .winner-person-name {
-    font-size: 26px;
-    max-width: 310px;
+    font-size: 22px;
+    max-width: 290px;
 }
 .bars-vertical-stack.two-cols .botanical-gold-leaf {
     width: 80px;
@@ -1509,6 +1753,58 @@ html, body {
         height: 220px !important;
         border-radius: 80px 80px 14px 14px !important;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    }
+
+    /* TV Prize Spotlight Zone Mobile/Tablet */
+    .stage-canvas-16-9 .tv-prize-spotlight-zone,
+    .stage-canvas-16-9.state-result .tv-prize-spotlight-zone,
+    .stage-canvas-16-9.state-stopped .tv-prize-spotlight-zone {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        margin: 6px 0 16px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    .stage-canvas-16-9.state-spinning .tv-prize-spotlight-zone {
+        display: none !important;
+    }
+    .stage-canvas-16-9 .prize-card-hero {
+        flex-direction: column !important;
+        padding: 14px 18px !important;
+        text-align: center !important;
+        gap: 10px !important;
+        width: 100% !important;
+        max-width: 340px !important;
+    }
+    .stage-canvas-16-9 .prize-hero-img-box {
+        width: 120px !important;
+        height: 120px !important;
+    }
+    .stage-canvas-16-9 .prize-hero-title {
+        font-size: 20px !important;
+    }
+    .stage-canvas-16-9 .prize-cards-grid {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    .stage-canvas-16-9 .prize-card-chip {
+        min-width: 100px !important;
+        max-width: 140px !important;
+        padding: 8px !important;
+    }
+    .stage-canvas-16-9 .prize-chip-img-box {
+        width: 76px !important;
+        height: 76px !important;
+    }
+    .stage-canvas-16-9 .prize-chip-name {
+        font-size: 11px !important;
+        max-width: 120px !important;
     }
 
     /* Right Stage Interactive Panel Mobile in All States */
