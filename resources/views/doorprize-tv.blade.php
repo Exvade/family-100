@@ -14,8 +14,16 @@
     <!-- Canvas Confetti CDN -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
 
-    <!-- Burgundy TV Stylesheet -->
-    <link rel="stylesheet" href="{{ asset('css/doorprize-tv.css') }}">
+    <!-- Direct Controller Data Injection -->
+    <script>
+        window.doorprizeParticipants = @json($participants ?? []);
+        window.doorprizeWedding = @json($wedding ?? null);
+        window.doorprizeSpin = @json($spin ?? null);
+        window.doorprizeSpinStateUrl = @json(route('doorprize.tv.state'));
+    </script>
+
+    <!-- Burgundy TV Stylesheet & Interactive Script via Vite Bundle -->
+    @vite(['resources/css/doorprize-tv.css', 'resources/js/doorprize-tv.js'])
 </head>
 <body class="theme-burgundy">
 
@@ -324,15 +332,5 @@
         </div>
     </div>
 
-    <!-- Direct Controller Data Injection -->
-    <script>
-        window.doorprizeParticipants = @json($participants ?? []);
-        window.doorprizeWedding = @json($wedding ?? null);
-        window.doorprizeSpin = @json($spin ?? null);
-        window.doorprizeSpinStateUrl = @json(route('doorprize.tv.state'));
-    </script>
-
-    <!-- Burgundy TV Interactive Script -->
-    <script src="{{ asset('js/doorprize-tv.js') }}"></script>
 </body>
 </html>
