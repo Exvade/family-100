@@ -1,742 +1,1236 @@
 :root {
-            --blue-glow:    #1e40af;
-            --blue-stage:   #0f2e9e;
-            --blue-deep:    #071960;
-            --blue-abyss:   #020617;
+    --burgundy-deep:    #120104;
+    --burgundy-dark:    #1c0207;
+    --burgundy-mid:     #35050e;
+    --burgundy-rich:    #540a18;
+    --burgundy-light:   #781023;
+    --burgundy-accent:  #aa1934;
 
-            --board-navy:   #061340;
-            --bar-dark:     #020a26;
-            --bar-light:    #081d68;
+    --gold-white:       #fffdf7;
+    --gold-shimmer:     #fef3c7;
+    --gold-light:       #fde68a;
+    --gold-bright:      #f59e0b;
+    --gold-amber:       #d97706;
+    --gold-dark:        #92400e;
+    --gold-metal:       #d4af37;
 
-            --gold-hi:      #fffef0;
-            --gold-light:   #fde68a;
-            --gold-bright:  #f59e0b;
-            --gold-mid:     #d97706;
-            --gold-dark:    #92400e;
-            --gold-deep:    #451a03;
-        }
+    --cream-card-bg:    linear-gradient(90deg, #fef8f4 0%, #faf0e7 45%, #f6e4d6 100%);
+    --card-text-dark:   #300710;
+}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
 
-        html, body {
-            width: 100vw;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: #020617;
-            font-family: 'Montserrat', sans-serif;
-            color: #ffffff;
-        }
+html, body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #0d0103;
+    font-family: 'Montserrat', sans-serif;
+    color: #ffffff;
+}
 
-        /* ==================== FULL VIEWPORT STAGE CANVAS (ZERO BLACK BARS) ==================== */
-        .stage-viewport {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            padding: clamp(10px, 1.8vh, 22px) clamp(16px, 2.5vw, 40px) clamp(12px, 2vh, 24px);
-            background: radial-gradient(ellipse at 50% 18%, #1e4de8 0%, #0d2bbd 35%, #071868 68%, #020617 100%);
-            overflow: hidden;
-        }
+/* ==================== 1. FULL VIEWPORT OUTER SHELL ==================== */
+.stage-viewport-shell {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, #35050e 0%, #1c0207 50%, #0d0103 100%);
+}
 
-        /* Volumetric Ceiling Spotlights */
-        .stage-lighting-overlay {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 1;
-            overflow: hidden;
-        }
-        .spotlight-cone {
-            position: absolute;
-            top: -12%;
-            height: 115%;
-            filter: blur(24px);
-            opacity: 0.75;
-            pointer-events: none;
-        }
-        .spotlight-cone.l1 { left: 3%;  width: 16%; background: conic-gradient(from 148deg at 50% 0%, rgba(147,197,253,0.42) 0deg, rgba(37,99,235,0.08) 22deg, transparent 42deg); }
-        .spotlight-cone.l2 { left: 19%; width: 15%; background: conic-gradient(from 158deg at 50% 0%, rgba(147,197,253,0.32) 0deg, rgba(37,99,235,0.06) 18deg, transparent 38deg); }
-        .spotlight-cone.r2 { right: 19%; width: 15%; background: conic-gradient(from 174deg at 50% 0%, rgba(147,197,253,0.32) 0deg, rgba(37,99,235,0.06) 18deg, transparent 38deg); }
-        .spotlight-cone.r1 { right: 3%;  width: 16%; background: conic-gradient(from 184deg at 50% 0%, rgba(147,197,253,0.42) 0deg, rgba(37,99,235,0.08) 22deg, transparent 42deg); }
+/* ==================== 2. 16:9 PROPORTIONAL SCALED CANVAS ==================== */
+/* 100% PURE CSS VELVET BACKGROUND (NO BAKED PNG WALLPAPER) */
+.stage-canvas-16-9 {
+    position: relative;
+    width: 1600px;
+    height: 900px;
+    flex-shrink: 0;
+    overflow: hidden;
+    transform-origin: center center;
+    background: radial-gradient(circle at 68% 40%, #540a18 0%, #35050e 40%, #1c0207 72%, #0d0103 100%);
+    box-shadow: 0 0 70px rgba(0, 0, 0, 0.95);
+}
 
-        /* Symmetrical Blue LED Dot-Matrix Wing Walls */
-        .stage-wing-wall {
-            position: absolute;
-            top: 4%;
-            width: 12%;
-            height: 84%;
-            background-image: radial-gradient(circle, #60a5fa 2.2px, transparent 3.2px);
-            background-size: 15px 15px;
-            opacity: 0.52;
-            mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 40%, transparent 88%);
-            -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 40%, transparent 88%);
-            pointer-events: none;
-            z-index: 2;
-        }
-        .stage-wing-wall.left { left: 0; }
-        .stage-wing-wall.right { right: 0; }
+/* ==================== 3. ORNATE DOUBLE GOLD BORDERS ==================== */
+.stage-border-outer {
+    position: absolute;
+    inset: 18px;
+    border: 1.5px solid rgba(212, 175, 55, 0.55);
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 6;
+}
+.stage-border-inner {
+    position: absolute;
+    inset: 24px;
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 6;
+}
 
-        /* 3D Sculpted Golden Stage Arches */
-        .stage-arch-beam {
-            position: absolute;
-            top: 0;
-            width: 16%;
-            height: 96%;
-            border: 14px solid #d97706;
-            border-color: #b45309 #f59e0b #d97706 #fde68a;
-            border-radius: 50%;
-            box-shadow: 0 0 35px rgba(245, 158, 11, 0.55), inset 0 0 25px rgba(0,0,0,0.85);
-            pointer-events: none;
-            z-index: 3;
-        }
-        .stage-arch-beam.left { left: -9%; transform: rotate(-10deg); }
-        .stage-arch-beam.right { right: -9%; transform: rotate(10deg); }
+/* ==================== 4. CORNER FLORAL ELEMENTS ==================== */
+.stage-floral {
+    position: absolute;
+    pointer-events: none;
+    z-index: 7;
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.7));
+}
+.stage-floral-tl {
+    top: -15px;
+    left: -15px;
+    width: 320px;
+}
+.stage-floral-tr {
+    top: -15px;
+    right: -15px;
+    width: 300px;
+    opacity: 0.85;
+}
+.stage-floral-bl {
+    bottom: -15px;
+    left: -15px;
+    width: 330px;
+    z-index: 8;
+}
+.stage-floral-br {
+    bottom: -15px;
+    right: -15px;
+    width: 320px;
+    opacity: 0.9;
+}
 
-        /* Glossy Circular Reflective Stage Floor */
-        .stage-floor-reflect {
-            position: absolute;
-            bottom: -32vh;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 88vw;
-            height: 52vh;
-            border-radius: 50%;
-            background: radial-gradient(ellipse at 50% 25%, rgba(37,99,235,0.7) 0%, rgba(10,31,106,0.9) 45%, #010619 88%);
-            border: 8px solid rgba(245, 158, 11, 0.8);
-            box-shadow: 0 0 70px rgba(37, 99, 235, 0.8), inset 0 0 45px rgba(245, 158, 11, 0.4);
-            pointer-events: none;
-            z-index: 2;
-        }
+/* ==================== 5. BOTTOM VELVET DRAPERY SHADOW ==================== */
+.stage-velvet-drape {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: radial-gradient(ellipse 110% 100% at 50% 100%, rgba(15, 1, 3, 0.96) 0%, rgba(35, 3, 9, 0.7) 45%, transparent 100%);
+    pointer-events: none;
+    z-index: 4;
+}
 
-        /* ==================== GRAND 3D TITLE CREST (WEDDING DOORPRIZE) ==================== */
-        .stage-header-crest {
-            position: relative;
-            z-index: 25;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex-shrink: 0;
-            margin-bottom: clamp(-20px, -2.2vh, -12px);
-        }
+/* ==================== 6. LEFT STAGE: ROMAN ARCH WITH PHOTO ==================== */
+/* UKURAN UTUH PADA DEFAULT/RESULT, MENYESUAIKAN DI BAWAH TITLE SAAT SPINNING (REPLIKA 15.43.58) */
+.stage-left-zone {
+    position: absolute;
+    left: 52px;
+    top: 48px;
+    width: 470px;
+    height: 804px;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.couple-arch-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 235px 235px 0 0;
+    border: 3.5px solid #d4af37;
+    outline: 1.5px solid rgba(253, 230, 138, 0.55);
+    outline-offset: 4px;
+    box-shadow: 
+        0 0 25px rgba(212, 175, 55, 0.45),
+        0 20px 45px rgba(0, 0, 0, 0.85);
+    overflow: hidden;
+    background: #150205;
+    transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.couple-arch-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.couple-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 6%;
+    transform: scale(1.09);
+    transform-origin: 50% 20%;
+    display: block;
+}
+.couple-arch-vignette {
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 45px rgba(10, 0, 2, 0.65);
+    background: linear-gradient(180deg, transparent 68%, rgba(18, 1, 4, 0.96) 100%);
+    pointer-events: none;
+}
 
-        .crest-rings {
-            filter: drop-shadow(0 0 16px rgba(254, 230, 138, 0.95));
-            margin-bottom: -8px;
-        }
-        .crest-rings svg {
-            width: clamp(54px, 4.8vw, 78px);
-            height: auto;
-        }
+/* ==================== 7. WEDDING TITLE HEADER ==================== */
+/* Posisi default / result: Kanan Atas (Replika 15.44.46). Saat spinning: Kiri Atas di atas foto (Replika 15.43.58) */
+.wedding-title-header {
+    position: absolute;
+    left: 565px;
+    width: 975px;
+    top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    z-index: 10;
+    transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wedding-hearts-icon {
+    margin-bottom: 0px;
+}
+.wedding-script-title {
+    font-family: 'Great Vibes', cursive;
+    font-size: 68px;
+    font-weight: 400;
+    line-height: 1.05;
+    margin-top: -6px;
+    background: linear-gradient(135deg, #fffbeb 0%, #fde68a 35%, #eab308 65%, #b45309 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8));
+    transition: font-size 0.55s ease;
+}
+.wedding-names-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: 1.5px;
+    margin-top: -4px;
+    background: linear-gradient(135deg, #ffffff 0%, #fffdfa 25%, #fde68a 55%, #eab308 85%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.9));
+    transition: font-size 0.55s ease;
+}
+.wedding-gold-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 6px;
+}
+.wedding-gold-divider .div-line {
+    width: 140px;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent 0%, #d4af37 50%, transparent 100%);
+    transition: width 0.55s ease;
+}
+.wedding-gold-divider .div-heart {
+    color: #fde68a;
+    font-size: 14px;
+    filter: drop-shadow(0 0 6px #d4af37);
+}
 
-        .crest-title-3d {
-            font-family: 'Cinzel', serif;
-            font-weight: 900;
-            text-align: center;
-            line-height: 1.02;
-            text-transform: uppercase;
-            background: linear-gradient(180deg, #ffffff 0%, #fffef0 25%, #fde68a 52%, #d97706 78%, #78350f 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 2px 0 #92400e)
-                    drop-shadow(0 4px 0 #5c2205)
-                    drop-shadow(0 8px 18px rgba(0, 0, 0, 0.92));
-        }
-        .title-top {
-            display: block;
-            font-size: clamp(1.4rem, 2.4vw, 2.4rem);
-            letter-spacing: 4px;
-        }
-        .title-bottom {
-            display: block;
-            font-size: clamp(1.8rem, 3.4vw, 3.4rem);
-            letter-spacing: 6px;
-        }
+/* Penyesuaian layout saat state-spinning agar 100% PERSIS dengan WhatsApp Image 2026-10-07 at 15.43.58.jpeg */
+.stage-canvas-16-9.state-spinning .wedding-title-header {
+    left: 45px;
+    top: 40px;
+    width: 450px;
+}
+.stage-canvas-16-9.state-spinning .wedding-script-title {
+    font-size: 54px;
+}
+.stage-canvas-16-9.state-spinning .wedding-names-title {
+    font-size: 42px;
+    letter-spacing: 1px;
+}
+.stage-canvas-16-9.state-spinning .wedding-gold-divider .div-line {
+    width: 90px;
+}
+.stage-canvas-16-9.state-spinning .stage-left-zone {
+    left: 45px;
+    top: 236px;
+    width: 450px;
+    height: 620px;
+}
+.stage-canvas-16-9.state-spinning .couple-arch-card {
+    border-radius: 200px 200px 0 0;
+}
 
-        /* Navy Ribbon with Gold Calligraphy */
-        .crest-ribbon {
-            position: relative;
-            margin-top: 2px;
-            background: linear-gradient(180deg, #091747 0%, #03081e 100%);
-            border: 2px solid #f59e0b;
-            border-radius: 9999px;
-            padding: 2px clamp(24px, 3.2vw, 44px);
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.45), 0 6px 14px rgba(0, 0, 0, 0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-        .crest-ribbon::before, .crest-ribbon::after {
-            content: '♥';
-            color: #fde68a;
-            font-size: 0.85rem;
-            filter: drop-shadow(0 0 6px #f59e0b);
-        }
-        .crest-ribbon-names {
-            font-family: 'Great Vibes', cursive;
-            font-size: clamp(1.35rem, 2vw, 2.1rem);
-            font-weight: 400;
-            letter-spacing: 2px;
-            background: linear-gradient(180deg, #ffffff 0%, #fff9db 40%, #fde68a 75%, #d97706 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
-        }
+/* ==================== 8. RIGHT STAGE: INTERACTIVE ZONE ==================== */
+.stage-right-zone {
+    position: absolute;
+    left: 565px;
+    width: 975px;
+    top: 255px;
+    bottom: 35px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    z-index: 10;
+    transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stage-canvas-16-9.state-spinning .stage-right-zone {
+    left: 520px;
+    width: 1030px;
+    top: 0px;
+    bottom: 0px;
+    height: 900px;
+}
 
-        /* ==================== THE GRAND GOLDEN MARQUEE BOARD ==================== */
-        .marquee-stage-board {
-            position: relative;
-            z-index: 10;
-            width: min(96vw, 1420px);
-            flex: 1;
-            min-height: 0;
-            background: linear-gradient(145deg, #fffef0 0%, #fde68a 22%, #b45309 48%, #f59e0b 74%, #451a03 100%);
-            border-radius: 36px;
-            padding: 12px;
-            box-shadow: 0 0 55px rgba(245, 158, 11, 0.5),
-                        0 24px 75px rgba(0, 0, 0, 0.95),
-                        inset 0 2px 4px #ffffff;
-            display: flex;
-            overflow: visible;
-        }
+/* Interactive Panels Container */
+.interactive-stage-panel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    flex-shrink: 0;
+}
 
-        .marquee-inner-surface {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            border-radius: 26px;
-            background: radial-gradient(ellipse at 50% 35%, #153ea8 0%, #0d2875 48%, #030c2c 95%);
-            border: 3px solid #78350f;
-            box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.92);
-            display: flex;
-            flex-direction: column;
-            padding: clamp(24px, 3.6vh, 36px) clamp(16px, 2.2vw, 28px) clamp(12px, 1.8vh, 20px);
-            overflow: hidden;
-        }
+.view-panel {
+    display: none;
+    position: absolute;
+    inset: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+.view-panel.active {
+    display: flex;
+}
 
-        /* Perimeter Tungsten Light Bulbs */
-        .marquee-bulbs-track {
-            position: absolute;
-            inset: -3px;
-            border-radius: 35px;
-            pointer-events: none;
-            z-index: 15;
-        }
-        .static-bulb {
-            position: absolute;
-            width: 13px;
-            height: 13px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 35%, #ffffff 0%, #ffea79 40%, #d97706 85%, #78350f 100%);
-            box-shadow: 0 0 10px #ffe066, 0 0 20px #f59e0b;
-        }
-        .static-bulb:nth-child(even) {
-            background: radial-gradient(circle at 35% 35%, #ffffff 0%, #ffd043 40%, #b45309 85%, #451a03 100%);
-            box-shadow: 0 0 8px #ffd043, 0 0 16px #d97706;
-        }
+/* ==================== 9. WINNER BARS (IDLE & RESULT STATES) ==================== */
+.bars-vertical-stack {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
 
-        /* 2-COLUMN SPLIT (5 BARS + REAL PHOTO FRAME) */
-        .board-split-columns {
-            position: relative;
-            z-index: 5;
-            width: 100%;
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            align-items: stretch;
-            gap: clamp(14px, 2.2vw, 28px);
-        }
+/* 1 Slot (Pemenang Tunggal / Grand Prize) */
+.bars-vertical-stack.single-slot {
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+.bars-vertical-stack.single-slot .winner-entry-bar {
+    height: 130px;
+    max-width: 960px;
+    gap: 22px;
+}
+.bars-vertical-stack.single-slot .bar-rank-badge {
+    width: 140px;
+    font-size: 58px;
+    border-radius: 18px;
+}
+.bars-vertical-stack.single-slot .bar-name-card {
+    padding: 0 36px;
+    border-radius: 18px;
+}
+.bars-vertical-stack.single-slot .winner-person-name {
+    font-size: 46px;
+}
 
-        /* ---------------- LEFT COLUMN: 5 FAMILY 100 WINNER BARS (~62%) ---------------- */
-        .col-participants-bars {
-            flex: 1.55;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            gap: 10px;
-        }
+/* 6 s/d 10 Slot (Multi-Winner 2 Kolom) */
+.bars-vertical-stack.two-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(5, 1fr);
+    gap: 10px 18px;
+    height: 100%;
+}
+.bars-vertical-stack.two-cols .winner-entry-bar {
+    height: 74px;
+    gap: 10px;
+}
+.bars-vertical-stack.two-cols .bar-rank-badge {
+    width: 75px;
+    font-size: 32px;
+    border-radius: 10px;
+}
+.bars-vertical-stack.two-cols .bar-name-card {
+    padding: 0 16px;
+    border-radius: 10px;
+}
+.bars-vertical-stack.two-cols .winner-person-name {
+    font-size: 26px;
+    max-width: 310px;
+}
+.bars-vertical-stack.two-cols .botanical-gold-leaf {
+    width: 80px;
+    height: 50px;
+    opacity: 0.35;
+}
 
-        .bars-top-title-badge {
-            align-self: flex-start;
-            background: linear-gradient(180deg, #fffbeb 0%, #fde047 35%, #d97706 80%, #78350f 100%);
-            padding: 5px 24px;
-            border-radius: 8px;
-            border: 1.5px solid #fde047;
-            box-shadow: 0 0 0 1.5px #78350f, 0 4px 12px rgba(0, 0, 0, 0.75), 0 0 14px rgba(245, 158, 11, 0.4);
-            font-size: clamp(0.72rem, 0.9vw, 0.88rem);
-            font-weight: 900;
-            letter-spacing: 2px;
-            color: #1c1103;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
+.winner-entry-bar {
+    width: 100%;
+    height: 88px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: transform 0.25s ease;
+}
 
-        .bars-vertical-stack {
-            display: flex;
-            flex-direction: column;
-            gap: clamp(8px, 1.3vh, 16px);
-            flex: 1;
-            min-height: 0;
-            justify-content: space-between;
-        }
+/* Kotak Nomor Urut: Burgundy Gelap + Bingkai Emas */
+.bar-rank-badge {
+    width: 110px;
+    height: 100%;
+    background: linear-gradient(145deg, #4d0c18 0%, #250308 100%);
+    border: 2px solid #d4af37;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 46px;
+    font-weight: 700;
+    color: #ffffff;
+    box-shadow: 
+        0 4px 14px rgba(0, 0, 0, 0.5),
+        inset 0 1px 1px rgba(253, 230, 138, 0.6);
+    flex-shrink: 0;
+}
 
-        /* Family 100 Style Answer Bar */
-        .family-participant-bar {
-            position: relative;
-            background: linear-gradient(180deg, #030b2e 0%, #081d68 50%, #030b2e 100%);
-            border: 2.5px solid #d97706;
-            border-radius: 14px;
-            padding: clamp(7px, 1.1vh, 11px) clamp(12px, 1.4vw, 18px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.15),
-                        0 4px 12px rgba(0, 0, 0, 0.7),
-                        0 0 12px rgba(217, 119, 6, 0.25);
-            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            flex: 1;
-            max-height: 74px;
-        }
-        .family-participant-bar:hover {
-            border-color: #fde68a;
-            transform: translateX(4px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85), 0 0 20px rgba(245, 158, 11, 0.45);
-        }
-        .family-participant-bar.revealed {
-            background: linear-gradient(180deg, #051a66 0%, #0d35ad 50%, #051a66 100%);
-            border-color: #fde68a;
-            box-shadow: 0 0 24px rgba(245, 158, 11, 0.75), inset 0 0 10px rgba(245, 158, 11, 0.3);
-        }
+/* Kartu Nama (Kanan): Champagne Cream Pearl + Border Emas */
+.bar-name-card {
+    flex: 1;
+    height: 100%;
+    background: var(--cream-card-bg);
+    border: 2.2px solid #dfa732;
+    border-radius: 12px;
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.4),
+        0 0 12px rgba(212, 175, 55, 0.25),
+        inset 0 1px 1px rgba(255, 255, 255, 1);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    position: relative;
+    overflow: hidden;
+}
 
-        /* 3D Golden Sphere Rank Badge (Exact Family 100 Coin) */
-        .sphere-rank-badge {
-            flex: none;
-            width: clamp(34px, 2.5vw, 42px);
-            height: clamp(34px, 2.5vw, 42px);
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 30%, #fffef0 0%, #fde68a 32%, #f59e0b 65%, #92400e 90%, #451a03 100%);
-            border: 2px solid #fde047;
-            box-shadow: 0 0 0 1.5px #78350f, 0 3px 8px rgba(0, 0, 0, 0.7), 0 0 10px rgba(245, 158, 11, 0.6);
-            display: grid;
-            place-items: center;
-            font-size: clamp(1.1rem, 1.35vw, 1.4rem);
-            font-weight: 900;
-            color: #1a0e02;
-        }
+/* Nama Pemenang: Playfair Display Bold Burgundy Gelap */
+.winner-name-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    z-index: 2;
+    overflow: hidden;
+}
+.winner-person-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--card-text-dark);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 680px;
+}
+.winner-cat-badge {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #881329;
+    background: rgba(220, 38, 38, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    padding: 3px 12px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8);
+    display: none;
+}
+.winner-cat-badge.visible,
+.winner-cat-badge:not(:empty) {
+    display: inline-block;
+}
 
-        .bar-label-container {
-            display: flex;
-            flex-direction: column;
-            margin-left: 12px;
-            flex: 1;
-            min-width: 0;
-        }
-        .bar-rank-heading {
-            font-size: clamp(0.72rem, 0.85vw, 0.9rem);
-            font-weight: 800;
-            color: #fde68a;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-        .bar-status-sub {
-            font-size: clamp(0.62rem, 0.72vw, 0.76rem);
-            font-weight: 700;
-            color: #93c5fd;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+/* Botanical Gold Leaf Watermark di Kanan Bar */
+.botanical-gold-leaf {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 120px;
+    height: 70px;
+    pointer-events: none;
+    opacity: 0.55;
+    z-index: 1;
+}
 
-        /* Participant Name Display Window */
-        .bar-participant-window {
-            background: #010619;
-            border: 2px solid #b45309;
-            border-radius: 10px;
-            padding: clamp(4px, 0.7vh, 7px) clamp(12px, 1.4vw, 18px);
-            box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.95), 0 0 10px rgba(217, 119, 6, 0.35);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: clamp(180px, 19vw, 260px);
-            text-align: center;
-        }
+/* Standby Styling (View Idle) */
+.standby-card {
+    justify-content: center;
+    background: linear-gradient(90deg, rgba(254, 248, 244, 0.85) 0%, rgba(250, 240, 231, 0.75) 50%, rgba(246, 228, 214, 0.85) 100%);
+    border: 1.8px dashed rgba(223, 167, 50, 0.7);
+}
+.standby-text-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 2;
+}
+.standby-shimmer-dots {
+    color: #dfa732;
+    font-size: 13px;
+    letter-spacing: 4px;
+    animation: goldDotsShimmer 2.2s infinite ease-in-out;
+}
+.standby-label-badge {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: #831843;
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    padding: 5px 16px;
+    border-radius: 20px;
+}
+@keyframes goldDotsShimmer {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; filter: drop-shadow(0 0 6px #f59e0b); }
+}
 
-        /* Golden Dots When Unrevealed (Matching Family 100) */
-        .slot-dots-unrevealed {
-            font-size: clamp(1.2rem, 1.6vw, 1.8rem);
-            color: #fde68a;
-            letter-spacing: 6px;
-            filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
-        }
+/* ==================== 10. GACHA ROULETTE CARD (EXACT REPLICA OF WhatsApp Image 2026-10-07 at 15.43.58.jpeg) ==================== */
+.gacha-mockup-card {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 135px;
+    height: 645px;
+    background: linear-gradient(145deg, rgba(78, 5, 22, 0.94) 0%, rgba(42, 1, 10, 0.98) 100%);
+    border: 2px solid #d4af37;
+    border-radius: 26px;
+    box-shadow: 
+        0 0 35px rgba(212, 175, 55, 0.35),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35),
+        0 25px 60px rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    overflow: visible;
+}
 
-        /* Revealed Participant Name */
-        .participant-name-text {
-            font-size: clamp(1.05rem, 1.4vw, 1.55rem);
-            font-weight: 900;
-            letter-spacing: 1px;
-            color: #ffffff;
-            background: linear-gradient(180deg, #ffffff 0%, #fffef0 40%, #fde68a 75%, #f59e0b 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 12px rgba(245, 158, 11, 0.65);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-        }
+/* Top Pill Badge: [ 🔀 ] Mengacak Nama... ─ */
+.gacha-top-badge {
+    position: absolute;
+    top: -27px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 54px;
+    padding: 0 32px 0 10px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #780216 0%, #4a020d 50%, #680516 100%);
+    border: 1.8px solid #fde68a;
+    box-shadow: 
+        0 0 22px rgba(245, 158, 11, 0.55),
+        inset 0 1px 2px rgba(255, 255, 255, 0.6),
+        0 8px 24px rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 20;
+}
+.gacha-top-badge::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 20%;
+    width: 60%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ffffff, transparent);
+    opacity: 0.85;
+}
+.badge-shuffle-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #991b1b;
+    border: 1.5px solid rgba(253, 230, 138, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.7);
+    flex-shrink: 0;
+}
+.badge-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 19px;
+    font-weight: 600;
+    color: #fff8ed;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+}
+.badge-gold-dash {
+    width: 22px;
+    height: 1.5px;
+    background: #d4af37;
+    margin-left: 2px;
+    opacity: 0.85;
+}
 
+/* ==================== 10. 5-LINE GACHA ROULETTE (INDIVIDUAL ARROWS ON EVERY LINE) ==================== */
+.gacha-mockup-card.gacha-card-5lines {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 125px;
+    height: 660px;
+    background: linear-gradient(145deg, rgba(78, 5, 22, 0.94) 0%, rgba(42, 1, 10, 0.98) 100%);
+    border: 2px solid #d4af37;
+    border-radius: 26px;
+    box-shadow: 
+        0 0 35px rgba(212, 175, 55, 0.35),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35),
+        0 25px 60px rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    overflow: visible;
+}
 
+/* Horizontal Dividing Lines Between Lines */
+.gacha-h-divider {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent 2%, rgba(212, 175, 55, 0.4) 15%, rgba(212, 175, 55, 0.75) 50%, rgba(212, 175, 55, 0.4) 85%, transparent 98%);
+    pointer-events: none;
+    z-index: 2;
+}
 
-        /* ---------------- RIGHT COLUMN: SLOT FOTO MEMPELAI (~38%) ---------------- */
-        .col-couple-portrait {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 0;
-        }
+/* Vertical Divider for 2-column mode (slots > 5) */
+.gacha-v-divider {
+    position: absolute;
+    top: 25px;
+    bottom: 25px;
+    left: 50%;
+    width: 1.5px;
+    background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.4) 30%, rgba(212, 175, 55, 0.4) 70%, transparent 100%);
+    pointer-events: none;
+    z-index: 2;
+    display: none;
+}
+.gacha-mockup-card.slots-multi .gacha-v-divider {
+    display: block;
+}
 
-        .couple-portrait-outer-frame {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(145deg, #fffef0 0%, #fde68a 25%, #b45309 50%, #f59e0b 75%, #451a03 100%);
-            border-radius: 22px;
-            padding: 8px;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.9),
-                        0 0 28px rgba(245, 158, 11, 0.4);
-            display: flex;
-            flex-direction: column;
-        }
+/* 2-Column Multi Slot (6 s/d 10 Pemenang) */
+.gacha-mockup-card.slots-multi .gacha-line-row {
+    width: calc(50% - 16px);
+}
+.gacha-mockup-card.slots-multi .gacha-line-row[data-col="0"] {
+    left: 8px;
+    right: auto;
+}
+.gacha-mockup-card.slots-multi .gacha-line-row[data-col="1"] {
+    left: auto;
+    right: 8px;
+}
+.gacha-mockup-card.slots-multi .name-pill.pill-edge {
+    display: none;
+}
+.gacha-mockup-card.slots-multi .line-side-pills {
+    margin: 0 8px;
+    gap: 8px;
+}
+.gacha-mockup-card.slots-multi .name-pill.pill-normal {
+    width: 95px;
+    font-size: 13px;
+    padding: 0 10px;
+}
+.gacha-mockup-card.slots-multi .line-target-slot-container {
+    width: 250px;
+}
+.gacha-mockup-card.slots-multi .name-pill.pill-target-center {
+    width: 240px;
+    height: 54px;
+}
+.gacha-mockup-card.slots-multi .target-name-txt {
+    font-size: 19px;
+}
+.gacha-mockup-card.slots-multi .line-gold-badge {
+    left: 8px;
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+}
 
-        .couple-portrait-card {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            border-radius: 15px;
-            background: radial-gradient(ellipse at 50% 35%, #0e297a 0%, #061548 65%, #02071d 100%);
-            border: 2px solid #78350f;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px;
-        }
+/* 5 Horizontal Line Rows */
+.gacha-line-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 3;
+    transition: all 0.35s ease;
+}
 
-        .portrait-top-badge {
-            background: linear-gradient(180deg, #fffef0 0%, #fde68a 35%, #d97706 80%, #78350f 100%);
-            border: 1.5px solid #fde047;
-            border-radius: 6px;
-            padding: 3px 16px;
-            font-size: clamp(0.68rem, 0.8vw, 0.78rem);
-            font-weight: 900;
-            color: #1a0e02;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            box-shadow: 0 0 0 1.5px #78350f, 0 3px 8px rgba(0, 0, 0, 0.55);
-            z-index: 5;
-        }
+/* Luxury Gold Rank Badge on Left (1 s/d 5) */
+.line-gold-badge {
+    position: absolute;
+    left: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #5c071a 0%, #29010a 100%);
+    border: 1.5px solid #d4af37;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 800;
+    color: #fde68a;
+    z-index: 6;
+    transition: all 0.4s ease;
+}
 
-        /* ELEGANT COUPLE INITIALS & MONOGRAM DISPLAY */
-        .portrait-artwork-viewport {
-            position: relative;
-            width: 100%;
-            flex: 1;
-            min-height: 0;
-            margin: 6px 0;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid rgba(245, 158, 11, 0.6);
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.85), 0 0 16px rgba(37, 99, 235, 0.35);
-            background: radial-gradient(circle at center, #0f2b80 0%, #061548 60%, #010619 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 14px;
-            text-align: center;
-        }
+/* Side Flanking Name Streams (Selang-seling Kiri-Kanan) */
+.line-side-pills {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 16px;
+}
+.line-side-pills.dir-rtl {
+    animation: ribbonSwayRTL 0.6s ease-in-out infinite alternate;
+}
+.line-side-pills.dir-ltr {
+    animation: ribbonSwayLTR 0.6s ease-in-out infinite alternate;
+}
+@keyframes ribbonSwayRTL {
+    0% { transform: translateX(8px); }
+    100% { transform: translateX(-8px); }
+}
+@keyframes ribbonSwayLTR {
+    0% { transform: translateX(-8px); }
+    100% { transform: translateX(8px); }
+}
 
-        .portrait-monogram-circle {
-            width: clamp(70px, 8vw, 105px);
-            height: clamp(70px, 8vw, 105px);
-            border-radius: 50%;
-            border: 2.5px solid #f59e0b;
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), inset 0 0 15px rgba(245, 158, 11, 0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: radial-gradient(circle at center, #1e40af 0%, #0a1f6a 80%);
-            margin-bottom: 8px;
-        }
+/* Center Target Slot on Every Line with Dedicated Pointers (▼ & ▲) */
+.line-target-slot-container {
+    position: relative;
+    width: 360px;
+    height: 132px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    flex-shrink: 0;
+}
 
-        .monogram-script-ah {
-            font-family: 'Great Vibes', cursive;
-            font-size: clamp(2rem, 3.2vw, 3.4rem);
-            color: #fde68a;
-            text-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
-            line-height: 0.9;
-        }
+/* 3D Gold Arrow Pointers per Line */
+.line-pointer {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 7;
+    transition: all 0.3s ease;
+}
+.line-pointer.line-pointer-down {
+    top: 6px;
+    animation: pointerFloatDown 1.3s infinite ease-in-out;
+}
+.line-pointer.line-pointer-up {
+    bottom: 6px;
+    animation: pointerFloatUp 1.3s infinite ease-in-out;
+}
+@keyframes pointerFloatDown {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(2.5px); }
+}
+@keyframes pointerFloatUp {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-2.5px); }
+}
 
-        .wedding-rings-ornament {
-            margin-top: 4px;
-        }
-        .wedding-rings-ornament svg {
-            width: clamp(34px, 3vw, 42px);
-            height: auto;
-        }
+/* Normal Name Pill */
+.name-pill.pill-normal {
+    min-width: 210px;
+    max-width: 245px;
+    height: 56px;
+    background: linear-gradient(180deg, rgba(255, 252, 250, 0.94) 0%, rgba(255, 244, 240, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    font-family: 'Playfair Display', serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: #3d0510;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.25s ease;
+}
 
-        .portrait-subtitle-label {
-            font-size: clamp(0.7rem, 0.85vw, 0.85rem);
-            font-weight: 800;
-            color: #fde68a;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-top: 6px;
-        }
+/* Edge Blurred Name Pill */
+.name-pill.pill-edge {
+    min-width: 170px;
+    max-width: 200px;
+    height: 56px;
+    background: rgba(255, 240, 235, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(74, 7, 21, 0.85);
+    filter: blur(3px);
+    opacity: 0.42;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
-        .portrait-date-text {
-            font-size: clamp(0.62rem, 0.72vw, 0.74rem);
-            color: #93c5fd;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-top: 2px;
-        }
+/* Center Highlighted Target Pill */
+.name-pill.pill-target-center {
+    width: 350px;
+    height: 64px;
+    background: linear-gradient(180deg, #ffffff 0%, #fffef7 50%, #fef3c7 100%);
+    border: 2.2px solid #d4af37;
+    border-radius: 14px;
+    box-shadow: 
+        0 0 24px rgba(251, 191, 36, 0.8),
+        0 0 45px rgba(245, 158, 11, 0.4),
+        inset 0 1px 2px #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    z-index: 5;
+    flex-shrink: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.target-name-txt {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: #2e050e;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
-        .portrait-bottom-banner {
-            width: 100%;
-            background: linear-gradient(180deg, #091747 0%, #03081e 100%);
-            border: 1.5px solid #d97706;
-            border-radius: 9px;
-            padding: 4px 10px;
-            text-align: center;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
-            z-index: 5;
-        }
-        .portrait-couple-title {
-            font-family: 'Great Vibes', cursive;
-            font-size: clamp(1.25rem, 1.6vw, 1.7rem);
-            color: #fde68a;
-            text-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
-            line-height: 1.1;
-        }
-        .portrait-couple-sub {
-            font-size: clamp(0.6rem, 0.7vw, 0.72rem);
-            font-weight: 700;
-            color: #93c5fd;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
+/* Locked Line Visual Effects */
+.gacha-line-row.locked .line-side-pills {
+    animation: none;
+}
+.gacha-line-row.locked .line-gold-badge {
+    background: linear-gradient(145deg, #fffbeb 0%, #fde68a 40%, #d4af37 100%);
+    color: #2b0c14;
+    border-color: #ffffff;
+    box-shadow: 0 0 18px #f59e0b;
+    transform: scale(1.12);
+}
+.gacha-line-row.locked .line-pointer {
+    animation: none;
+    filter: drop-shadow(0 0 8px #ffffff);
+}
+.gacha-line-row.locked .name-pill.pill-target-center {
+    animation: targetWinnerFlare 0.8s ease-out forwards;
+}
+@keyframes targetWinnerFlare {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 20px #f59e0b;
+    }
+    40% {
+        transform: scale(1.06);
+        box-shadow: 0 0 50px #ffffff, 0 0 80px #f59e0b;
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 30px rgba(251, 191, 36, 0.95), 0 0 60px rgba(245, 158, 11, 0.6);
+    }
+}
 
+/* ==================== 11. CELEBRATION MODAL POPUP ==================== */
+.celebration-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 0, 3, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.celebration-popup-overlay.active {
+    display: flex;
+}
+.celebration-popup-card {
+    background: radial-gradient(circle at 50% 30%, #540a18 0%, #29040b 60%, #120104 100%);
+    border: 2.5px solid #d4af37;
+    border-radius: 28px;
+    box-shadow: 
+        0 0 50px rgba(212, 175, 55, 0.5),
+        0 25px 60px rgba(0, 0, 0, 0.9);
+    width: 90%;
+    max-width: 900px;
+    padding: 36px 42px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.popup-crown-emblem {
+    font-size: 52px;
+    margin-bottom: 8px;
+}
+.popup-header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 1.5px;
+    background: linear-gradient(135deg, #ffffff 0%, #fde68a 60%, #eab308 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.popup-header-sub {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fde68a;
+    letter-spacing: 3px;
+    margin-top: 4px;
+    margin-bottom: 24px;
+}
+.popup-winners-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 24px;
+}
+.popup-winner-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--cream-card-bg);
+    border: 2px solid #dfa732;
+    border-radius: 12px;
+    padding: 10px 18px;
+}
+.popup-winner-rank {
+    width: 44px;
+    height: 44px;
+    background: #4d0c18;
+    border: 1.5px solid #d4af37;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+.popup-winner-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #300710;
+    flex: 1;
+    text-align: left;
+}
+.btn-close-popup {
+    height: 46px;
+    padding: 0 32px;
+    background: linear-gradient(135deg, #fffbeb 0%, #fde68a 30%, #d4af37 70%, #92400e 100%);
+    border: 1px solid #fff;
+    border-radius: 23px;
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #2b0c14;
+    cursor: pointer;
+}
+.popup-dismiss-hint {
+    font-size: 11px;
+    color: rgba(254, 243, 199, 0.5);
+    margin-top: 10px;
+    letter-spacing: 1.5px;
+}
 
+/* ==================== 12. RESPONSIVE DESIGN (TABLET & MOBILE) ==================== */
+@media (max-width: 1023px), (orientation: portrait), (max-height: 580px) {
+    html, body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: auto !important;
+        min-height: 100vh;
+    }
 
-        /* ==================== CELEBRATION WINNER POPUP ==================== */
-        .celebration-popup-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 300;
-            background: rgba(1, 6, 25, 0.94);
-            backdrop-filter: blur(14px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.35s ease;
-            padding: 24px;
-        }
-        .celebration-popup-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .celebration-popup-card {
-            position: relative;
-            background: radial-gradient(circle at center, #143ca8 0%, #0a1f6a 65%, #02071d 100%);
-            border: 5px solid #f59e0b;
-            border-radius: 36px;
-            padding: clamp(24px, 3.8vh, 42px) clamp(28px, 3.5vw, 56px);
-            text-align: center;
-            box-shadow: 0 0 45px rgba(245, 158, 11, 0.38),
-                        0 28px 85px rgba(0, 0, 0, 0.98);
-            transform: scale(0.9) translateY(10px);
-            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-width: 860px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .celebration-popup-overlay.active .celebration-popup-card {
-            transform: scale(1) translateY(0);
-        }
+    .stage-viewport-shell {
+        position: relative !important;
+        inset: auto !important;
+        width: 100vw !important;
+        height: auto !important;
+        min-height: 100vh;
+        display: block !important;
+        padding: 16px 12px 40px !important;
+        overflow-y: visible !important;
+        overflow-x: hidden !important;
+    }
 
-        .popup-header-title {
-            font-family: 'Cinzel', serif;
-            font-size: clamp(1.8rem, 2.8vw, 2.7rem);
-            font-weight: 900;
-            color: #fffef0;
-            text-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
-            margin-bottom: 6px;
-            line-height: 1.15;
-            letter-spacing: 1px;
-        }
+    .stage-canvas-16-9 {
+        position: relative !important;
+        width: 100% !important;
+        max-width: 760px !important;
+        height: auto !important;
+        min-height: calc(100vh - 32px) !important;
+        margin: 0 auto !important;
+        transform: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        padding: 24px 14px 34px !important;
+        border-radius: 18px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85);
+    }
 
-        .popup-header-sub {
-            font-size: clamp(0.78rem, 0.95vw, 0.92rem);
-            font-weight: 700;
-            color: #fde68a;
-            letter-spacing: 2px;
-            margin-bottom: 24px;
-            text-transform: uppercase;
-        }
+    .stage-border-outer {
+        inset: 8px;
+    }
+    .stage-border-inner {
+        inset: 12px;
+    }
 
-        /* 3-Column Grid: Row 1 = 3 cards, Row 2 = 2 cards */
-        .popup-winners-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-            margin-bottom: 24px;
-        }
-        @media (max-width: 768px) {
-            .popup-winners-grid {
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            }
-        }
+    .stage-floral-tl {
+        width: 130px;
+        top: -10px;
+        left: -10px;
+    }
+    .stage-floral-tr {
+        width: 110px;
+        top: -10px;
+        right: -10px;
+    }
+    .stage-floral-bl {
+        width: 130px;
+        bottom: -10px;
+        left: -10px;
+    }
+    .stage-floral-br {
+        width: 130px;
+        bottom: -10px;
+        right: -10px;
+    }
 
-        .winner-card-cell {
-            background: #010619;
-            border: 2px solid #b45309;
-            border-radius: 14px;
-            padding: clamp(12px, 1.8vh, 18px) 12px;
-            box-shadow: inset 0 0 14px rgba(0,0,0,0.9), 0 4px 12px rgba(0, 0, 0, 0.6);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 5px;
-            transition: transform 0.2s ease, border-color 0.2s ease;
-        }
-        .winner-card-cell:hover {
-            transform: translateY(-3px);
-            border-color: #fde047;
-        }
+    /* Wedding Title Header Mobile in All States */
+    .stage-canvas-16-9 .wedding-title-header,
+    .stage-canvas-16-9.state-spinning .wedding-title-header,
+    .stage-canvas-16-9.state-result .wedding-title-header,
+    .stage-canvas-16-9.state-stopped .wedding-title-header {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        margin: 8px 0 14px 0 !important;
+        text-align: center !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    .wedding-names-title,
+    .stage-canvas-16-9.state-spinning .wedding-names-title {
+        font-size: clamp(1.8rem, 6.5vw, 2.7rem) !important;
+    }
+    .wedding-script-title,
+    .stage-canvas-16-9.state-spinning .wedding-script-title {
+        font-size: clamp(1.6rem, 5.5vw, 2.3rem) !important;
+    }
 
-        .winner-card-rank {
-            font-size: clamp(0.68rem, 0.75vw, 0.78rem);
-            font-weight: 800;
-            color: #fde68a;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
+    /* Couple Arch Photo Mobile in All States */
+    .stage-canvas-16-9 .stage-left-zone,
+    .stage-canvas-16-9.state-spinning .stage-left-zone,
+    .stage-canvas-16-9.state-result .stage-left-zone,
+    .stage-canvas-16-9.state-stopped .stage-left-zone {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        display: flex !important;
+        justify-content: center !important;
+        margin-bottom: 22px !important;
+        transition: none !important;
+    }
+    .couple-arch-card,
+    .stage-canvas-16-9.state-spinning .couple-arch-card {
+        width: 160px !important;
+        height: 220px !important;
+        border-radius: 80px 80px 14px 14px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    }
 
-        .winner-card-name {
-            font-size: clamp(1.05rem, 1.25vw, 1.3rem);
-            font-weight: 900;
-            color: #ffffff;
-            letter-spacing: 0.5px;
-            line-height: 1.2;
-            word-break: break-word;
-        }
+    /* Right Stage Interactive Panel Mobile in All States */
+    .stage-canvas-16-9 .stage-right-zone,
+    .stage-canvas-16-9.state-spinning .stage-right-zone,
+    .stage-canvas-16-9.state-result .stage-right-zone,
+    .stage-canvas-16-9.state-stopped .stage-right-zone {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+    .interactive-stage-panel {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+    }
 
-        .winner-card-tag {
-            font-size: clamp(0.64rem, 0.7vw, 0.74rem);
-            font-weight: 800;
-            color: #55efc4;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
+    .view-panel {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        display: none;
+    }
+    .view-panel.active {
+        display: block !important;
+    }
 
-        .btn-close-popup {
-            background: linear-gradient(180deg, #fffbeb 0%, #fde047 30%, #f59e0b 70%, #b45309 100%);
-            border: 2px solid #fde047;
-            border-radius: 9999px;
-            padding: 10px 48px;
-            font-size: clamp(0.85rem, 0.95vw, 1rem);
-            font-weight: 900;
-            letter-spacing: 2px;
-            color: #1a0e02;
-            cursor: pointer;
-            box-shadow: 0 0 0 2px #78350f, 0 6px 20px rgba(0, 0, 0, 0.8);
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-transform: uppercase;
-        }
-        .btn-close-popup:hover {
-            transform: scale(1.04);
-            box-shadow: 0 0 0 2px #92400e, 0 8px 26px rgba(0, 0, 0, 0.9);
-        }
+    /* Gacha Card Mobile */
+    .gacha-mockup-card.gacha-card-5lines {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 42px 8px 18px !important;
+        margin-top: 24px !important;
+    }
+    .gacha-top-badge {
+        top: -24px !important;
+        height: 48px !important;
+        padding: 0 18px 0 8px !important;
+    }
+    .badge-text {
+        font-size: 13px !important;
+    }
+    .badge-shuffle-circle {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    .gacha-lines-viewport {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    .gacha-line-row {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 74px !important;
+        padding: 8px 4px !important;
+        margin: 0 !important;
+        border-bottom: 1px solid rgba(229, 195, 134, 0.22) !important;
+    }
+    .gacha-h-divider, .gacha-v-divider {
+        display: none !important;
+    }
+    .line-gold-badge {
+        position: relative !important;
+        left: auto !important;
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 14px !important;
+        margin-right: 8px !important;
+        flex-shrink: 0;
+    }
+    .line-side-pills.side-left,
+    .line-side-pills.side-right {
+        display: none !important;
+    }
+    .line-target-slot-container {
+        width: 100% !important;
+        max-width: 310px !important;
+        height: 70px !important;
+    }
+    .name-pill.pill-target-center {
+        width: 100% !important;
+        max-width: 290px !important;
+        height: 48px !important;
+    }
+    .target-name-txt {
+        font-size: 17px !important;
+    }
 
-        .popup-dismiss-hint {
-            margin-top: 10px;
-            font-size: 0.74rem;
-            color: #93c5fd;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            opacity: 0.85;
-        }
-
-        /* Dynamic Slots Adaptation (1 to 10 winners) */
-        .bars-vertical-stack.single-winner {
-            justify-content: center;
-        }
-        .bars-vertical-stack.single-winner .family-participant-bar {
-            max-height: 120px;
-            padding: 16px 24px;
-        }
-        .bars-vertical-stack.single-winner .sphere-rank-badge {
-            width: clamp(48px, 4vw, 64px);
-            height: clamp(48px, 4vw, 64px);
-            font-size: clamp(1.6rem, 2vw, 2.2rem);
-        }
-        .bars-vertical-stack.single-winner .bar-rank-heading {
-            font-size: clamp(1rem, 1.2vw, 1.3rem);
-        }
-        .bars-vertical-stack.single-winner .participant-name-text {
-            font-size: clamp(1.8rem, 2.6vw, 3rem);
-        }
-
-        .bars-vertical-stack.two-columns {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            grid-auto-flow: column;
-            grid-template-rows: repeat(5, minmax(0, 1fr));
-            gap: clamp(6px, 1vh, 10px);
-        }
-        .bars-vertical-stack.two-columns .family-participant-bar {
-            max-height: 58px;
-            padding: 4px 10px;
-            border-width: 2px;
-        }
-        .bars-vertical-stack.two-columns .sphere-rank-badge {
-            width: 28px;
-            height: 28px;
-            font-size: 0.92rem;
-        }
-        .bars-vertical-stack.two-columns .bar-rank-heading {
-            font-size: 0.68rem;
-            letter-spacing: 0.8px;
-        }
-        .bars-vertical-stack.two-columns .bar-status-sub {
-            font-size: 0.6rem;
-        }
-        .bars-vertical-stack.two-columns .participant-name-text {
-            font-size: clamp(0.85rem, 1.1vw, 1.15rem);
-        }
-        .bars-vertical-stack.two-columns .slot-dots-unrevealed {
-            font-size: 0.95rem;
-        }
-
+    /* Winner Bars & Standby Bars Mobile */
+    .bars-vertical-stack {
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    .bars-vertical-stack.two-cols {
+        grid-template-columns: 1fr !important;
+        grid-auto-flow: row !important;
+    }
+    .winner-entry-bar {
+        height: auto !important;
+        min-height: 64px !important;
+        padding: 6px !important;
+        gap: 10px !important;
+    }
+    .bar-rank-badge {
+        width: 52px !important;
+        height: 52px !important;
+        font-size: 22px !important;
+        border-radius: 8px !important;
+    }
+    .bar-name-card {
+        padding: 8px 14px !important;
+        min-height: 52px !important;
+    }
+    .winner-person-name {
+        font-size: 18px !important;
+        max-width: 220px !important;
+    }
+    .botanical-gold-leaf {
+        display: none !important;
+    }
+    .standby-label-badge {
+        font-size: 14px !important;
+        padding: 4px 12px !important;
+    }
+}
