@@ -47,6 +47,61 @@ class DoorprizeParticipantsTest extends TestCase
             ->assertSee('data-name="Rina Marlina"', false);
     }
 
+    public function test_inline_edit_updates_name_category_and_status(): void
+    {
+        $participant = Participant::factory()->create(['name' => 'Budi', 'category' => 'Umum']);
+        $url = route('doorprize.participants.update', $participant);
+
+        $this->patchJson($url, ['field' => 'name', 'value' => '  Budi   Santoso '])
+            ->assertOk()->assertJson(['name' => 'Budi Santoso']);
+        $this->patchJson($url, ['field' => 'category', 'value' => 'Teman CPP'])
+            ->assertOk()->assertJson(['category' => 'Teman CPP']);
+        $this->patchJson($url, ['field' => 'status', 'value' => 'PEMENANG'])
+            ->assertOk()->assertJson(['status' => 'PEMENANG']);
+
+        $participant->refresh();
+        $this->assertSame('Budi Santoso', $participant->name);
+        $this->assertSame('Teman CPP', $participant->category);
+        $this->assertTrue($participant->isWinner());
+
+        $this->patchJson($url, ['field' => 'status', 'value' => ''])
+            ->assertOk()->assertJson(['status' => '']);
+        $this->assertFalse($participant->refresh()->isWinner());
+    }
+
+    public function test_inline_edit_rejects_invalid_values(): void
+    {
+        Participant::factory()->create(['name' => 'Rina']);
+        $participant = Participant::factory()->create(['name' => 'Budi']);
+        $url = route('doorprize.participants.update', $participant);
+
+        $this->patchJson($url, ['field' => 'name', 'value' => ' '])->assertStatus(422);
+        $this->patchJson($url, ['field' => 'name', 'value' => 'rina'])->assertStatus(422);
+        $this->patchJson($url, ['field' => 'category', 'value' => 'Lainnya'])->assertStatus(422);
+        $this->patchJson($url, ['field' => 'status', 'value' => 'MENANG'])->assertStatus(422);
+        $this->patchJson($url, ['field' => 'nomor', 'value' => '3'])->assertStatus(422);
+
+        $this->assertSame('Budi', $participant->refresh()->name);
+    }
+
+    public function test_participants_table_shows_the_win_time_column(): void
+    {
+        $winner = Participant::factory()->create(['name' => 'Budi', 'won_at' => now()->subMinutes(5)]);
+        Participant::factory()->create(['name' => 'Rina']);
+
+        $this->get(route('doorprize'))->assertOk()
+            ->assertSee('data-dt-sort="wonAt"', false)
+            ->assertSee('data-won-at="'.$winner->won_at->toIso8601String().'"', false)
+            ->assertSee('data-col-won-at', false)
+            ->assertSee($winner->won_at->diffForHumans());
+
+        $rina = Participant::where('name', 'Rina')->first();
+        $this->patchJson(route('doorprize.participants.update', $rina), ['field' => 'status', 'value' => 'PEMENANG'])
+            ->assertOk()
+            ->assertJsonPath('status', 'PEMENANG')
+            ->assertJsonStructure(['won_at', 'won_at_human', 'won_at_formatted']);
+    }
+
     public function test_doorprize_page_renders_with_its_components(): void
     {
         $this->get(route('doorprize'))->assertOk()
@@ -65,13 +120,11 @@ class DoorprizeParticipantsTest extends TestCase
             ->assertSee('Budi Santoso');
     }
 
-    public function test_template_downloads_as_an_xlsx_with_the_header_in_the_first_sheet(): void
+    /** @return array<string, list<mixed>> nama sheet => nilai kolom A tiap baris */
+    private function readSheets(string $content): array
     {
-        $response = $this->get(route('doorprize.template'))->assertOk();
-        $this->assertStringContainsString('template-peserta-doorprize.xlsx', $response->headers->get('content-disposition'));
-
         $path = tempnam(sys_get_temp_dir(), 'tpl');
-        file_put_contents($path, $response->streamedContent());
+        file_put_contents($path, $content);
 
         $reader = new Reader;
         $reader->open($path);
@@ -85,8 +138,101 @@ class DoorprizeParticipantsTest extends TestCase
         }
         $reader->close();
 
-        $this->assertSame(['Nama Peserta'], $sheets['Peserta']);
-        $this->assertArrayHasKey('Petunjuk', $sheets);
+        return $sheets;
+    }
+
+    public function test_template_has_one_sheet_per_category_plus_instructions(): void
+    {
+        $response = $this->get(route('doorprize.template'))->assertOk();
+        $this->assertStringContainsString('template-peserta-doorprize.xlsx', $response->headers->get('content-disposition'));
+
+        $sheets = $this->readSheets($response->streamedContent());
+
+        $this->assertSame(
+            ['Tamu Keluarga CPP', 'Tamu Keluarga CPW', 'Teman CPW', 'Teman CPP', 'Umum', 'Petunjuk'],
+            array_keys($sheets),
+        );
+        foreach (['Tamu Keluarga CPP', 'Tamu Keluarga CPW', 'Teman CPW', 'Teman CPP', 'Umum'] as $name) {
+            $this->assertSame(['Nama Peserta'], $sheets[$name]);
+        }
+    }
+
+    public function test_category_template_has_a_single_sheet_named_after_the_category(): void
+    {
+        $sheets = $this->readSheets($this->get(route('doorprize.template', ['category' => 'Teman CPP']))->assertOk()->streamedContent());
+
+        $this->assertSame(['Teman CPP', 'Petunjuk'], array_keys($sheets));
+        $this->assertSame(['Nama Peserta'], $sheets['Teman CPP']);
+    }
+
+    /** @param array<string, list<string>> $sheets nama sheet => nilai kolom A tiap baris */
+    private function xlsxSheets(array $sheets, string $filename = 'peserta.xlsx'): \Illuminate\Http\Testing\File
+    {
+        $path = tempnam(sys_get_temp_dir(), 'xl');
+        $writer = new Writer;
+        $writer->openToFile($path);
+        $first = true;
+        foreach ($sheets as $name => $lines) {
+            $first ? $writer->getCurrentSheet()->setName($name) : $writer->addNewSheetAndMakeItCurrent()->setName($name);
+            $first = false;
+            foreach ($lines as $line) {
+                $writer->addRow(Row::fromValues([$line]));
+            }
+        }
+        $writer->close();
+
+        $content = file_get_contents($path);
+        unlink($path);
+
+        return UploadedFile::fake()->createWithContent($filename, $content);
+    }
+
+    public function test_multi_sheet_import_gives_each_sheet_its_category_and_skips_the_instructions(): void
+    {
+        $file = $this->xlsxSheets([
+            'Tamu Keluarga CPP' => ['Nama Peserta', 'Budi Santoso', 'Citra Dewi'],
+            'Tamu Keluarga CPW' => ['Nama Peserta'],
+            'Teman CPW' => ['Nama Peserta', 'Rina Marlina'],
+            'Umum' => ['Nama Peserta', 'Dewi Lestari'],
+            'Petunjuk' => ['Petunjuk Pengisian Template Per Kategori:', '1. Setiap kategori sudah memiliki Sheet tersendiri'],
+        ]);
+
+        Livewire::test(ParticipantImport::class)->set('file', $file)->call('save')->assertHasNoErrors();
+
+        $this->assertSame('Keluarga CPP', Participant::where('name', 'Budi Santoso')->value('category'));
+        $this->assertSame('Keluarga CPP', Participant::where('name', 'Citra Dewi')->value('category'));
+        $this->assertSame('Teman CPW', Participant::where('name', 'Rina Marlina')->value('category'));
+        $this->assertSame('Umum', Participant::where('name', 'Dewi Lestari')->value('category'));
+        $this->assertDatabaseCount('participants', 4);
+    }
+
+    public function test_import_with_a_chosen_category_overrides_the_sheet_names(): void
+    {
+        $file = $this->xlsxSheets([
+            'Tamu Keluarga CPP' => ['Nama Peserta', 'Budi Santoso'],
+            'Umum' => ['Nama Peserta', 'Dewi Lestari'],
+        ]);
+
+        Livewire::test(ParticipantImport::class)
+            ->set('category', 'Teman CPP')
+            ->set('file', $file)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(['Teman CPP', 'Teman CPP'], Participant::orderBy('id')->pluck('category')->all());
+    }
+
+    public function test_names_repeated_across_sheets_are_imported_once(): void
+    {
+        $file = $this->xlsxSheets([
+            'Tamu Keluarga CPP' => ['Nama Peserta', 'Budi Santoso'],
+            'Teman CPP' => ['Nama Peserta', 'budi  santoso', 'Rina Marlina'],
+        ]);
+
+        Livewire::test(ParticipantImport::class)->set('file', $file)->call('save')->assertHasNoErrors();
+
+        $this->assertDatabaseCount('participants', 2);
+        $this->assertSame('Keluarga CPP', Participant::where('name', 'Budi Santoso')->value('category'));
     }
 
     public function test_importing_the_untouched_template_adds_nothing(): void
@@ -149,8 +295,8 @@ class DoorprizeParticipantsTest extends TestCase
 
     public function test_too_many_rows_are_refused_and_nothing_is_imported(): void
     {
-        // MAX_ROWS peserta + 1 baris judul masih boleh; satu baris lagi ditolak.
-        $names = array_map(fn ($i) => "Peserta $i", range(1, ParticipantSpreadsheet::MAX_ROWS + 2));
+        // MAX_ROWS peserta masih boleh (judul kolom tidak dihitung); satu lagi ditolak.
+        $names = array_map(fn ($i) => "Peserta $i", range(1, ParticipantSpreadsheet::MAX_ROWS + 1));
 
         Livewire::test(ParticipantImport::class)
             ->set('file', $this->xlsx($names))
@@ -158,6 +304,15 @@ class DoorprizeParticipantsTest extends TestCase
             ->assertHasErrors('file');
 
         $this->assertDatabaseCount('participants', 0);   // tidak ada yang masuk setengah jalan
+    }
+
+    public function test_exactly_the_maximum_number_of_rows_is_accepted_with_a_header(): void
+    {
+        $names = ['Nama Peserta', ...array_map(fn ($i) => "Peserta $i", range(1, ParticipantSpreadsheet::MAX_ROWS))];
+
+        Livewire::test(ParticipantImport::class)->set('file', $this->xlsx($names))->call('save')->assertHasNoErrors();
+
+        $this->assertDatabaseCount('participants', ParticipantSpreadsheet::MAX_ROWS);
     }
 
     public function test_participant_can_be_added_manually(): void

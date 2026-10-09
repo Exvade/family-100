@@ -378,6 +378,10 @@ class DoorprizeSpinTest extends TestCase
 
     public function test_can_save_lucky_draw_quota_settings(): void
     {
+        foreach (Participant::CATEGORIES as $category) {
+            Participant::factory()->create(['category' => $category]);
+        }
+
         $response = $this->postJson(route('doorprize.setting'), [
             'quotas' => [
                 'Tamu Keluarga CPP' => 1,
@@ -408,6 +412,123 @@ class DoorprizeSpinTest extends TestCase
                 'Keluarga CPW' => 6,
             ],
         ])->assertStatus(422);
+    }
+
+    public function test_quota_spin_fills_a_short_category_from_other_quota_categories(): void
+    {
+        Participant::factory()->count(5)->create(['category' => 'Keluarga CPP']);
+        Participant::factory()->count(1)->create(['category' => 'Keluarga CPW']);
+        Participant::factory()->count(1)->create(['category' => 'Umum']);
+        Participant::factory()->count(4)->create(['category' => 'Teman CPP']); // kuota 0: tidak ikut diundi
+
+        $this->postJson(route('doorprize.setting'), [
+            'quotas' => ['Keluarga CPP' => 2, 'Keluarga CPW' => 3, 'Umum' => 5],
+        ])->assertOk();
+
+        // Total kuota 10, tapi hanya 7 peserta di kategori berkuota: slot mengikuti 7.
+        $started = $this->postJson(route('doorprize.spin.start'), ['mode' => 'quota'])->assertOk()->json();
+        $this->assertSame(7, $started['slots']);
+
+        $stopped = $this->postJson(route('doorprize.spin.stop'))->assertOk()->json();
+        $this->assertCount(7, $stopped['winners']);
+        $this->assertSame(5, Participant::where('category', 'Keluarga CPP')->whereNotNull('won_at')->count());
+        $this->assertSame(1, Participant::where('category', 'Keluarga CPW')->whereNotNull('won_at')->count());
+        $this->assertSame(1, Participant::where('category', 'Umum')->whereNotNull('won_at')->count());
+        $this->assertSame(0, Participant::where('category', 'Teman CPP')->whereNotNull('won_at')->count());
+    }
+
+    public function test_quota_spin_shows_the_full_slot_count_when_other_categories_can_fill_in(): void
+    {
+        Participant::factory()->count(6)->create(['category' => 'Keluarga CPP']);
+        Participant::factory()->count(4)->create(['category' => 'Keluarga CPW']);
+        Participant::factory()->count(1)->create(['category' => 'Umum']);
+
+        $this->postJson(route('doorprize.setting'), [
+            'quotas' => ['Keluarga CPP' => 1, 'Keluarga CPW' => 1, 'Teman CPW' => 1, 'Teman CPP' => 1, 'Umum' => 6],
+        ])->assertOk();
+
+        $started = $this->postJson(route('doorprize.spin.start'), ['mode' => 'quota'])->assertOk()->json();
+        $this->assertSame(8, $started['slots']);
+
+        $stopped = $this->postJson(route('doorprize.spin.stop'))->assertOk()->json();
+        $this->assertCount(8, array_unique($stopped['winners']));
+    }
+
+    public function test_quota_of_categories_without_eligible_participants_is_ignored(): void
+    {
+        Participant::factory()->count(6)->create(['category' => 'Keluarga CPP']);
+        Participant::factory()->count(4)->create(['category' => 'Keluarga CPW']);
+
+        $response = $this->postJson(route('doorprize.setting'), [
+            'quotas' => ['Keluarga CPP' => 1, 'Keluarga CPW' => 1, 'Teman CPW' => 1, 'Teman CPP' => 1, 'Umum' => 6],
+        ])->assertOk();
+
+        $response->assertJsonPath('quota_total', 2);
+        $this->assertSame(0, $response->json('quota_setting.Umum'));
+
+        $this->postJson(route('doorprize.spin.start'), ['mode' => 'quota'])->assertOk()->assertJsonPath('slots', 2);
+    }
+
+    public function test_quota_defaults_to_zero_for_every_category(): void
+    {
+        Participant::factory()->count(3)->create(['category' => 'Keluarga CPP']);
+
+        $state = $this->getJson(route('doorprize.tv.state'))->assertOk()->json();
+
+        $this->assertSame(0, $state['quota_total']);
+        $this->assertSame(array_fill_keys(Participant::CATEGORIES, 0), $state['quota_setting']);
+    }
+
+    public function test_starting_a_quota_spin_resets_the_saved_quota_to_zero(): void
+    {
+        Participant::factory()->count(3)->create(['category' => 'Keluarga CPP']);
+        Participant::factory()->count(3)->create(['category' => 'Keluarga CPW']);
+
+        $this->postJson(route('doorprize.setting'), [
+            'quotas' => ['Keluarga CPP' => 1, 'Keluarga CPW' => 2],
+        ])->assertOk()->assertJsonPath('quota_total', 3);
+
+        $started = $this->postJson(route('doorprize.spin.start'), ['mode' => 'quota'])->assertOk()->json();
+        $this->assertSame(3, $started['slots']);
+        $this->assertSame(0, $started['quota_total']);
+
+        $stopped = $this->postJson(route('doorprize.spin.stop'))->assertOk()->json();
+        $this->assertCount(3, $stopped['winners']);
+        $this->assertSame(0, $stopped['quota_total']);
+    }
+
+    public function test_quick_category_spin_resets_only_that_category_quota(): void
+    {
+        Participant::factory()->count(3)->create(['category' => 'Keluarga CPP']);
+        Participant::factory()->count(3)->create(['category' => 'Keluarga CPW']);
+
+        $this->postJson(route('doorprize.setting'), [
+            'quotas' => ['Keluarga CPP' => 2, 'Keluarga CPW' => 1],
+        ])->assertOk();
+
+        $started = $this->postJson(route('doorprize.spin.start'), [
+            'mode' => 'quota',
+            'quotas' => ['Keluarga CPP' => 2],
+        ])->assertOk()->json();
+
+        $this->assertSame(2, $started['slots']);
+        $this->assertSame(0, $started['quota_setting']['Keluarga CPP']);
+        $this->assertSame(1, $started['quota_setting']['Keluarga CPW']);
+
+        $stopped = $this->postJson(route('doorprize.spin.stop'))->assertOk()->json();
+        $this->assertSame(2, Participant::where('category', 'Keluarga CPP')->whereNotNull('won_at')->count());
+        $this->assertSame(0, Participant::where('category', 'Keluarga CPW')->whereNotNull('won_at')->count());
+    }
+
+    public function test_quota_spin_is_refused_when_no_category_with_a_quota_has_participants(): void
+    {
+        Participant::factory()->count(3)->create(['category' => 'Keluarga CPP']);
+
+        $this->postJson(route('doorprize.setting'), [
+            'quotas' => ['Umum' => 2],
+        ])->assertOk();
+
+        $this->postJson(route('doorprize.spin.start'), ['mode' => 'quota'])->assertStatus(422);
     }
 
     public function test_spin_in_quota_mode_draws_exact_number_from_each_configured_category(): void
@@ -448,7 +569,7 @@ class DoorprizeSpinTest extends TestCase
     public function test_dashboard_renders_lucky_draw_setting_form_and_triggers(): void
     {
         $this->get(route('doorprize'))->assertOk()
-            ->assertSee('SETTING LUCKY DRAW')
+            ->assertSee('Pengaturan Kuota Tiap Kategori')
             ->assertSee('setting-lucky-draw-form')
             ->assertSee('data-trigger-action="start-quota"', false)
             ->assertSee('data-trigger-category="Keluarga CPP"', false);

@@ -93,7 +93,7 @@ class ParticipantSpreadsheet
         return $path;
     }
 
-    /** Ekspor daftar seluruh pemenang undian ke file Excel */
+    /** Ekspor daftar seluruh pemenang undian beserta hadiahnya ke file Excel */
     public function exportWinners(): string
     {
         $path = tempnam(sys_get_temp_dir(), 'win');
@@ -102,7 +102,8 @@ class ParticipantSpreadsheet
         $options->setColumnWidth(8, 1);
         $options->setColumnWidth(35, 2);
         $options->setColumnWidth(25, 3);
-        $options->setColumnWidth(25, 4);
+        $options->setColumnWidth(30, 4);
+        $options->setColumnWidth(25, 5);
 
         $writer = new XlsxWriter($options);
         $writer->openToFile($path);
@@ -115,10 +116,12 @@ class ParticipantSpreadsheet
             'No',
             'Nama Pemenang',
             'Kategori',
+            'Hadiah',
             'Waktu Menang',
         ], $boldStyle));
 
-        $winners = Participant::whereNotNull('won_at')
+        $winners = Participant::with('prize:id,name')
+            ->whereNotNull('won_at')
             ->orderBy('won_at', 'asc')
             ->orderBy('id', 'asc')
             ->get();
@@ -129,6 +132,7 @@ class ParticipantSpreadsheet
                 $num++,
                 $winner->name,
                 Participant::displayLabel($winner->category),
+                $winner->prize?->name ?? '-',
                 $winner->won_at?->translatedFormat('d F Y, H:i:s') ?? '-',
             ]));
         }
@@ -160,6 +164,7 @@ class ParticipantSpreadsheet
             ->all();
 
         $added = $duplicates = $invalid = 0;
+        $filled = 0;
         $batch = [];
         $now = now();
 
@@ -184,6 +189,12 @@ class ParticipantSpreadsheet
             if ($lineInSheet === 1 && in_array(mb_strtolower($name), self::HEADERS, true)) {
                 continue;
             }
+
+            // Batas MAX_ROWS dihitung dari baris berisi nama (tanpa judul kolom dan sheet petunjuk), di semua sheet.
+            if (++$filled > self::MAX_ROWS) {
+                throw new InvalidArgumentException('Jumlah baris melebihi batas '.self::MAX_ROWS.'.');
+            }
+
             if (mb_strlen($name) > self::MAX_NAME_LENGTH) {
                 $invalid++;
 
@@ -259,7 +270,8 @@ class ParticipantSpreadsheet
                 foreach ($sheet->getRowIterator() as $row) {
                     $lineInSheet++;
                     $line++;
-                    if ($line > self::MAX_ROWS + 50) {
+                    // Pengaman terhadap file yang penuh baris kosong; batas sebenarnya dihitung di importRows().
+                    if ($line > self::MAX_ROWS * 2 + 50) {
                         throw new InvalidArgumentException('Jumlah baris melebihi batas '.self::MAX_ROWS.'.');
                     }
 

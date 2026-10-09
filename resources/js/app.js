@@ -9,3 +9,5 @@ import './answered';
 import './answer-modal';
 import './participant-modals';
 import './doorprize-control';
+import './inline-edit';
+import './prizes';

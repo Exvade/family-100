@@ -22,7 +22,7 @@ class DoorprizeController extends Controller
             'participants' => Participant::orderBy('id')->get(),
             'categories' => Participant::CATEGORIES,
             'spin' => $state,
-            'winnersHistory' => $state['winners_history'],
+            'prizes' => $state['prizes'],
             'quotaSetting' => $state['quota_setting'],
             'quotaTotal' => $state['quota_total'],
             'eligibleCount' => $state['eligible'],
@@ -84,25 +84,20 @@ class DoorprizeController extends Controller
             'categories.*' => ['string'],
             'quotas' => ['nullable', 'array'],
             'quotas.*' => ['integer', 'min:0', 'max:'.DoorprizeSpin::MAX_SLOTS],
+            'prize_id' => ['nullable', 'integer'],
+            'allocation' => ['nullable', 'array', 'max:'.DoorprizeSpin::MAX_SLOTS],
+            'allocation.*.prize_id' => ['required', 'integer'],
+            'allocation.*.count' => ['required', 'integer', 'min:1', 'max:'.DoorprizeSpin::MAX_SLOTS],
         ]);
 
         $mode = $data['mode'] ?? null;
         $slots = isset($data['slots']) ? (int) $data['slots'] : null;
         $categories = isset($data['categories']) ? (array) $data['categories'] : null;
         $quotas = isset($data['quotas']) ? (array) $data['quotas'] : null;
+        $prizeId = isset($data['prize_id']) ? (int) $data['prize_id'] : null;
+        $allocation = isset($data['allocation']) ? array_values($data['allocation']) : null;
 
-        return $this->command(fn () => $spin->start($slots, $categories, $mode, $quotas));
-    }
-
-    public function configure(Request $request, DoorprizeSpin $spin): JsonResponse
-    {
-        $data = $request->validate([
-            'slots' => ['required', 'integer', 'min:'.DoorprizeSpin::MIN_SLOTS, 'max:'.DoorprizeSpin::MAX_SLOTS],
-            'categories' => ['nullable', 'array'],
-            'categories.*' => ['string'],
-        ]);
-
-        return response()->json($spin->configure((int) $data['slots'], $data['categories'] ?? []));
+        return $this->command(fn () => $spin->start($slots, $categories, $mode, $quotas, $prizeId, $allocation));
     }
 
     public function stop(DoorprizeSpin $spin): JsonResponse
@@ -142,12 +137,63 @@ class DoorprizeController extends Controller
             ->deleteFileAfterSend();
     }
 
-    /** Unduh berkas Excel daftar semua pemenang doorprize */
+    /** Unduh berkas Excel daftar semua pemenang doorprize beserta hadiahnya */
     public function exportWinners(ParticipantSpreadsheet $spreadsheet): BinaryFileResponse
     {
         return response()
             ->download($spreadsheet->exportWinners(), 'daftar-pemenang-doorprize.xlsx')
             ->deleteFileAfterSend();
+    }
+
+    /** Ubah satu kolom peserta langsung dari tabel (nama, kategori, atau status pemenang). */
+    public function update(Request $request, Participant $participant): JsonResponse
+    {
+        $data = $request->validate([
+            'field' => ['required', 'in:name,category,status'],
+            'value' => ['nullable', 'string', 'max:255'],
+        ]);
+        $value = (string) ($data['value'] ?? '');
+
+        switch ($data['field']) {
+            case 'name':
+                $value = trim(preg_replace('/\s+/u', ' ', $value));
+                if ($value === '') {
+                    return response()->json(['message' => 'Nama peserta wajib diisi.'], 422);
+                }
+                if (Participant::nameTaken($value, $participant->id)) {
+                    return response()->json(['message' => 'Peserta dengan nama ini sudah ada.'], 422);
+                }
+                $participant->name = $value;
+                break;
+            case 'category':
+                if (! in_array($value, Participant::CATEGORIES, true)) {
+                    return response()->json(['message' => 'Kategori tidak valid.'], 422);
+                }
+                $participant->category = $value;
+                break;
+            default:
+                if (! in_array($value, ['', 'PEMENANG'], true)) {
+                    return response()->json(['message' => 'Status tidak valid.'], 422);
+                }
+                if ($value === 'PEMENANG') {
+                    $participant->won_at ??= now();
+                } else {
+                    $participant->won_at = null;
+                }
+        }
+
+        $participant->save();
+
+        return response()->json([
+            'id' => $participant->id,
+            'name' => $participant->name,
+            'category' => $participant->category,
+            'status' => $participant->isWinner() ? 'PEMENANG' : '',
+            'won_at_title' => $participant->won_at?->translatedFormat('d M Y H:i'),
+            'won_at' => $participant->won_at?->toIso8601String(),
+            'won_at_human' => $participant->won_at?->diffForHumans(),
+            'won_at_formatted' => $participant->won_at?->translatedFormat('d M Y, H:i'),
+        ]);
     }
 
     public function destroy(Participant $participant): RedirectResponse
