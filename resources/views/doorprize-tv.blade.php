@@ -64,13 +64,30 @@
             }
             $mappedPrizes[$i] = $foundPrize;
         }
+
+        $activePrizesSlice = array_slice($mappedPrizes, 0, $slotCount);
+        $uniquePrizes = [];
+        foreach ($activePrizesSlice as $idx => $pz) {
+            if ($pz) {
+                $pKey = $pz['id'] ?? $pz['name'];
+                if (!isset($uniquePrizes[$pKey])) {
+                    $uniquePrizes[$pKey] = [
+                        'prize' => $pz,
+                        'slots' => [$idx + 1],
+                    ];
+                } else {
+                    $uniquePrizes[$pKey]['slots'][] = $idx + 1;
+                }
+            }
+        }
+        $uniqueCount = count($uniquePrizes);
     @endphp
 
     <!-- OUTER VIEWPORT SHELL (Centers and clips stage) -->
     <div class="stage-viewport-shell" id="stageShell">
 
         <!-- 16:9 PROPORTIONAL SCALED CANVAS (Auto-scales on Ctrl - / Ctrl + and any resolution) -->
-        <div class="stage-canvas-16-9 state-{{ $currentStatus }}" id="stageCanvas">
+        <div class="stage-canvas-16-9 state-{{ $currentStatus === 'stopped' ? 'result' : $currentStatus }}" id="stageCanvas" data-slots="{{ $slotCount }}" data-unique="{{ $uniqueCount }}">
 
             <!-- 1. LUXURY GOLD BORDERS AROUND ENTIRE CANVAS -->
             <div class="stage-border-outer"></div>
@@ -117,25 +134,7 @@
             </div>
 
             <!-- 5. RIGHT TOP STAGE: PRIZE SPOTLIGHT SHOWCASE (FOTO BESAR & PIN NOMOR MINI) -->
-            <div class="tv-prize-spotlight-zone" id="tvPrizeSpotlightZone">
-                @php
-                    $activePrizesSlice = array_slice($mappedPrizes, 0, $slotCount);
-                    $uniquePrizes = [];
-                    foreach ($activePrizesSlice as $idx => $pz) {
-                        if ($pz) {
-                            $pKey = $pz['id'] ?? $pz['name'];
-                            if (!isset($uniquePrizes[$pKey])) {
-                                $uniquePrizes[$pKey] = [
-                                    'prize' => $pz,
-                                    'slots' => [$idx + 1],
-                                ];
-                            } else {
-                                $uniquePrizes[$pKey]['slots'][] = $idx + 1;
-                            }
-                        }
-                    }
-                    $uniqueCount = count($uniquePrizes);
-                @endphp
+            <div class="tv-prize-spotlight-zone" id="tvPrizeSpotlightZone" data-slots="{{ $slotCount }}" data-unique="{{ $uniqueCount }}">
                 <div class="prize-zone-badge">
                     <span class="badge-sparkle">✦</span>
                     <span class="badge-title" id="prizeBadgeTitle">
@@ -148,7 +147,7 @@
                     <span class="badge-sparkle">✦</span>
                 </div>
 
-                <div class="tv-prizes-showcase-deck" id="prizeShowcaseDeck" data-slots="{{ $slotCount }}">
+                <div class="tv-prizes-showcase-deck" id="prizeShowcaseDeck" data-slots="{{ $slotCount }}" data-unique="{{ $uniqueCount }}">
                     @if ($uniqueCount === 1 && !empty($uniquePrizes))
                         @php
                             $heroData = reset($uniquePrizes);
@@ -270,7 +269,7 @@
             </div>
 
             <!-- 6. RIGHT STAGE: INTERACTIVE PANELS (TANPA TOMBOL KONTROL, FULL CONTROL DARI DASHBOARD) -->
-            <div class="stage-right-zone" id="stageRightZone">
+            <div class="stage-right-zone" id="stageRightZone" data-slots="{{ $slotCount }}">
 
                 <!-- Interactive State Panels: Idle, Spinning (5 Lines Roulette Card), Result -->
                 <main class="interactive-stage-panel">
@@ -350,10 +349,22 @@
                             <!-- Vertical Divider for 2-column mode (slots > 5) -->
                             <div class="gacha-v-divider" id="gachaVDivider"></div>
 
+                            @php
+                                $rowHeightsMap = [1 => 180, 2 => 170, 3 => 150, 4 => 135, 5 => 128];
+                                $topOffsetsMap = [1 => 230, 2 => 130, 3 => 75, 4 => 30, 5 => 10];
+                                $rowSpacingMap = [1 => 0, 2 => 210, 3 => 175, 4 => 145, 5 => 128];
+                            @endphp
+
                             <!-- Horizontal Dividers Between Lines (Up to 9 dividers) -->
                             @for ($d = 1; $d < 10; $d++)
-                                @php $isDivVisible = $d < $slotCount && $slotCount <= 5; @endphp
-                                <div class="gacha-h-divider div-line-{{ $d }}" style="top: {{ 10 + $d * 128 }}px; {{ $isDivVisible ? '' : 'display: none;' }}"></div>
+                                @php
+                                    $isDivVisible = $d < $slotCount && $slotCount <= 5;
+                                    $divTop = 10 + $d * 128;
+                                    if ($slotCount <= 5 && isset($topOffsetsMap[$slotCount], $rowSpacingMap[$slotCount])) {
+                                        $divTop = ($topOffsetsMap[$slotCount] ?? 10) + $d * ($rowSpacingMap[$slotCount] ?? 128) - 10;
+                                    }
+                                @endphp
+                                <div class="gacha-h-divider div-line-{{ $d }}" style="top: {{ $divTop }}px; {{ $isDivVisible ? '' : 'display: none;' }}"></div>
                             @endfor
 
                             <!-- Up to 10 Horizontal Lines with Dedicated Target Slots & 3D Gold Arrows -->
@@ -363,10 +374,26 @@
                                         $defaultName = $winnersList[$i] ?? ('Pemenang #' . ($i + 1));
                                         $isLocked = $previewLocked && ($i < min(3, $slotCount));
                                         $isVisible = $i < $slotCount;
-                                        $col = $i < 5 ? 0 : 1;
-                                        $rowInCol = $i % 5;
+                                        if ($slotCount <= 5) {
+                                            $col = 0;
+                                            $rowH = $rowHeightsMap[$slotCount] ?? 128;
+                                            $rowTop = ($topOffsetsMap[$slotCount] ?? 10) + $i * ($rowSpacingMap[$slotCount] ?? 128);
+                                        } else {
+                                            $half = (int) ceil($slotCount / 2);
+                                            $col = $i < $half ? 0 : 1;
+                                            $rowInCol = $col === 0 ? $i : ($i - $half);
+                                            $rowTop = 15 + $rowInCol * 125;
+                                            $rowH = 120;
+                                            if ($half === 3) {
+                                                $rowTop = 90 + $rowInCol * 170;
+                                                $rowH = 145;
+                                            } elseif ($half === 4) {
+                                                $rowTop = 40 + $rowInCol * 145;
+                                                $rowH = 135;
+                                            }
+                                        }
                                     @endphp
-                                    <div class="gacha-line-row line-{{ $i }} {{ $isLocked ? 'locked' : '' }}" id="gachaLineRow-{{ $i }}" style="top: {{ 10 + $rowInCol * 128 }}px; height: 128px; {{ $isVisible ? '' : 'display: none;' }}" data-index="{{ $i }}" data-col="{{ $col }}">
+                                    <div class="gacha-line-row line-{{ $i }} {{ $isLocked ? 'locked' : '' }}" id="gachaLineRow-{{ $i }}" style="top: {{ $rowTop }}px; height: {{ $rowH }}px; {{ $isVisible ? '' : 'display: none;' }}" data-index="{{ $i }}" data-col="{{ $col }}">
 
                                         <!-- Subtle Luxury Gold Rank Badge -->
                                         <div class="line-gold-badge" id="lineBadge-{{ $i }}">{{ $i + 1 }}</div>
