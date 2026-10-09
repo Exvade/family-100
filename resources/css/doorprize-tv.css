@@ -124,14 +124,14 @@ html, body {
     z-index: 4;
 }
 
-/* ==================== 6. LEFT STAGE: ROMAN ARCH WITH PHOTO ==================== */
-/* UKURAN UTUH PADA DEFAULT/RESULT, MENYESUAIKAN DI BAWAH TITLE SAAT SPINNING (REPLIKA 15.43.58) */
+/* ==================== 6. LEFT STAGE: ROMAN ARCH WITH PHOTO (SACRED COUPLE ZONE) ==================== */
+/* Konsep A: Foto pasangan selalu berada di sisi kiri di bawah teks nama Anne & Hanif */
 .stage-left-zone {
     position: absolute;
-    left: 52px;
-    top: 48px;
-    width: 470px;
-    height: 804px;
+    left: 45px;
+    top: 236px;
+    width: 450px;
+    height: 620px;
     z-index: 6;
     display: flex;
     flex-direction: column;
@@ -142,7 +142,7 @@ html, body {
     position: relative;
     width: 100%;
     height: 100%;
-    border-radius: 235px 235px 0 0;
+    border-radius: 200px 200px 0 0;
     border: 3.5px solid #d4af37;
     outline: 1.5px solid rgba(253, 230, 138, 0.55);
     outline-offset: 4px;
@@ -176,13 +176,13 @@ html, body {
     pointer-events: none;
 }
 
-/* ==================== 7. WEDDING TITLE HEADER ==================== */
-/* Posisi default / result: Kanan Atas (Replika 15.44.46). Saat spinning: Kiri Atas di atas foto (Replika 15.43.58) */
+/* ==================== 7. WEDDING TITLE HEADER (SACRED COUPLE ZONE) ==================== */
+/* Konsep A: Selalu berada di kiri atas panggung di atas foto prewedding */
 .wedding-title-header {
     position: absolute;
-    left: 565px;
-    width: 975px;
-    top: 40px;
+    left: 45px;
+    width: 450px;
+    top: 36px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -195,7 +195,7 @@ html, body {
 }
 .wedding-script-title {
     font-family: 'Great Vibes', cursive;
-    font-size: 68px;
+    font-size: 54px;
     font-weight: 400;
     line-height: 1.05;
     margin-top: -6px;
@@ -207,10 +207,10 @@ html, body {
 }
 .wedding-names-title {
     font-family: 'Playfair Display', serif;
-    font-size: 58px;
+    font-size: 42px;
     font-weight: 700;
     line-height: 1.05;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     margin-top: -4px;
     background: linear-gradient(135deg, #ffffff 0%, #fffdfa 25%, #fde68a 55%, #eab308 85%, #d97706 100%);
     -webkit-background-clip: text;
@@ -223,10 +223,10 @@ html, body {
     align-items: center;
     justify-content: center;
     gap: 14px;
-    margin-top: 6px;
+    margin-top: 4px;
 }
 .wedding-gold-divider .div-line {
-    width: 140px;
+    width: 90px;
     height: 1.5px;
     background: linear-gradient(90deg, transparent 0%, #d4af37 50%, transparent 100%);
     transition: width 0.55s ease;
@@ -237,39 +237,452 @@ html, body {
     filter: drop-shadow(0 0 6px #d4af37);
 }
 
-/* Penyesuaian layout saat state-spinning agar 100% PERSIS dengan WhatsApp Image 2026-10-07 at 15.43.58.jpeg */
-.stage-canvas-16-9.state-spinning .wedding-title-header {
-    left: 45px;
-    top: 40px;
-    width: 450px;
+/* ==================== 7B. TV PRIZE SPOTLIGHT ZONE (KONSEP A) ==================== */
+/* Menampilkan showcase foto produk hadiah di sisi kanan atas */
+.tv-prize-spotlight-zone {
+    position: absolute;
+    left: 535px;
+    top: 14px;
+    width: 1015px;
+    height: 214px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.4s ease, transform 0.4s ease;
 }
-.stage-canvas-16-9.state-spinning .wedding-script-title {
-    font-size: 54px;
+
+/* Saat sedang spinning, hide showcase hadiah atas agar roulette bebas 900px */
+.stage-canvas-16-9.state-spinning .tv-prize-spotlight-zone {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-20px);
 }
-.stage-canvas-16-9.state-spinning .wedding-names-title {
-    font-size: 42px;
-    letter-spacing: 1px;
+
+.prize-zone-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 18px;
+    border-radius: 9999px;
+    background: radial-gradient(ellipse at center, rgba(55, 6, 16, 0.9) 0%, rgba(20, 2, 5, 0.95) 100%);
+    border: 1.2px solid rgba(212, 175, 55, 0.6);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(253, 230, 138, 0.4);
+    margin-bottom: 5px;
 }
-.stage-canvas-16-9.state-spinning .wedding-gold-divider .div-line {
-    width: 90px;
+.prize-zone-badge .badge-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2.2px;
+    color: #fde68a;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
-.stage-canvas-16-9.state-spinning .stage-left-zone {
-    left: 45px;
-    top: 236px;
-    width: 450px;
-    height: 620px;
+.prize-zone-badge .badge-sparkle {
+    color: #fde68a;
+    font-size: 11px;
+    filter: drop-shadow(0 0 4px #d4af37);
 }
-.stage-canvas-16-9.state-spinning .couple-arch-card {
-    border-radius: 200px 200px 0 0;
+
+.tv-prizes-showcase-deck {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s ease;
+}
+
+/* 1 Hero Prize Card (Foto Ekstra Besar & Elegan, Tight Gap untuk 1 Barang) */
+.prize-card-hero {
+    display: flex;
+    align-items: center;
+    background: radial-gradient(ellipse at 35% 35%, #5a0a1c 0%, #29030b 60%, #120104 100%);
+    border: 2px solid #dfa732;
+    outline: 1.5px solid rgba(253, 230, 138, 0.55);
+    outline-offset: 3px;
+    border-radius: 22px;
+    padding: 8px 36px 8px 14px;
+    box-shadow: 
+        0 14px 40px rgba(0, 0, 0, 0.85),
+        0 0 35px rgba(212, 175, 55, 0.45),
+        inset 0 1px 2px rgba(255, 248, 220, 0.4);
+    max-width: 860px;
+    width: auto;
+    gap: 18px;
+    transition: all 0.4s ease;
+}
+.prize-hero-img-box {
+    position: relative;
+    width: 156px;
+    height: 156px;
+    border-radius: 18px;
+    border: 2px solid #eab308;
+    background: radial-gradient(circle at 50% 30%, #450817 0%, #1d0208 65%, #0c0103 100%);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.8), 
+        inset 0 0 20px rgba(0, 0, 0, 0.85),
+        0 0 20px rgba(212, 175, 55, 0.4);
+    flex-shrink: 0;
+}
+.prize-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.85));
+    transition: transform 0.35s ease;
+}
+.prize-hero-img-box:hover .prize-hero-img {
+    transform: scale(1.06);
+}
+.prize-hero-icon-fallback {
+    font-size: 74px;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.8));
+}
+.prize-hero-info {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    justify-content: center;
+}
+.prize-hero-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3.5px 14px;
+    border-radius: 9999px;
+    background: rgba(220, 38, 38, 0.18);
+    border: 1.2px solid rgba(212, 175, 55, 0.65);
+    width: fit-content;
+    margin-bottom: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+    color: #fde68a;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.prize-hero-badge-pill .badge-sparkle {
+    color: #fde68a;
+    font-size: 10px;
+    filter: drop-shadow(0 0 4px #d4af37);
+}
+.prize-hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    background: linear-gradient(135deg, #ffffff 0%, #fffdfa 25%, #fde68a 55%, #eab308 85%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.95));
+    line-height: 1.25;
+    max-width: 490px;
+}
+
+/* Multi Prizes Grid (Foto Diperbesar, Pin Nomor Mini) */
+.prize-cards-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    flex-wrap: nowrap;
+}
+.prize-card-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: radial-gradient(ellipse at 50% 15%, #4c0716 0%, #26030b 70%, #110103 100%);
+    border: 1.5px solid #dfa732;
+    outline: 1px solid rgba(253, 230, 138, 0.4);
+    outline-offset: 2px;
+    border-radius: 16px;
+    padding: 6px 8px 8px;
+    box-shadow: 
+        0 8px 22px rgba(0, 0, 0, 0.65),
+        0 0 18px rgba(212, 175, 55, 0.3),
+        inset 0 1px 1px rgba(255, 248, 220, 0.3);
+    flex: 1 1 0px;
+    min-width: 90px;
+    max-width: 175px;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+.prize-card-chip:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.8), 0 0 24px rgba(212, 175, 55, 0.55);
+}
+.prize-chip-img-box {
+    position: relative;
+    width: 104px;
+    height: 104px;
+    border-radius: 14px;
+    border: 1.5px solid #eab308;
+    background: radial-gradient(circle at 50% 30%, #380611 0%, #1c0207 70%, #0d0103 100%);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.6);
+    flex-shrink: 0;
+}
+.prize-chip-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
+    transition: transform 0.3s ease;
+}
+.prize-chip-img-box:hover .prize-chip-img {
+    transform: scale(1.08);
+}
+.prize-chip-icon {
+    font-size: 46px;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+}
+.prize-chip-pin {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    z-index: 2;
+    background: linear-gradient(135deg, #fffbeb 0%, #fde68a 35%, #d4af37 75%, #a16207 100%);
+    color: #3b020c;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 6px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
+    border: 1px solid #fffdfa;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+}
+.prize-chip-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fffbeb;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+    letter-spacing: 0.3px;
+    margin-top: 6px;
+    background: rgba(18, 1, 4, 0.85);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 9999px;
+    padding: 3px 12px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Penyesuaian Ukuran Dinamis Berdasarkan Jumlah Hadiah Unik */
+/* 2 Hadiah Unik: Tampilan Lebar & Foto Besar 132px */
+.prize-cards-grid[data-count="2"] {
+    gap: 24px;
+}
+.prize-cards-grid[data-count="2"] .prize-card-chip {
+    max-width: 270px;
+    padding: 8px 16px 10px;
+}
+.prize-cards-grid[data-count="2"] .prize-chip-img-box {
+    width: 132px;
+    height: 132px;
+}
+.prize-cards-grid[data-count="2"] .prize-chip-name {
+    font-size: 13px;
+    max-width: 230px;
+    padding: 4px 16px;
+}
+
+/* 3 Hadiah Unik: Foto 120px & Card Sedang */
+.prize-cards-grid[data-count="3"] {
+    gap: 16px;
+}
+.prize-cards-grid[data-count="3"] .prize-card-chip {
+    max-width: 220px;
+    padding: 7px 12px 9px;
+}
+.prize-cards-grid[data-count="3"] .prize-chip-img-box {
+    width: 120px;
+    height: 120px;
+}
+.prize-cards-grid[data-count="3"] .prize-chip-name {
+    font-size: 12px;
+    max-width: 180px;
+    padding: 3px 14px;
+}
+
+/* Jika Lebih Dari 3 Produk Berbeda: Kecilkan Nama Agar Gambar Tetap Terlihat Jelas */
+.prize-cards-grid.compact-names,
+.prize-cards-grid[data-count="4"],
+.prize-cards-grid[data-count="5"] {
+    gap: 10px;
+}
+.prize-cards-grid.compact-names .prize-card-chip,
+.prize-cards-grid[data-count="4"] .prize-card-chip,
+.prize-cards-grid[data-count="5"] .prize-card-chip {
+    max-width: 170px;
+    padding: 6px 7px 7px;
+}
+.prize-cards-grid.compact-names .prize-chip-img-box,
+.prize-cards-grid[data-count="4"] .prize-chip-img-box,
+.prize-cards-grid[data-count="5"] .prize-chip-img-box {
+    width: 104px;
+    height: 104px;
+}
+.prize-cards-grid.compact-names .prize-chip-name,
+.prize-cards-grid[data-count="4"] .prize-chip-name,
+.prize-cards-grid[data-count="5"] .prize-chip-name {
+    font-size: 10px;
+    max-width: 120px;
+    line-height: 1.15;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+
+/* Jika Lebih Dari 5 Produk Berbeda (6 s/d 10 Item): Compact Grid Ekstra */
+.prize-cards-grid[data-count="6"],
+.prize-cards-grid[data-count="7"],
+.prize-cards-grid[data-count="8"],
+.prize-cards-grid[data-count="9"],
+.prize-cards-grid[data-count="10"] {
+    gap: 6px;
+}
+.prize-cards-grid[data-count="6"] .prize-card-chip,
+.prize-cards-grid[data-count="7"] .prize-card-chip,
+.prize-cards-grid[data-count="8"] .prize-card-chip,
+.prize-cards-grid[data-count="9"] .prize-card-chip,
+.prize-cards-grid[data-count="10"] .prize-card-chip {
+    max-width: 104px;
+    min-width: 78px;
+    padding: 4px 4px 6px;
+}
+.prize-cards-grid[data-count="6"] .prize-chip-img-box,
+.prize-cards-grid[data-count="7"] .prize-chip-img-box,
+.prize-cards-grid[data-count="8"] .prize-chip-img-box,
+.prize-cards-grid[data-count="9"] .prize-chip-img-box,
+.prize-cards-grid[data-count="10"] .prize-chip-img-box {
+    width: 74px;
+    height: 74px;
+}
+.prize-cards-grid[data-count="6"] .prize-chip-name,
+.prize-cards-grid[data-count="7"] .prize-chip-name,
+.prize-cards-grid[data-count="8"] .prize-chip-name,
+.prize-cards-grid[data-count="9"] .prize-chip-name,
+.prize-cards-grid[data-count="10"] .prize-chip-name {
+    font-size: 9px;
+    max-width: 84px;
+    line-height: 1.1;
+    -webkit-line-clamp: 2;
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+
+/* Fallback jika data-slots digunakan tanpa data-count */
+.tv-prizes-showcase-deck[data-slots="6"]:not(:has([data-count])) .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="7"]:not(:has([data-count])) .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="8"]:not(:has([data-count])) .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="9"]:not(:has([data-count])) .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="10"]:not(:has([data-count])) .prize-chip-img-box {
+    width: 68px;
+    height: 68px;
+}
+.tv-prizes-showcase-deck[data-slots="6"]:not(:has([data-count])) .prize-cards-grid,
+.tv-prizes-showcase-deck[data-slots="7"]:not(:has([data-count])) .prize-cards-grid,
+.tv-prizes-showcase-deck[data-slots="8"]:not(:has([data-count])) .prize-cards-grid,
+.tv-prizes-showcase-deck[data-slots="9"]:not(:has([data-count])) .prize-cards-grid,
+.tv-prizes-showcase-deck[data-slots="10"]:not(:has([data-count])) .prize-cards-grid {
+    gap: 6px;
+}
+.tv-prizes-showcase-deck[data-slots="6"]:not(:has([data-count])) .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="7"]:not(:has([data-count])) .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="8"]:not(:has([data-count])) .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="9"]:not(:has([data-count])) .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="10"]:not(:has([data-count])) .prize-chip-name {
+    font-size: 10px;
+    max-width: 85px;
+}
+
+/* Prize Tag in Bar Rows (Standby & Result) */
+.bar-prize-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 9999px;
+    background: radial-gradient(ellipse at center, rgba(45, 6, 14, 0.95) 0%, rgba(20, 2, 5, 0.98) 100%);
+    border: 1.3px solid rgba(212, 175, 55, 0.75);
+    color: #fef08a;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    margin-left: auto;
+    margin-right: 14px;
+    z-index: 3;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.bar-prize-tag .prize-tag-icon {
+    font-size: 14px;
+}
+.bar-prize-tag .prize-tag-name {
+    color: #fde68a;
+    font-weight: 700;
+    text-transform: uppercase;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.bars-vertical-stack.two-cols .bar-prize-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    margin-right: 6px;
+}
+.bars-vertical-stack.two-cols .bar-prize-tag .prize-tag-name {
+    max-width: 140px;
+}
+
+.popup-winner-info {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    flex: 1;
+}
+.popup-winner-prize-pill {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #881329;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+    text-transform: uppercase;
 }
 
 /* ==================== 8. RIGHT STAGE: INTERACTIVE ZONE ==================== */
 .stage-right-zone {
     position: absolute;
-    left: 565px;
-    width: 975px;
-    top: 255px;
-    bottom: 35px;
+    left: 535px;
+    width: 1015px;
+    top: 236px;
+    bottom: 44px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -351,8 +764,8 @@ html, body {
     gap: 10px;
 }
 .bars-vertical-stack.two-cols .bar-rank-badge {
-    width: 75px;
-    font-size: 32px;
+    width: 65px;
+    font-size: 28px;
     border-radius: 10px;
 }
 .bars-vertical-stack.two-cols .bar-name-card {
@@ -378,9 +791,9 @@ html, body {
     transition: transform 0.25s ease;
 }
 
-/* Kotak Nomor Urut: Burgundy Gelap + Bingkai Emas */
+/* Kotak Nomor Urut: Burgundy Gelap + Bingkai Emas (Dikecilkan proporsional agar card nama lebih luas) */
 .bar-rank-badge {
-    width: 110px;
+    width: 88px;
     height: 100%;
     background: linear-gradient(145deg, #4d0c18 0%, #250308 100%);
     border: 2px solid #d4af37;
@@ -389,7 +802,7 @@ html, body {
     align-items: center;
     justify-content: center;
     font-family: 'Playfair Display', serif;
-    font-size: 46px;
+    font-size: 38px;
     font-weight: 700;
     color: #ffffff;
     box-shadow: 
@@ -472,11 +885,17 @@ html, body {
     background: linear-gradient(90deg, rgba(254, 248, 244, 0.85) 0%, rgba(250, 240, 231, 0.75) 50%, rgba(246, 228, 214, 0.85) 100%);
     border: 1.8px dashed rgba(223, 167, 50, 0.7);
 }
+.standby-card .standby-prize,
+.standby-card .bar-prize-tag {
+    display: none !important;
+}
 .standby-text-wrap {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 20px;
     z-index: 2;
+    margin: 0 auto;
 }
 .standby-shimmer-dots {
     color: #dfa732;

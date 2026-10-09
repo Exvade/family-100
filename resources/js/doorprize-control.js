@@ -196,6 +196,9 @@ if (root) {
         const mainSlots = drawableSlots();
         allocation.setProgress(mainSlots);
         if (mainSlots > 0) {
+            try {
+                localStorage.setItem('doorprize.slots', String(mainSlots));
+            } catch (e) {}
             const resolved = allocation.resolve(mainSlots);
             allocation.setSummary(resolved.error ?? `Alokasi sesuai: ${mainSlots} pemenang.`, resolved.error ? 'danger' : 'success');
         } else {

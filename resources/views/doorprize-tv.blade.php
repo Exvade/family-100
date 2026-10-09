@@ -19,6 +19,7 @@
         window.doorprizeParticipants = @json($participants ?? []);
         window.doorprizeWedding = @json($wedding ?? null);
         window.doorprizeSpin = @json($spin ?? null);
+        window.doorprizePrizes = @json($prizes ?? ($spin['prizes'] ?? []));
         window.doorprizeSpinStateUrl = @json(route('doorprize.tv.state'));
     </script>
 
@@ -41,6 +42,28 @@
         $winnersList = (!empty($spin['winners']) && is_array($spin['winners'])) ? $spin['winners'] : $defaultPreviewWinners;
         $winnerDetailsList = $spin['winner_details'] ?? [];
         $slotCount = request()->has('slots') ? max(1, min(10, (int) request('slots'))) : max(1, min(10, (int) ($slots ?? 5)));
+
+        $prizesList = $prizes ?? ($spin['prizes'] ?? []);
+        $prizePlan = $spin['prize_plan'] ?? [];
+        $mappedPrizes = [];
+        for ($i = 0; $i < 10; $i++) {
+            $pId = $prizePlan[$i] ?? null;
+            $foundPrize = null;
+            if ($pId !== null) {
+                foreach ($prizesList as $pz) {
+                    if ((string) ($pz['id'] ?? '') === (string) $pId) {
+                        $foundPrize = $pz;
+                        break;
+                    }
+                }
+            }
+            if (!$foundPrize && !empty($prizesList)) {
+                // Jangan mengambil hadiah acak/berbeda per slot jika tidak ada alokasi khusus.
+                // Gunakan hadiah pertama untuk semua slot agar data hadiah lain tidak tertampil.
+                $foundPrize = $prizesList[0];
+            }
+            $mappedPrizes[$i] = $foundPrize;
+        }
     @endphp
 
     <!-- OUTER VIEWPORT SHELL (Centers and clips stage) -->
@@ -62,33 +85,16 @@
             <!-- 3. BOTTOM VELVET DRAPERY SHADOW -->
             <div class="stage-velvet-drape"></div>
 
-            <!-- 4. LEFT STAGE: ROMAN ARCH WITH PREWEDDING COUPLE PHOTO (TETAP UTUH & TIDAK PERNAH MENYUSUT) -->
-            <div class="stage-left-zone" id="stageLeftZone">
-                <div class="couple-arch-card" id="coupleArchCard">
-                    <div class="couple-arch-inner">
-                        <img src="{{ asset('images/prewed.webp') }}" class="couple-photo-img" alt="Anne & Hanif Prewedding" />
-                        <div class="couple-arch-vignette"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. WEDDING TITLE HEADER (TETAP DI KANAN ATAS PADA SEMUA STATE: IDLE, GACHA, RESULT) -->
+            <!-- 4. LEFT STAGE: WEDDING COUPLE ZONE (ANNE & HANIF) -->
+            <!-- Teks megah Wedding Anne & Hanif asli diletakkan di atas foto prewedding -->
             <header class="wedding-title-header" id="weddingTitleHeader">
                 <div class="wedding-hearts-icon">
-                    <svg viewBox="0 0 64 42" width="58" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg viewBox="0 0 64 42" width="54" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22 36 C10 26 2 18 2 10 C2 4 7 0 13 0 C18 0 21 3 22 5 C23 3 26 0 31 0 C37 0 42 4 42 10 C42 18 34 26 22 36 Z" stroke="url(#goldH1)" stroke-width="2.6" fill="none" stroke-linejoin="round"/>
                         <path d="M42 36 C30 26 22 18 22 10 C22 4 27 0 33 0 C38 0 41 3 42 5 C43 3 46 0 51 0 C57 0 62 4 62 10 C62 18 54 26 42 36 Z" stroke="url(#goldH2)" stroke-width="2.4" fill="none" stroke-linejoin="round"/>
                         <defs>
-                            <linearGradient id="goldH1" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0%" stop-color="#fff8ed"/>
-                                <stop offset="50%" stop-color="#fde68a"/>
-                                <stop offset="100%" stop-color="#d97706"/>
-                            </linearGradient>
-                            <linearGradient id="goldH2" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0%" stop-color="#fde68a"/>
-                                <stop offset="50%" stop-color="#d4af37"/>
-                                <stop offset="100%" stop-color="#92400e"/>
-                            </linearGradient>
+                            <linearGradient id="goldH1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff8ed"/><stop offset="50%" stop-color="#fde68a"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
+                            <linearGradient id="goldH2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="50%" stop-color="#d4af37"/><stop offset="100%" stop-color="#92400e"/></linearGradient>
                         </defs>
                     </svg>
                 </div>
@@ -100,6 +106,102 @@
                     <span class="div-line"></span>
                 </div>
             </header>
+
+            <div class="stage-left-zone" id="stageLeftZone">
+                <div class="couple-arch-card" id="coupleArchCard">
+                    <div class="couple-arch-inner">
+                        <img src="{{ asset('images/prewed.webp') }}" class="couple-photo-img" alt="Anne & Hanif Prewedding" />
+                        <div class="couple-arch-vignette"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. RIGHT TOP STAGE: PRIZE SPOTLIGHT SHOWCASE (FOTO BESAR & PIN NOMOR MINI) -->
+            <div class="tv-prize-spotlight-zone" id="tvPrizeSpotlightZone">
+                <div class="prize-zone-badge">
+                    <span class="badge-sparkle">✦</span>
+                    <span class="badge-title">HADIAH YANG DIUNDI</span>
+                    <span class="badge-sparkle">✦</span>
+                </div>
+
+                <div class="tv-prizes-showcase-deck" id="prizeShowcaseDeck" data-slots="{{ $slotCount }}">
+                    @php
+                        $activePrizesSlice = array_slice($mappedPrizes, 0, $slotCount);
+                        $uniquePrizes = [];
+                        foreach ($activePrizesSlice as $idx => $pz) {
+                            if ($pz) {
+                                $pKey = $pz['id'] ?? $pz['name'];
+                                if (!isset($uniquePrizes[$pKey])) {
+                                    $uniquePrizes[$pKey] = [
+                                        'prize' => $pz,
+                                        'slots' => [$idx + 1],
+                                    ];
+                                } else {
+                                    $uniquePrizes[$pKey]['slots'][] = $idx + 1;
+                                }
+                            }
+                        }
+                        $isSingleHero = count($uniquePrizes) === 1;
+                    @endphp
+
+                    @if ($isSingleHero && !empty($uniquePrizes))
+                        @php
+                            $heroData = reset($uniquePrizes);
+                            $heroPrize = $heroData['prize'];
+                            $heroSlots = $heroData['slots'];
+                            $slotRange = count($heroSlots) === 1 ? '#' . $heroSlots[0] : '#' . min($heroSlots) . ' - #' . max($heroSlots);
+                            $winnerCountText = count($heroSlots) > 1 ? count($heroSlots) . ' PEMENANG' : '1 PEMENANG';
+                        @endphp
+                        <div class="prize-card-hero" id="prizeCardHero">
+                            <div class="prize-hero-img-box">
+                                <div class="prize-chip-pin">{{ $slotRange }}</div>
+                                @if (!empty($heroPrize['image_url']))
+                                    <img src="{{ $heroPrize['image_url'] }}" class="prize-hero-img" alt="{{ $heroPrize['name'] }}" />
+                                @else
+                                    <div class="prize-hero-icon-fallback">🎁</div>
+                                @endif
+                            </div>
+                            <div class="prize-hero-info">
+                                <div class="prize-hero-badge-pill">
+                                    <span class="badge-sparkle">✦</span>
+                                    <span>DOORPRIZE &bull; {{ $winnerCountText }}</span>
+                                    <span class="badge-sparkle">✦</span>
+                                </div>
+                                <div class="prize-hero-title">{{ strtoupper($heroPrize['name']) }}</div>
+                            </div>
+                        </div>
+                    @else
+                        @php
+                            $uniqueCount = count($uniquePrizes);
+                        @endphp
+                        <div class="prize-cards-grid {{ $uniqueCount > 3 ? 'compact-names' : '' }}" id="prizeCardsGrid" data-count="{{ $uniqueCount }}">
+                            @foreach ($uniquePrizes as $uIdx => $uItem)
+                                @php
+                                    $pz = $uItem['prize'];
+                                    $slotsArray = $uItem['slots'];
+                                    $pzName = $pz['name'] ?? ('Hadiah #' . ($uIdx + 1));
+                                    $pzImg = $pz['image_url'] ?? null;
+                                    $isConsec = count($slotsArray) > 1 && $slotsArray === range(min($slotsArray), max($slotsArray));
+                                    $slotPin = count($slotsArray) === 1 
+                                        ? '#' . $slotsArray[0] 
+                                        : ($isConsec ? '#' . min($slotsArray) . ' - #' . max($slotsArray) : implode(', ', array_map(fn($s) => '#' . $s, $slotsArray)));
+                                @endphp
+                                <div class="prize-card-chip" id="topPrizeChip-{{ $uIdx }}" data-slots="{{ implode(',', $slotsArray) }}">
+                                    <div class="prize-chip-img-box">
+                                        <div class="prize-chip-pin">{{ $slotPin }}</div>
+                                        @if (!empty($pzImg))
+                                            <img src="{{ $pzImg }}" class="prize-chip-img" id="topPrizeImg-{{ $uIdx }}" alt="{{ $pzName }}" />
+                                        @else
+                                            <div class="prize-chip-icon" id="topPrizeIcon-{{ $uIdx }}">🎁</div>
+                                        @endif
+                                    </div>
+                                    <div class="prize-chip-name" id="topPrizeName-{{ $uIdx }}">{{ strtoupper($pzName) }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
 
             <!-- 6. RIGHT STAGE: INTERACTIVE PANELS (TANPA TOMBOL KONTROL, FULL CONTROL DARI DASHBOARD) -->
             <div class="stage-right-zone" id="stageRightZone">
@@ -116,8 +218,14 @@
                                     <div class="bar-rank-badge">{{ $i + 1 }}</div>
                                     <div class="bar-name-card standby-card">
                                         <div class="standby-text-wrap">
-                                            <span class="standby-shimmer-dots">✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦</span>
+                                            <span class="standby-shimmer-dots">✦ &nbsp; ✦ &nbsp; ✦</span>
                                             <span class="standby-label-badge">SIAP DIUNDI</span>
+                                        </div>
+                                        <div class="bar-prize-tag standby-prize" id="idlePrizeTag-{{ $i }}" style="display: none;">
+                                            <span class="prize-tag-icon">🎁</span>
+                                            <span class="prize-tag-name" id="idlePrizeName-{{ $i }}">
+                                                {{ $mappedPrizes[$i]['name'] ?? ('Hadiah #' . ($i + 1)) }}
+                                            </span>
                                         </div>
                                         <div class="botanical-gold-leaf">
                                             <svg viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -270,6 +378,14 @@
                                         <div class="winner-name-wrap">
                                             <div class="winner-person-name" id="winnerName-{{ $i }}">{{ $initWinner }}</div>
                                             <div class="winner-cat-badge {{ $initCat ? 'visible' : '' }}" id="winnerCat-{{ $i }}">{{ $initCat }}</div>
+                                        </div>
+
+                                        <!-- Prize Tag in Winner Bar -->
+                                        <div class="bar-prize-tag winner-prize" id="winnerPrizeTag-{{ $i }}">
+                                            <span class="prize-tag-icon">🎁</span>
+                                            <span class="prize-tag-name" id="winnerPrizeName-{{ $i }}">
+                                                {{ $initDetail['prize'] ?? ($mappedPrizes[$i]['name'] ?? ('Hadiah #' . ($i + 1))) }}
+                                            </span>
                                         </div>
 
                                         <!-- Botanical Leaf Watermark on Right -->

@@ -10,11 +10,12 @@ const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (m) => ({
 
 function load() {
     try {
-        const rows = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '[]');
+        const raw = sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
+        const rows = JSON.parse(raw || '[]');
         if (Array.isArray(rows) && rows.length > 0) {
             return rows.slice(0, MAX_ROWS).map((r) => ({ prizeId: String(r.prizeId ?? ''), count: String(r.count ?? '') }));
         }
-    } catch (e) { /* tanpa sessionStorage */ }
+    } catch (e) { /* tanpa storage */ }
 
     return [{ prizeId: '', count: '' }];
 }
@@ -31,7 +32,14 @@ export function createAllocation(container, onChange) {
     let dirtyWhileFocused = false;
 
     const persist = () => {
-        try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(rows)); } catch (e) { /* abaikan */ }
+        try {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+            const sum = rows.reduce((acc, r) => acc + (parseInt(r.count, 10) || 0), 0);
+            if (sum >= 1) {
+                localStorage.setItem('doorprize.slots', String(Math.min(10, sum)));
+            }
+        } catch (e) { /* abaikan */ }
     };
 
     function render() {
