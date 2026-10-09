@@ -83,7 +83,11 @@
                             <span class="text-muted">/ {{ $giftCount }} Kotak</span>
                         </div>
                     </div>
-                    <div class="col-lg-4 text-lg-end">
+                    <div class="col-lg-4 text-lg-end d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
+                        <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalBulkEditGifts" id="btnOpenBulkEditGifts">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /><path d="M9 4h10" /><path d="M14 8h5" /></svg>
+                            <span>Edit Semua Hadiah (List)</span>
+                        </button>
                         <form action="{{ route('family-100.gifts.reset') }}" method="POST" id="formResetGifts" class="d-inline">
                             @csrf
                             <button type="button" class="btn btn-danger btn-sm fw-bold shadow-sm d-inline-flex align-items-center gap-1" id="btnResetGifts">
@@ -182,6 +186,8 @@
         </form>
     </div>
 </div>
+
+@include('family-100.gifts._bulk_modal', ['gifts' => $gifts, 'giftCount' => $giftCount])
 @endsection
 
 @push('scripts')
@@ -413,6 +419,208 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Submit Bulk Edit Hadiah via AJAX
+    const formBulk = document.getElementById('formBulkEditGifts');
+    if (formBulk) {
+        formBulk.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnSubmit = document.getElementById('btnSubmitBulkGifts');
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add('btn-loading');
+            }
+
+            const giftsPayload = [];
+            const nameInputs = formBulk.querySelectorAll('.bulk-gift-input-name');
+            nameInputs.forEach((input, index) => {
+                const idInput = formBulk.querySelector(`input[name="gifts[${index}][id]"]`);
+                const descInput = formBulk.querySelector(`input[name="gifts[${index}][description]"]`);
+                if (idInput && idInput.value) {
+                    giftsPayload.push({
+                        id: parseInt(idInput.value, 10),
+                        name: input.value.trim(),
+                        description: descInput ? descInput.value.trim() : ''
+                    });
+                }
+            });
+
+            try {
+                const res = await fetch(formBulk.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ gifts: giftsPayload })
+                });
+
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => null);
+                    throw new Error(errJson?.message || 'HTTP ' + res.status);
+                }
+
+                const data = await res.json();
+
+                // Update tampilan kartu di dashboard secara real-time
+                giftsPayload.forEach(g => {
+                    const cardCol = document.querySelector(`[data-gift-card="${g.id}"]`);
+                    if (cardCol) {
+                        const nameEl = cardCol.querySelector('[data-gift-name]');
+                        if (nameEl) {
+                            nameEl.textContent = g.name || `Hadiah #${g.id}`;
+                            nameEl.title = g.name || `Hadiah #${g.id}`;
+                        }
+
+                        let descEl = cardCol.querySelector('[data-gift-desc]');
+                        if (g.description) {
+                            if (!descEl) {
+                                descEl = document.createElement('p');
+                                descEl.className = 'text-secondary small mb-1 text-truncate';
+                                descEl.setAttribute('data-gift-desc', '');
+                                const winnerEl = cardCol.querySelector('[data-gift-winner]');
+                                if (winnerEl) winnerEl.parentNode.insertBefore(descEl, winnerEl);
+                            }
+                            descEl.textContent = g.description;
+                            descEl.title = g.description;
+                            descEl.style.display = '';
+                        } else if (descEl) {
+                            descEl.textContent = '';
+                            descEl.style.display = 'none';
+                        }
+
+                        // Sinkronkan data-attribute pada tombol edit satuan
+                        const editBtn = cardCol.querySelector('[data-bs-target="#modalEditGift"]');
+                        if (editBtn) {
+                            editBtn.dataset.name = g.name;
+                            editBtn.dataset.description = g.description || '';
+                        }
+                    }
+                });
+
+                // Tutup modal
+                const modalEl = document.getElementById('modalBulkEditGifts');
+                if (modalEl) {
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                    modalInstance.hide();
+                }
+
+                if (window.Swal) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: data.message || 'Semua hadiah berhasil disimpan!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            } catch (err) {
+                // Fallback submit bila AJAX terkendala
+                formBulk.submit();
+            } finally {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.classList.remove('btn-loading');
+                }
+            }
+        });
+    }
+
+    // ========================================================
+    // SINKRONISASI REALTIME KE LAYAR TV (Bidirectional Sync)
+    // ========================================================
+    const tvStateUrl = '{{ route("family-100.gifts.tv.state") }}';
+    let isPollingGifts = false;
+
+    async function syncGiftsStateWithTv() {
+        if (isPollingGifts) return;
+        isPollingGifts = true;
+
+        try {
+            const res = await fetch(tvStateUrl, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            // 1. Sinkronkan jumlah kotak terbuka di badge
+            const countBadge = document.getElementById('openedCountBadge');
+            if (countBadge && data.opened_count !== undefined) {
+                countBadge.textContent = data.opened_count;
+            }
+
+            // 2. Sinkronkan tiap kartu hadiah
+            (data.gifts || []).forEach(g => {
+                const cardCol = document.querySelector(`[data-gift-card="${g.id}"]`);
+                if (!cardCol) return;
+
+                const card = cardCol.querySelector('.card');
+                const header = card?.querySelector('.card-header');
+                const numBadge = header?.querySelector('.badge:first-child');
+                const statusBadge = cardCol.querySelector('[data-gift-status-badge]');
+                const iconContainer = cardCol.querySelector('[data-gift-icon-container]');
+                const iconEl = cardCol.querySelector('[data-gift-icon]');
+                const btnToggle = cardCol.querySelector('[data-toggle-gift-btn]');
+
+                const isOpened = Boolean(g.is_opened);
+                const currentStatus = statusBadge?.textContent.trim();
+
+                const svgGift = `<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z" /><path d="M12 8l0 13" /><path d="M19 12v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5" /></svg>`;
+                const svgPackage = `<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /><path d="M12 12l8 -4.5" /><path d="M12 12l0 9" /><path d="M12 12l-8 -4.5" /></svg>`;
+
+                if (isOpened && currentStatus !== 'TERBUKA') {
+                    if (card) card.className = 'card h-100 shadow-sm border transition-all border-success bg-success-lt';
+                    if (header) header.className = 'card-header py-2 px-3 d-flex justify-content-between align-items-center bg-success text-white';
+                    if (numBadge) numBadge.className = 'badge bg-white text-success fs-4 fw-bold px-2 py-1 shadow-sm';
+                    if (statusBadge) {
+                        statusBadge.className = 'badge bg-success-subtle text-success-emphasis border border-success px-2 py-1';
+                        statusBadge.textContent = 'TERBUKA';
+                    }
+                    if (iconContainer) iconContainer.className = 'avatar avatar-md mx-auto mb-2 bg-success text-white shadow-sm rounded-circle d-flex align-items-center justify-content-center';
+                    if (iconEl) iconEl.innerHTML = svgGift;
+                    if (btnToggle) {
+                        btnToggle.className = 'btn btn-sm btn-outline-secondary fw-bold w-100 shadow-sm';
+                        btnToggle.textContent = 'Tutup Kotak';
+                    }
+                } else if (!isOpened && currentStatus !== 'TERTUTUP') {
+                    if (card) card.className = 'card h-100 shadow-sm border transition-all border-warning-subtle bg-white';
+                    if (header) header.className = 'card-header py-2 px-3 d-flex justify-content-between align-items-center bg-warning-subtle text-dark';
+                    if (numBadge) numBadge.className = 'badge bg-warning text-dark fs-4 fw-bold px-2 py-1 shadow-sm';
+                    if (statusBadge) {
+                        statusBadge.className = 'badge bg-secondary-subtle text-secondary px-2 py-1';
+                        statusBadge.textContent = 'TERTUTUP';
+                    }
+                    if (iconContainer) iconContainer.className = 'avatar avatar-md mx-auto mb-2 bg-warning-lt text-warning shadow-sm rounded-circle d-flex align-items-center justify-content-center';
+                    if (iconEl) iconEl.innerHTML = svgPackage;
+                    if (btnToggle) {
+                        btnToggle.className = 'btn btn-sm btn-success fw-bold w-100 shadow-sm';
+                        btnToggle.textContent = 'Buka Kotak di TV';
+                    }
+                }
+
+                // Update nama pemenang jika ada perubahan
+                const winnerEl = cardCol.querySelector('[data-gift-winner]');
+                if (winnerEl) {
+                    if (g.winner_name) {
+                        winnerEl.className = 'small text-primary fw-semibold';
+                        winnerEl.textContent = 'Pemenang: ' + g.winner_name;
+                    } else if (winnerEl.textContent.startsWith('Pemenang:')) {
+                        winnerEl.className = 'small text-muted fst-italic';
+                        winnerEl.textContent = 'Belum ada pemenang';
+                    }
+                }
+            });
+        } catch (e) {
+            // Silently ignore network hiccup
+        } finally {
+            isPollingGifts = false;
+        }
+    }
+
+    // Polling setiap 800ms
+    setInterval(syncGiftsStateWithTv, 800);
 });
 </script>
 @endpush

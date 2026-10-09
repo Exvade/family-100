@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Family 100 - {{ config('app.name') }}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1035,7 +1036,7 @@
             <div class="celebration-close-hint">
                 <span class="celebration-timer-badge">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7v5l3 3" /></svg>
-                    Menutup otomatis dalam <strong id="celebTimerSec">5</strong>s
+                    Menutup otomatis dalam <strong id="celebTimerSec">3</strong>s
                 </span>
                 <span class="celebration-manual-hint">• Klik di mana saja atau tekan ESC untuk menutup</span>
             </div>
@@ -1439,7 +1440,7 @@
 
         let celebrationAutoCloseTimer = null;
         let celebrationCountdownInterval = null;
-        const CELEBRATION_DURATION_MS = 5000;
+        const CELEBRATION_DURATION_MS = 3000;
 
         function showCelebrationModal(number, name, desc, winner) {
             // Bersihkan timer lama jika masih aktif

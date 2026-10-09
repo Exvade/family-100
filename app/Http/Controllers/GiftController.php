@@ -7,6 +7,7 @@ use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class GiftController extends Controller
@@ -50,6 +51,42 @@ class GiftController extends Controller
         }
 
         return back()->with('status', "Hadiah #{$gift->number} berhasil diperbarui.");
+    }
+
+    /**
+     * Update data banyak hadiah sekaligus (bulk edit list).
+     */
+    public function bulkUpdate(Request $request): JsonResponse|RedirectResponse
+    {
+        $validated = $request->validate([
+            'gifts' => ['required', 'array'],
+            'gifts.*.id' => ['required', 'integer', 'exists:gifts,id'],
+            'gifts.*.name' => ['required', 'string', 'max:255'],
+            'gifts.*.description' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'gifts.required' => 'Data hadiah tidak boleh kosong.',
+            'gifts.*.name.required' => 'Nama hadiah wajib diisi.',
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['gifts'] as $item) {
+                Gift::where('id', $item['id'])->update([
+                    'name' => trim($item['name']),
+                    'description' => isset($item['description']) && trim($item['description']) !== '' ? trim($item['description']) : null,
+                ]);
+            }
+        });
+
+        $count = count($validated['gifts']);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => "Berhasil memperbarui {$count} data hadiah sekaligus.",
+            ]);
+        }
+
+        return back()->with('status', "Berhasil memperbarui {$count} data hadiah sekaligus.");
     }
 
     /**
