@@ -1,6 +1,6 @@
 @props(['title'])
 
-<div class="card" data-datatable>
+<div class="card" data-datatable {{ $attributes }}>
     <div class="card-header">
         <h3 class="card-title">{{ $title }}</h3>
     </div>

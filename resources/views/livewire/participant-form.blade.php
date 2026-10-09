@@ -16,7 +16,7 @@
                     <label class="form-label required" for="participant-category-select">Kategori Peserta</label>
                     <select id="participant-category-select" class="form-select @error('category') is-invalid @enderror" wire:model="category">
                         @foreach ($categories as $cat)
-                            <option value="{{ $cat }}">{{ $cat }}</option>
+                            <option value="{{ $cat }}">{{ \App\Models\Participant::displayLabel($cat) }}</option>
                         @endforeach
                     </select>
                     @error('category')<div class="invalid-feedback">{{ $message }}</div>@enderror

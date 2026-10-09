@@ -22,6 +22,13 @@ body {
     z-index: 20;
 }
 
+/* Tabel daftar hadiah: tinggi dibatasi dan bisa di-scroll (tanpa dropdown, jadi aman dari overflow-visible di atas) */
+.prize-scroll {
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
 /* Card footer memiliki z-index lebih rendah sehingga dropdown menu melayang di ATAS footer */
 .card[data-datatable] .card-footer,
 .card:has(.datatable) .card-footer,
@@ -373,34 +380,6 @@ body {
     justify-content: center;
 }
 
-.spin-winners {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-    margin: 1rem 0 0;
-    padding: 0;
-    list-style: none;
-    counter-reset: winner;
-}
-
-.spin-winners[hidden] {
-    display: none;
-}
-
-.spin-winners li {
-    counter-increment: winner;
-    padding: .375rem .875rem;
-    border-radius: 999px;
-    background: var(--tblr-primary-lt, #e6effa);
-    color: var(--tblr-primary, #0054a6);
-    font-weight: 600;
-}
-
-.spin-winners li::before {
-    content: counter(winner) '. ';
-    opacity: .7;
-}
-
 @media (max-width: 767.98px) {
     .spin-control-actions {
         flex: 1 1 100%;
@@ -459,5 +438,116 @@ body {
         flex: 1 1 100%;
         align-items: stretch;
         text-align: left;
+    }
+}
+
+/* Edit langsung di sel tabel peserta */
+.inline-editable {
+    cursor: pointer;
+    min-width: 6rem;
+}
+
+.inline-editable:hover {
+    background: var(--tblr-bg-surface-secondary, rgba(0, 0, 0, .03));
+}
+
+.inline-editable:empty::after,
+.inline-editable[data-empty="1"]::after {
+    content: '—';
+    color: var(--tblr-secondary, #667382);
+}
+
+.inline-editable .form-control,
+.inline-editable .form-select {
+    min-width: 8rem;
+}
+
+/* Gambar hadiah */
+.prize-thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    background: var(--tblr-bg-surface-secondary, #f4f6fa);
+}
+
+.prize-thumb-lg {
+    width: 64px;
+    height: 64px;
+}
+
+.prize-thumb-empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border: 1px dashed var(--tblr-border-color, #dce1e7);
+    border-radius: var(--tblr-border-radius, 4px);
+    color: var(--tblr-secondary, #667382);
+    font-size: .7rem;
+    cursor: pointer;
+}
+
+/* Editor alokasi hadiah: satu baris per hadiah (badge slot, thumbnail, pilihan hadiah, jumlah, hapus) */
+.allocation-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.allocation-row {
+    display: grid;
+    grid-template-columns: 4.5rem 2.5rem minmax(0, 1fr) 7.5rem 2rem;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem;
+    background: var(--tblr-bg-surface, #fff);
+    border: 1px solid var(--tblr-border-color, #dce1e7);
+    border-radius: var(--tblr-border-radius, 4px);
+}
+
+.allocation-slot {
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.allocation-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    overflow: hidden;
+    background: var(--tblr-bg-surface-secondary, #f4f6fa);
+    border: 1px solid var(--tblr-border-color, #dce1e7);
+    border-radius: var(--tblr-border-radius, 4px);
+}
+
+.allocation-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.allocation-count input {
+    min-width: 0;
+    text-align: center;
+    font-weight: 600;
+}
+
+@media (max-width: 575.98px) {
+    .allocation-row {
+        grid-template-columns: auto 2.5rem minmax(0, 1fr) 2rem;
+    }
+
+    /* Pilihan hadiah selebar baris; jumlah di baris bawahnya */
+    .allocation-row .form-select {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .allocation-row .allocation-count {
+        grid-column: 1 / 4;
+        grid-row: 3;
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** Peserta undian doorprize. */
 class Participant extends Model
@@ -85,6 +86,12 @@ class Participant extends Model
         }
 
         return self::DEFAULT_CATEGORY;
+    }
+
+    /** Hadiah yang dimenangkan peserta ini (diisi saat undian dihentikan) */
+    public function prize(): BelongsTo
+    {
+        return $this->belongsTo(Prize::class);
     }
 
     protected function casts(): array

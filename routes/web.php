@@ -3,6 +3,7 @@
 use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\DoorprizeController;
 use App\Http\Controllers\GiftController;
+use App\Http\Controllers\PrizeController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
@@ -54,6 +55,12 @@ Route::put('family-100/pengaturan', [SettingController::class, 'update'])->name(
 Route::get('/doorprize', [DoorprizeController::class, 'index'])->name('doorprize');
 Route::get('/doorprize/template', [DoorprizeController::class, 'template'])->name('doorprize.template');
 Route::get('/doorprize/winners/export', [DoorprizeController::class, 'exportWinners'])->name('doorprize.winners.export');
+Route::post('/doorprize/hadiah', [PrizeController::class, 'store'])->name('doorprize.prizes.store');
+Route::patch('/doorprize/hadiah/{prize}', [PrizeController::class, 'update'])->name('doorprize.prizes.update');
+Route::delete('/doorprize/hadiah/{prize}', [PrizeController::class, 'destroy'])->name('doorprize.prizes.destroy');
+Route::post('/doorprize/hadiah/{prize}/gambar', [PrizeController::class, 'uploadImage'])->name('doorprize.prizes.image.store');
+Route::delete('/doorprize/hadiah/{prize}/gambar', [PrizeController::class, 'removeImage'])->name('doorprize.prizes.image.destroy');
+Route::patch('/doorprize/peserta/{participant}', [DoorprizeController::class, 'update'])->name('doorprize.participants.update');
 Route::delete('/doorprize/peserta/{participant}', [DoorprizeController::class, 'destroy'])->name('doorprize.participants.destroy');
 Route::get('/doorprize/tv', [DoorprizeController::class, 'tv'])->name('doorprize.tv');
 Route::get('/doorprize/tv/state', [DoorprizeController::class, 'tvState'])->name('doorprize.tv.state');
@@ -61,5 +68,4 @@ Route::post('/doorprize/spin/start', [DoorprizeController::class, 'start'])->nam
 Route::post('/doorprize/spin/stop', [DoorprizeController::class, 'stop'])->name('doorprize.spin.stop');
 Route::post('/doorprize/spin/reset', [DoorprizeController::class, 'reset'])->name('doorprize.spin.reset');
 Route::post('/doorprize/spin/duration', [DoorprizeController::class, 'duration'])->name('doorprize.spin.duration');
-Route::post('/doorprize/spin/configure', [DoorprizeController::class, 'configure'])->name('doorprize.spin.configure');
 Route::post('/doorprize/setting', [DoorprizeController::class, 'saveSetting'])->name('doorprize.setting');
