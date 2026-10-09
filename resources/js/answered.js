@@ -107,6 +107,8 @@ document.addEventListener('click', async (event) => {
             throw new Error(`HTTP ${response.status}`);
         }
 
+        const data = await response.json();
+
         // Reset tombol jawaban di tabel ke hijau "Terjawab"
         document.querySelectorAll('[data-answered-toggle]').forEach((btn) => {
             btn.classList.remove('btn-orange');
@@ -117,14 +119,14 @@ document.addEventListener('click', async (event) => {
         // Reset badge salah ke 0
         const badge = document.querySelector('[data-wrong-count-badge]');
         if (badge) {
-            badge.textContent = '0';
+            badge.textContent = data.wrong_count ?? '0';
         }
 
         Swal.fire({
             toast: true,
             position: 'top-end',
             icon: 'success',
-            title: 'Babak berhasil direset!',
+            title: data.message || 'Babak berhasil direset!',
             timer: 1500,
             showConfirmButton: false,
         });

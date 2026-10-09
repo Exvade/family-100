@@ -31,6 +31,9 @@
                   <a class="dropdown-item {{ request()->routeIs('family-100.questions.*', 'family-100.answers.*') ? 'active' : '' }}" href="{{ route('family-100.questions.index') }}">
                     Pertanyaan
                   </a>
+                  <a class="dropdown-item {{ request()->routeIs('family-100.gifts.*') ? 'active' : '' }}" href="{{ route('family-100.gifts.index') }}">
+                    Hadiah Kuis
+                  </a>
                   <a class="dropdown-item {{ request()->routeIs('family-100.settings.*') ? 'active' : '' }}" href="{{ route('family-100.settings.edit') }}">
                     Pengaturan
                   </a>

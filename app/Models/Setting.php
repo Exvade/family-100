@@ -24,6 +24,28 @@ class Setting extends Model
         static::updateOrCreate(['key' => $key], ['value' => (string) $value]);
     }
 
+    public const TV_MODE = 'family_100_tv_mode';
+
+    public const TV_MODE_QUIZ = 'quiz';
+
+    public const TV_MODE_GIFT = 'gift';
+
+    public const GIFT_COUNT = 'family_100_gift_count';
+
+    public const DEFAULT_GIFT_COUNT = 15;
+
+    public static function tvMode(): string
+    {
+        return static::get(self::TV_MODE, self::TV_MODE_QUIZ) ?: self::TV_MODE_QUIZ;
+    }
+
+    public static function giftCount(): int
+    {
+        $count = (int) static::get(self::GIFT_COUNT, (string) self::DEFAULT_GIFT_COUNT);
+
+        return max(1, min(20, $count ?: self::DEFAULT_GIFT_COUNT));
+    }
+
     /** Durasi timer Family 100 dalam detik. */
     public static function timerDuration(): int
     {

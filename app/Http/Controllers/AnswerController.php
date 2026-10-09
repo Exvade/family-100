@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Answer;
+use App\Models\Gift;
 use App\Models\Question;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,9 @@ class AnswerController extends Controller
         if ($isSwitching) {
             // Ketika berpindah pertanyaan, tutup semua jawaban dan reset hitungan salah
             $question->answers()->update(['is_answered' => false]);
-            $question->update(['wrong_count' => 0]);
+            $question->wrong_count = 0;
+            $question->save();
+            $question->resetTimer();
             Setting::put(Setting::ACTIVE_QUESTION, $question->id);
         }
 
@@ -40,6 +43,10 @@ class AnswerController extends Controller
         $currentNumber = ($currentIndex !== false ? $currentIndex + 1 : 1);
         $totalQuestions = $allQuestions->count();
 
+        $giftCount = Setting::giftCount();
+        Gift::ensureCount($giftCount);
+        $gifts = Gift::where('number', '<=', $giftCount)->orderBy('number')->get();
+
         return view('family-100.answers.index', compact('question', 'answers', 'onTvIds') + [
             'timer' => $question->timerState(),
             'prevQuestion' => $prevQuestion,
@@ -47,6 +54,9 @@ class AnswerController extends Controller
             'currentNumber' => $currentNumber,
             'totalQuestions' => $totalQuestions,
             'allQuestions' => $allQuestions,
+            'tvMode' => Setting::tvMode(),
+            'giftCount' => $giftCount,
+            'gifts' => $gifts,
         ]);
     }
 

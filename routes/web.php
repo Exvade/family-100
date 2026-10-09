@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\DoorprizeController;
+use App\Http\Controllers\GiftController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,19 @@ Route::prefix('family-100')->name('family-100.')->group(function () {
         ->only('index', 'destroy')
         ->shallow()
         ->names('answers');
+
+    // Dashboard & Kontrol Hadiah
+    Route::get('hadiah', [GiftController::class, 'index'])->name('gifts.index');
+    Route::put('hadiah/{gift}', [GiftController::class, 'update'])->name('gifts.update');
+    Route::post('hadiah/{gift}/toggle', [GiftController::class, 'toggle'])->name('gifts.toggle');
+    Route::post('hadiah/{gift}/open', [GiftController::class, 'open'])->name('gifts.open');
+    Route::post('hadiah/reset', [GiftController::class, 'reset'])->name('gifts.reset');
+    Route::post('hadiah/jumlah', [GiftController::class, 'updateCount'])->name('gifts.count');
+    Route::post('tv/mode', [GiftController::class, 'switchTvMode'])->name('tv.mode');
+
+    // Layar TV Hadiah Panggung
+    Route::get('hadiah/tv', [GiftController::class, 'tv'])->name('gifts.tv');
+    Route::get('hadiah/tv/state', [GiftController::class, 'tvState'])->name('gifts.tv.state');
 });
 
 Route::get('family-100/pengaturan', [SettingController::class, 'edit'])->name('family-100.settings.edit');

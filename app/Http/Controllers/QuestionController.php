@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Gift;
 use App\Models\Question;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -141,11 +142,18 @@ class QuestionController extends Controller
         $question = ($activeId ? Question::find($activeId) : null) ?? Question::orderBy('id')->first();
 
         if (! $question) {
+            $giftCount = Setting::giftCount();
+            Gift::ensureCount($giftCount);
+            $gifts = Gift::where('number', '<=', $giftCount)->orderBy('number')->get();
+
             return view('family-100.tv', [
                 'question' => null,
                 'answers' => collect(),
                 'total' => 0,
                 'timer' => ['status' => 'idle', 'remaining_ms' => Setting::timerDuration() * 1000, 'duration_ms' => Setting::timerDuration() * 1000],
+                'tvMode' => Setting::tvMode(),
+                'giftCount' => $giftCount,
+                'gifts' => $gifts,
             ]);
         }
 
@@ -158,7 +166,18 @@ class QuestionController extends Controller
         $question = ($activeId ? Question::find($activeId) : null) ?? Question::orderBy('id')->first();
 
         if (! $question) {
+            $giftCount = Setting::giftCount();
+            $gifts = Gift::where('number', '<=', $giftCount)->orderBy('number')->get()->map(fn ($g) => [
+                'id' => $g->id,
+                'number' => $g->number,
+                'name' => $g->name,
+                'description' => $g->description,
+                'is_opened' => (bool) $g->is_opened,
+                'winner_name' => $g->winner_name,
+            ]);
+
             return response()->json([
+                'tv_mode' => Setting::tvMode(),
                 'question_id' => null,
                 'question' => null,
                 'display_limit' => 0,
@@ -166,6 +185,8 @@ class QuestionController extends Controller
                 'answers' => [],
                 'timer' => ['status' => 'idle', 'remaining_ms' => Setting::timerDuration() * 1000, 'duration_ms' => Setting::timerDuration() * 1000],
                 'wrong_count' => 0,
+                'gift_count' => $giftCount,
+                'gifts' => $gifts,
             ]);
         }
 
@@ -177,20 +198,39 @@ class QuestionController extends Controller
         Setting::put(Setting::ACTIVE_QUESTION, $question->id);
 
         $answers = $question->answers()->limit($question->display_limit)->get();
+        $giftCount = Setting::giftCount();
+        Gift::ensureCount($giftCount);
+        $gifts = Gift::where('number', '<=', $giftCount)->orderBy('number')->get();
 
         return view('family-100.tv', [
             'question' => $question,
             'answers' => $answers,
             'total' => $question->answers()->count(),
             'timer' => $question->timerState(),
+            'tvMode' => Setting::tvMode(),
+            'giftCount' => $giftCount,
+            'gifts' => $gifts,
         ]);
     }
 
     public function tvState(Question $question): JsonResponse
     {
         $answers = $question->answers()->limit($question->display_limit)->get();
+        $giftCount = Setting::giftCount();
+        $gifts = Gift::where('number', '<=', $giftCount)
+            ->orderBy('number')
+            ->get()
+            ->map(fn ($g) => [
+                'id' => $g->id,
+                'number' => $g->number,
+                'name' => $g->name,
+                'description' => $g->description,
+                'is_opened' => (bool) $g->is_opened,
+                'winner_name' => $g->winner_name,
+            ]);
 
         return response()->json([
+            'tv_mode' => Setting::tvMode(),
             'question_id' => $question->id,
             'question' => $question->question,
             'display_limit' => $question->display_limit,
@@ -206,6 +246,8 @@ class QuestionController extends Controller
             ])->values(),
             'timer' => $question->timerState(),
             'wrong_count' => $question->wrong_count,
+            'gift_count' => $giftCount,
+            'gifts' => $gifts,
         ]);
     }
 
@@ -221,11 +263,14 @@ class QuestionController extends Controller
     public function resetRound(Question $question): JsonResponse
     {
         $question->answers()->update(['is_answered' => false]);
-        $question->update(['wrong_count' => 0]);
+        $question->wrong_count = 0;
+        $question->save();
+        $question->resetTimer();
 
         return response()->json([
             'status' => 'success',
             'wrong_count' => 0,
+            'timer' => $question->timerState(),
             'message' => 'Babak berhasil direset. Semua jawaban ditutup kembali dan hitungan salah kembali ke 0.',
         ]);
     }

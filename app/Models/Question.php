@@ -11,7 +11,7 @@ class Question extends Model
     /** @use HasFactory<\Database\Factories\QuestionFactory> */
     use HasFactory;
 
-    protected $fillable = ['question', 'display_limit'];
+    protected $fillable = ['question', 'display_limit', 'wrong_count'];
 
     protected function casts(): array
     {

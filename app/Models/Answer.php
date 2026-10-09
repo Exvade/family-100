@@ -11,7 +11,7 @@ class Answer extends Model
     /** @use HasFactory<\Database\Factories\AnswerFactory> */
     use HasFactory;
 
-    protected $fillable = ['answer', 'ranking'];
+    protected $fillable = ['answer', 'ranking', 'is_answered'];
 
     protected function casts(): array
     {
