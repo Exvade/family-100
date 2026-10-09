@@ -20,10 +20,10 @@
                 <div class="p-3 bg-body-tertiary border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <div class="text-secondary small d-flex align-items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon text-primary flex-none" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9h.01" /><path d="M11 12h1v4h1" /><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" /></svg>
-                        <span>Isi nama hadiah langsung secara berurutan. Klik <strong>Simpan Semua Hadiah</strong> untuk menyimpan sekaligus.</span>
+                        <span>Isi nama hadiah langsung secara berurutan. Kotak yang sudah terbuka tidak akan diacak posisinya.</span>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm d-inline-flex align-items-center gap-1" id="btnShuffleBulkInputs" title="Acak posisi atau urutan nomor hadiah">
+                        <button type="button" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm d-inline-flex align-items-center gap-1" id="btnShuffleBulkInputs" title="Acak posisi atau urutan nomor hadiah yang belum dibuka">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 4l3 3l-3 3" /><path d="M18 20l3 -3l-3 -3" /><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" /><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1.018m-4.004 7.964a4.978 4.978 0 0 1 -2.996 1.018h-3" /></svg>
                             <span>Acak Nomor Hadiah</span>
                         </button>
@@ -37,28 +37,38 @@
                     <table class="table table-vcenter table-hover table-striped m-0">
                         <thead class="sticky-top bg-body" style="z-index: 10;">
                             <tr>
-                                <th style="width: 80px;" class="text-center py-2">Kotak</th>
+                                <th style="width: 90px;" class="text-center py-2">Kotak</th>
                                 <th style="min-width: 250px;" class="py-2">Nama / Isi Hadiah <span class="text-danger">*</span></th>
                                 <th style="min-width: 230px;" class="py-2">Keterangan / Catatan (Opsional)</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($gifts as $index => $gift)
-                                <tr>
+                                <tr data-gift-row-id="{{ $gift->id }}" data-is-opened="{{ $gift->is_opened ? '1' : '0' }}" class="{{ $gift->is_opened ? 'bg-success-lt' : '' }}">
                                     <td class="text-center align-middle py-2">
                                         <input type="hidden" name="gifts[{{ $index }}][id]" value="{{ $gift->id }}">
-                                        <span class="badge bg-warning text-dark fs-3 fw-bold px-2 py-1 shadow-sm">
-                                            #{{ $gift->number }}
-                                        </span>
+                                        <div class="d-flex flex-column align-items-center justify-content-center gap-1">
+                                            <span class="badge {{ $gift->is_opened ? 'bg-success text-white' : 'bg-warning text-dark' }} fs-3 fw-bold px-2 py-1 shadow-sm badge-number-bulk">
+                                                #{{ $gift->number }}
+                                            </span>
+                                            <span class="badge {{ $gift->is_opened ? 'bg-success text-white' : 'bg-secondary-subtle text-secondary' }} px-1 py-0 badge-status-bulk" style="font-size: 0.65rem; display: {{ $gift->is_opened ? 'inline-block' : 'none' }};">
+                                                {{ $gift->is_opened ? 'TERBUKA' : 'TERTUTUP' }}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td class="align-middle py-2">
-                                        <input type="text"
-                                               name="gifts[{{ $index }}][name]"
-                                               class="form-control form-control-sm fw-semibold bulk-gift-input-name"
-                                               data-bulk-id="{{ $gift->id }}"
-                                               value="{{ $gift->name }}"
-                                               placeholder="Contoh: Kipas Angin / Hadiah #{{ $gift->number }}"
-                                               required>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="text"
+                                                   name="gifts[{{ $index }}][name]"
+                                                   class="form-control form-control-sm fw-semibold bulk-gift-input-name"
+                                                   data-bulk-id="{{ $gift->id }}"
+                                                   value="{{ $gift->name }}"
+                                                   placeholder="Contoh: Kipas Angin / Hadiah #{{ $gift->number }}"
+                                                   required>
+                                            <span class="badge bg-success-lt text-success text-nowrap small py-1 px-2 border border-success-subtle opened-tag" style="display: {{ $gift->is_opened ? 'inline-block' : 'none' }}; font-size: 0.72rem;" title="Kotak ini sudah dibuka sehingga posisinya tidak akan ikut diacak">
+                                                Terkunci
+                                            </span>
+                                        </div>
                                     </td>
                                     <td class="align-middle py-2">
                                         <input type="text"
@@ -76,7 +86,7 @@
             </div>
 
             <div class="modal-footer py-2 px-3 bg-body-tertiary d-flex justify-content-between align-items-center">
-                <button type="button" class="btn btn-outline-warning text-dark fw-bold d-inline-flex align-items-center gap-2 shadow-sm" id="btnShuffleBulkInputsFooter" title="Acak posisi atau urutan nomor hadiah">
+                <button type="button" class="btn btn-outline-warning text-dark fw-bold d-inline-flex align-items-center gap-2 shadow-sm" id="btnShuffleBulkInputsFooter" title="Acak posisi atau urutan nomor hadiah yang belum dibuka">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 4l3 3l-3 3" /><path d="M18 20l3 -3l-3 -3" /><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" /><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1.018m-4.004 7.964a4.978 4.978 0 0 1 -2.996 1.018h-3" /></svg>
                     <span>Acak Nomor Hadiah</span>
                 </button>
@@ -97,11 +107,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalBulk = document.getElementById('modalBulkEditGifts');
     if (!modalBulk) return;
 
-    // Sinkronisasi data saat modal dibuka
+    // Sinkronisasi data dan status buka saat modal dibuka
     modalBulk.addEventListener('show.bs.modal', () => {
         document.querySelectorAll('[data-gift-card]').forEach(cardCol => {
             const id = cardCol.dataset.giftCard;
             const editBtn = cardCol.querySelector('[data-bs-target="#modalEditGift"]');
+            const row = modalBulk.querySelector(`tr[data-gift-row-id="${id}"]`);
+            const statusBadge = cardCol.querySelector('[data-gift-status-badge]');
+            const isOpened = statusBadge && statusBadge.textContent.includes('TERBUKA');
+
+            if (row) {
+                row.dataset.isOpened = isOpened ? '1' : '0';
+                if (isOpened) {
+                    row.classList.add('bg-success-lt');
+                } else {
+                    row.classList.remove('bg-success-lt');
+                }
+
+                const numberBadge = row.querySelector('.badge-number-bulk');
+                if (numberBadge) {
+                    numberBadge.className = `badge ${isOpened ? 'bg-success text-white' : 'bg-warning text-dark'} fs-3 fw-bold px-2 py-1 shadow-sm badge-number-bulk`;
+                }
+
+                const statusBadgeEl = row.querySelector('.badge-status-bulk');
+                if (statusBadgeEl) {
+                    statusBadgeEl.textContent = isOpened ? 'TERBUKA' : 'TERTUTUP';
+                    statusBadgeEl.style.display = isOpened ? 'inline-block' : 'none';
+                    statusBadgeEl.className = `badge ${isOpened ? 'bg-success text-white' : 'bg-secondary-subtle text-secondary'} px-1 py-0 badge-status-bulk`;
+                }
+
+                const openedTag = row.querySelector('.opened-tag');
+                if (openedTag) {
+                    openedTag.style.display = isOpened ? 'inline-block' : 'none';
+                }
+            }
+
             if (id && editBtn) {
                 const nameInput = modalBulk.querySelector(`.bulk-gift-input-name[data-bulk-id="${id}"]`);
                 const descInput = modalBulk.querySelector(`.bulk-gift-input-desc[data-bulk-id="${id}"]`);
@@ -111,17 +151,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Fungsi Mengacak Nomor / Urutan Hadiah di dalam modal
+    // Fungsi Mengacak Nomor / Urutan Hadiah HANYA untuk kotak yang BELUM TERBUKA
     const performBulkShuffle = () => {
-        const nameInputs = Array.from(modalBulk.querySelectorAll('.bulk-gift-input-name'));
-        const descInputs = Array.from(modalBulk.querySelectorAll('.bulk-gift-input-desc'));
+        // Ambil HANYA baris hadiah yang belum terbuka
+        const unopenedRows = Array.from(modalBulk.querySelectorAll('tr[data-gift-row-id]')).filter(row => {
+            return row.dataset.isOpened !== '1';
+        });
 
-        if (nameInputs.length < 2) return;
+        if (unopenedRows.length < 2) {
+            if (window.Swal) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Tidak Dapat Diacak',
+                    text: 'Tidak ada cukup kotak hadiah yang tertutup (minimal 2 kotak tertutup) untuk diacak posisinya.',
+                    confirmButtonColor: '#206bc4'
+                });
+            }
+            return;
+        }
 
-        // Ambil pasangan nama & deskripsi saat ini
-        const items = nameInputs.map((nInput, idx) => ({
+        const unopenedNameInputs = unopenedRows.map(row => row.querySelector('.bulk-gift-input-name'));
+        const unopenedDescInputs = unopenedRows.map(row => row.querySelector('.bulk-gift-input-desc'));
+
+        // Ambil nilai nama & deskripsi saat ini dari baris yang BELUM terbuka
+        const items = unopenedNameInputs.map((nInput, idx) => ({
             name: nInput.value,
-            desc: descInputs[idx] ? descInputs[idx].value : ''
+            desc: unopenedDescInputs[idx] ? unopenedDescInputs[idx].value : ''
         }));
 
         // Pastikan ada input yang terisi
@@ -138,32 +193,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Fisher-Yates Shuffle
+        // Fisher-Yates Shuffle HANYA untuk items yang belum terbuka
         for (let i = items.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [items[i], items[j]] = [items[j], items[i]];
         }
 
-        // Kembalikan ke input form dengan efek visual pulse / highlight
+        // Kembalikan ke input form yang BELUM terbuka dengan efek visual pulse / highlight
         items.forEach((item, idx) => {
-            if (nameInputs[idx]) {
-                nameInputs[idx].value = item.name;
-                nameInputs[idx].style.transition = 'all 0.35s ease';
-                nameInputs[idx].style.backgroundColor = '#fef08a';
-                nameInputs[idx].style.borderColor = '#eab308';
+            if (unopenedNameInputs[idx]) {
+                unopenedNameInputs[idx].value = item.name;
+                unopenedNameInputs[idx].style.transition = 'all 0.35s ease';
+                unopenedNameInputs[idx].style.backgroundColor = '#fef08a';
+                unopenedNameInputs[idx].style.borderColor = '#eab308';
                 setTimeout(() => {
-                    nameInputs[idx].style.backgroundColor = '';
-                    nameInputs[idx].style.borderColor = '';
+                    unopenedNameInputs[idx].style.backgroundColor = '';
+                    unopenedNameInputs[idx].style.borderColor = '';
                 }, 750);
             }
-            if (descInputs[idx]) {
-                descInputs[idx].value = item.desc;
-                descInputs[idx].style.transition = 'all 0.35s ease';
-                descInputs[idx].style.backgroundColor = '#fef08a';
-                descInputs[idx].style.borderColor = '#eab308';
+            if (unopenedDescInputs[idx]) {
+                unopenedDescInputs[idx].value = item.desc;
+                unopenedDescInputs[idx].style.transition = 'all 0.35s ease';
+                unopenedDescInputs[idx].style.backgroundColor = '#fef08a';
+                unopenedDescInputs[idx].style.borderColor = '#eab308';
                 setTimeout(() => {
-                    descInputs[idx].style.backgroundColor = '';
-                    descInputs[idx].style.borderColor = '';
+                    unopenedDescInputs[idx].style.backgroundColor = '';
+                    unopenedDescInputs[idx].style.borderColor = '';
                 }, 750);
             }
         });
@@ -173,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 toast: true,
                 position: 'top-end',
                 icon: 'success',
-                title: 'Nomor hadiah berhasil diacak!',
+                title: `Berhasil mengacak ${unopenedRows.length} hadiah yang belum terbuka!`,
                 timer: 2000,
                 showConfirmButton: false
             });

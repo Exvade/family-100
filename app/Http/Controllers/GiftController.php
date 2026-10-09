@@ -95,22 +95,30 @@ class GiftController extends Controller
     public function shuffle(): JsonResponse|RedirectResponse
     {
         $giftCount = Setting::giftCount();
-        $gifts = Gift::where('number', '<=', $giftCount)->get();
+        $unopenedGifts = Gift::where('number', '<=', $giftCount)
+            ->where('is_opened', false)
+            ->get();
 
-        if ($gifts->count() > 1) {
-            $payloads = $gifts->map(fn ($g) => [
+        if ($unopenedGifts->count() > 1) {
+            $payloads = $unopenedGifts->map(fn ($g) => [
                 'name' => $g->name,
                 'description' => $g->description,
             ])->shuffle()->values();
 
-            DB::transaction(function () use ($gifts, $payloads) {
-                foreach ($gifts as $index => $gift) {
+            DB::transaction(function () use ($unopenedGifts, $payloads) {
+                foreach ($unopenedGifts as $index => $gift) {
                     $gift->update([
                         'name' => $payloads[$index]['name'],
                         'description' => $payloads[$index]['description'],
                     ]);
                 }
             });
+
+            $message = 'Posisi hadiah yang belum dibuka berhasil diacak.';
+            $status = 'ok';
+        } else {
+            $message = 'Tidak ada cukup kotak hadiah tertutup untuk diacak (minimal 2 kotak tertutup).';
+            $status = 'warning';
         }
 
         if (request()->wantsJson()) {
@@ -123,13 +131,14 @@ class GiftController extends Controller
             ]);
 
             return response()->json([
-                'status' => 'ok',
-                'message' => 'Posisi seluruh hadiah berhasil diacak.',
+                'status' => $status,
+                'message' => $message,
                 'gifts' => $refreshedGifts,
+                'shuffled_count' => $unopenedGifts->count(),
             ]);
         }
 
-        return back()->with('status', 'Posisi seluruh hadiah berhasil diacak.');
+        return back()->with('status', $message);
     }
 
     /**

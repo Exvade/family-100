@@ -430,8 +430,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnShuffleDirect.addEventListener('click', async () => {
             if (window.Swal) {
                 const result = await Swal.fire({
-                    title: 'Acak Posisi Hadiah?',
-                    text: 'Nomor kotak seluruh hadiah yang aktif akan diacak secara acak.',
+                    title: 'Acak Posisi Hadiah Tertutup?',
+                    text: 'Hanya kotak hadiah yang BELUM dibuka yang akan diacak posisinya. Hadiah yang sudah terbuka tidak akan ikut diacak.',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#f59e0b',
@@ -489,15 +489,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                 editBtn.dataset.description = g.description || '';
                             }
 
-                            const card = cardCol.querySelector('.card');
-                            if (card) {
-                                card.style.transition = 'all 0.35s ease';
-                                card.style.transform = 'scale(1.03)';
-                                card.style.boxShadow = '0 0 12px rgba(245, 158, 11, 0.4)';
-                                setTimeout(() => {
-                                    card.style.transform = '';
-                                    card.style.boxShadow = '';
-                                }, 600);
+                            // Animasi kartu HANYA untuk kotak yang belum dibuka
+                            if (!g.is_opened) {
+                                const card = cardCol.querySelector('.card');
+                                if (card) {
+                                    card.style.transition = 'all 0.35s ease';
+                                    card.style.transform = 'scale(1.03)';
+                                    card.style.boxShadow = '0 0 12px rgba(245, 158, 11, 0.4)';
+                                    setTimeout(() => {
+                                        card.style.transform = '';
+                                        card.style.boxShadow = '';
+                                    }, 600);
+                                }
                             }
                         }
                     });
@@ -507,9 +510,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     Swal.fire({
                         toast: true,
                         position: 'top-end',
-                        icon: 'success',
-                        title: data.message || 'Posisi seluruh hadiah berhasil diacak!',
-                        timer: 2000,
+                        icon: data.status === 'warning' ? 'warning' : 'success',
+                        title: data.message || 'Posisi hadiah berhasil diacak!',
+                        timer: 2500,
                         showConfirmButton: false
                     });
                 }
