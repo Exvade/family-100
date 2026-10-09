@@ -255,9 +255,9 @@ html, body {
 
 /* Saat sedang spinning, hide showcase hadiah atas agar roulette bebas 900px */
 .stage-canvas-16-9.state-spinning .tv-prize-spotlight-zone {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-20px);
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(-20px) !important;
 }
 
 .prize-zone-badge {
@@ -535,6 +535,8 @@ html, body {
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.95));
     line-height: 1.25;
     max-width: 550px;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Multi Prizes Grid (Foto Diperbesar untuk Audiens Panggung, Pin Nomor Jelas) */
@@ -855,11 +857,271 @@ html, body {
     transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .stage-canvas-16-9.state-spinning .stage-right-zone {
-    left: 520px;
-    width: 1030px;
-    top: 0px;
-    bottom: 0px;
-    height: 900px;
+    left: 520px !important;
+    width: 1030px !important;
+    top: 0px !important;
+    bottom: 0px !important;
+    height: 900px !important;
+}
+
+/* ==================== 8B. DYNAMIC RESPONSIVE STAGE & PRIZE SHOWCASE (PER SLOT COUNT) ==================== */
+
+/* -------------------- 1 SLOT: GRAND PRIZE / 1 PESERTA (FOTO RAKSASA MAJESTIK) -------------------- */
+.stage-canvas-16-9[data-slots="1"] .tv-prize-spotlight-zone,
+.tv-prize-spotlight-zone[data-slots="1"] {
+    top: 6px;
+    height: 615px;
+}
+.stage-canvas-16-9[data-slots="1"] .stage-right-zone,
+.stage-right-zone[data-slots="1"] {
+    top: 635px;
+    bottom: 18px;
+    justify-content: center;
+}
+.stage-right-zone[data-slots="1"] .bars-vertical-stack {
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+.stage-right-zone[data-slots="1"] .winner-entry-bar {
+    height: 105px;
+    max-width: 980px;
+}
+.stage-right-zone[data-slots="1"] .bar-rank-badge {
+    width: 110px;
+    font-size: 50px;
+    border-radius: 16px;
+}
+.stage-right-zone[data-slots="1"] .winner-person-name {
+    font-size: 42px;
+}
+
+/* 1 Slot Hero Card: Foto Raksasa Spektakuler Grand Prize */
+.tv-prize-spotlight-zone[data-slots="1"] .prize-card-hero,
+.tv-prizes-showcase-deck[data-slots="1"] .prize-card-hero {
+    max-width: 990px;
+    width: 100%;
+    height: 550px;
+    padding: 20px 48px 20px 24px;
+    border-radius: 28px;
+    gap: 40px;
+}
+.tv-prize-spotlight-zone[data-slots="1"] .prize-hero-img-box,
+.tv-prizes-showcase-deck[data-slots="1"] .prize-hero-img-box {
+    width: 540px;
+    height: 500px;
+    flex: 0 0 540px;
+    border-radius: 22px;
+    border: 2.5px solid #eab308;
+    box-shadow: 
+        0 14px 40px rgba(0, 0, 0, 0.9), 
+        inset 0 0 25px rgba(0, 0, 0, 0.9),
+        0 0 32px rgba(212, 175, 55, 0.55);
+}
+.tv-prize-spotlight-zone[data-slots="1"] .prize-hero-img,
+.tv-prizes-showcase-deck[data-slots="1"] .prize-hero-img {
+    padding: 4px;
+    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.92));
+}
+.tv-prize-spotlight-zone[data-slots="1"] .prize-hero-icon-fallback,
+.tv-prizes-showcase-deck[data-slots="1"] .prize-hero-icon-fallback {
+    font-size: 190px;
+}
+.tv-prize-spotlight-zone[data-slots="1"] .prize-chip-pin,
+.tv-prizes-showcase-deck[data-slots="1"] .prize-chip-pin {
+    font-size: 16px;
+    padding: 5px 16px;
+    border-radius: 9px;
+    top: 10px;
+    left: 10px;
+}
+.tv-prize-spotlight-zone[data-slots="1"] .prize-hero-info,
+.tv-prizes-showcase-deck[data-slots="1"] .prize-hero-info {
+    gap: 8px;
+}
+.tv-prize-spotlight-zone[data-slots="1"] .prize-hero-badge-pill,
+.tv-prizes-showcase-deck[data-slots="1"] .prize-hero-badge-pill {
+    font-size: 14px;
+    padding: 6px 22px;
+    margin-bottom: 12px;
+    letter-spacing: 2.2px;
+}
+.tv-prize-spotlight-zone[data-slots="1"] .prize-hero-title,
+.tv-prizes-showcase-deck[data-slots="1"] .prize-hero-title {
+    font-size: 44px;
+    line-height: 1.15;
+    letter-spacing: 1px;
+}
+
+/* -------------------- 2 SLOTS: 2 PESERTA (FOTO SANGAT BESAR & ELEGAN) -------------------- */
+.stage-canvas-16-9[data-slots="2"] .tv-prize-spotlight-zone,
+.tv-prize-spotlight-zone[data-slots="2"] {
+    top: 6px;
+    height: 525px;
+}
+.stage-canvas-16-9[data-slots="2"] .stage-right-zone,
+.stage-right-zone[data-slots="2"] {
+    top: 545px;
+    bottom: 18px;
+    justify-content: center;
+}
+.stage-right-zone[data-slots="2"] .bars-vertical-stack {
+    height: 100%;
+    justify-content: center;
+    gap: 16px;
+}
+
+/* 2 Slot Hero Card (1 Hadiah untuk 2 Pemenang) */
+.tv-prize-spotlight-zone[data-slots="2"] .prize-card-hero,
+.tv-prizes-showcase-deck[data-slots="2"] .prize-card-hero {
+    max-width: 980px;
+    width: 100%;
+    height: 465px;
+    padding: 16px 40px 16px 20px;
+    gap: 36px;
+}
+.tv-prize-spotlight-zone[data-slots="2"] .prize-hero-img-box,
+.tv-prizes-showcase-deck[data-slots="2"] .prize-hero-img-box {
+    width: 480px;
+    height: 420px;
+    flex: 0 0 480px;
+}
+.tv-prize-spotlight-zone[data-slots="2"] .prize-hero-title,
+.tv-prizes-showcase-deck[data-slots="2"] .prize-hero-title {
+    font-size: 38px;
+}
+
+/* 2 Slot Grid (2 Hadiah Berbeda untuk 2 Pemenang) */
+.tv-prize-spotlight-zone[data-slots="2"] .prize-cards-grid .prize-card-chip,
+.tv-prizes-showcase-deck[data-slots="2"] .prize-cards-grid .prize-card-chip {
+    max-width: 485px;
+    height: 465px;
+    padding: 10px 12px 14px;
+}
+.tv-prize-spotlight-zone[data-slots="2"] .prize-cards-grid .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="2"] .prize-cards-grid .prize-chip-img-box {
+    width: 100%;
+    height: 385px;
+}
+.tv-prize-spotlight-zone[data-slots="2"] .prize-cards-grid .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="2"] .prize-cards-grid .prize-chip-name {
+    font-size: 18px;
+    padding: 6px 28px;
+    margin-top: 10px;
+}
+
+/* -------------------- 3 SLOTS: 3 PESERTA (FOTO BESAR PROPORSIONAL) -------------------- */
+.stage-canvas-16-9[data-slots="3"] .tv-prize-spotlight-zone,
+.tv-prize-spotlight-zone[data-slots="3"] {
+    top: 6px;
+    height: 475px;
+}
+.stage-canvas-16-9[data-slots="3"] .stage-right-zone,
+.stage-right-zone[data-slots="3"] {
+    top: 495px;
+    bottom: 16px;
+    justify-content: center;
+}
+.stage-right-zone[data-slots="3"] .bars-vertical-stack {
+    height: 100%;
+    justify-content: center;
+    gap: 14px;
+}
+
+/* 3 Slot Hero Card */
+.tv-prize-spotlight-zone[data-slots="3"] .prize-card-hero,
+.tv-prizes-showcase-deck[data-slots="3"] .prize-card-hero {
+    height: 415px;
+}
+.tv-prize-spotlight-zone[data-slots="3"] .prize-hero-img-box,
+.tv-prizes-showcase-deck[data-slots="3"] .prize-hero-img-box {
+    width: 440px;
+    height: 370px;
+    flex: 0 0 440px;
+}
+.tv-prize-spotlight-zone[data-slots="3"] .prize-hero-title,
+.tv-prizes-showcase-deck[data-slots="3"] .prize-hero-title {
+    font-size: 34px;
+}
+
+/* 3 Slot Grid (Hadiah Berbeda) */
+.tv-prize-spotlight-zone[data-slots="3"] .prize-cards-grid .prize-card-chip,
+.tv-prizes-showcase-deck[data-slots="3"] .prize-cards-grid .prize-card-chip {
+    height: 415px;
+}
+.tv-prize-spotlight-zone[data-slots="3"] .prize-cards-grid[data-count="3"] .prize-card-chip,
+.tv-prizes-showcase-deck[data-slots="3"] .prize-cards-grid[data-count="3"] .prize-card-chip {
+    max-width: 325px;
+}
+.tv-prize-spotlight-zone[data-slots="3"] .prize-cards-grid[data-count="2"] .prize-card-chip,
+.tv-prizes-showcase-deck[data-slots="3"] .prize-cards-grid[data-count="2"] .prize-card-chip {
+    max-width: 460px;
+}
+.tv-prize-spotlight-zone[data-slots="3"] .prize-cards-grid .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="3"] .prize-cards-grid .prize-chip-img-box {
+    height: 345px;
+}
+.tv-prize-spotlight-zone[data-slots="3"] .prize-cards-grid .prize-chip-name,
+.tv-prizes-showcase-deck[data-slots="3"] .prize-cards-grid .prize-chip-name {
+    font-size: 15px;
+    padding: 5px 20px;
+}
+
+/* -------------------- 4 & 5 SLOTS: 4-5 PESERTA (1 KOLOM) -------------------- */
+.stage-canvas-16-9[data-slots="4"] .tv-prize-spotlight-zone,
+.stage-canvas-16-9[data-slots="5"] .tv-prize-spotlight-zone,
+.tv-prize-spotlight-zone[data-slots="4"],
+.tv-prize-spotlight-zone[data-slots="5"] {
+    top: 6px;
+    height: 430px;
+}
+.stage-canvas-16-9[data-slots="4"] .stage-right-zone,
+.stage-canvas-16-9[data-slots="5"] .stage-right-zone,
+.stage-right-zone[data-slots="4"],
+.stage-right-zone[data-slots="5"] {
+    top: 450px;
+    bottom: 16px;
+}
+
+.tv-prize-spotlight-zone[data-slots="4"] .prize-card-hero,
+.tv-prize-spotlight-zone[data-slots="5"] .prize-card-hero,
+.tv-prizes-showcase-deck[data-slots="4"] .prize-card-hero,
+.tv-prizes-showcase-deck[data-slots="5"] .prize-card-hero {
+    height: 375px;
+}
+.tv-prize-spotlight-zone[data-slots="4"] .prize-hero-img-box,
+.tv-prize-spotlight-zone[data-slots="5"] .prize-hero-img-box,
+.tv-prizes-showcase-deck[data-slots="4"] .prize-hero-img-box,
+.tv-prizes-showcase-deck[data-slots="5"] .prize-hero-img-box {
+    width: 410px;
+    height: 335px;
+    flex: 0 0 410px;
+}
+
+.tv-prize-spotlight-zone[data-slots="4"] .prize-card-chip,
+.tv-prize-spotlight-zone[data-slots="5"] .prize-card-chip,
+.tv-prizes-showcase-deck[data-slots="4"] .prize-card-chip,
+.tv-prizes-showcase-deck[data-slots="5"] .prize-card-chip {
+    height: 375px;
+}
+.tv-prize-spotlight-zone[data-slots="4"] .prize-chip-img-box,
+.tv-prize-spotlight-zone[data-slots="5"] .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="4"] .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="5"] .prize-chip-img-box {
+    height: 310px;
+}
+.tv-prize-spotlight-zone[data-slots="4"] .prize-marquee-track .prize-card-chip,
+.tv-prize-spotlight-zone[data-slots="5"] .prize-marquee-track .prize-card-chip,
+.tv-prizes-showcase-deck[data-slots="4"] .prize-marquee-track .prize-card-chip,
+.tv-prizes-showcase-deck[data-slots="5"] .prize-marquee-track .prize-card-chip {
+    height: 375px !important;
+}
+.tv-prize-spotlight-zone[data-slots="4"] .prize-marquee-track .prize-chip-img-box,
+.tv-prize-spotlight-zone[data-slots="5"] .prize-marquee-track .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="4"] .prize-marquee-track .prize-chip-img-box,
+.tv-prizes-showcase-deck[data-slots="5"] .prize-marquee-track .prize-chip-img-box {
+    height: 310px !important;
+    flex: 0 0 310px !important;
 }
 
 /* Interactive Panels Container */
@@ -894,6 +1156,7 @@ html, body {
 
 /* 1 Slot (Pemenang Tunggal / Grand Prize) */
 .bars-vertical-stack.single-slot,
+.bars-vertical-stack.single-slot,
 .bars-vertical-stack[data-slots="1"] {
     justify-content: center;
     align-items: center;
@@ -902,14 +1165,14 @@ html, body {
 }
 .bars-vertical-stack.single-slot .winner-entry-bar,
 .bars-vertical-stack[data-slots="1"] .winner-entry-bar {
-    height: 100px;
-    max-width: 960px;
+    height: 105px;
+    max-width: 980px;
     gap: 20px;
 }
 .bars-vertical-stack.single-slot .bar-rank-badge,
 .bars-vertical-stack[data-slots="1"] .bar-rank-badge {
     width: 110px;
-    font-size: 48px;
+    font-size: 50px;
     border-radius: 16px;
 }
 .bars-vertical-stack.single-slot .bar-name-card,
@@ -919,43 +1182,74 @@ html, body {
 }
 .bars-vertical-stack.single-slot .winner-person-name,
 .bars-vertical-stack[data-slots="1"] .winner-person-name {
-    font-size: 40px;
+    font-size: 42px;
+}
+.bars-vertical-stack.single-slot .standby-label-badge,
+.bars-vertical-stack[data-slots="1"] .standby-label-badge {
+    font-size: 24px;
+    padding: 8px 26px;
+    border-radius: 9999px;
+}
+.bars-vertical-stack.single-slot .standby-shimmer-dots,
+.bars-vertical-stack[data-slots="1"] .standby-shimmer-dots {
+    font-size: 18px;
+    letter-spacing: 6px;
+}
+.bars-vertical-stack.single-slot .bar-prize-tag,
+.bars-vertical-stack[data-slots="1"] .bar-prize-tag {
+    font-size: 18px;
+    padding: 6px 20px;
+    margin-right: 24px;
+}
+.bars-vertical-stack.single-slot .bar-prize-tag .prize-tag-icon,
+.bars-vertical-stack[data-slots="1"] .bar-prize-tag .prize-tag-icon {
+    font-size: 20px;
+}
+.bars-vertical-stack.single-slot .bar-prize-tag .prize-tag-name,
+.bars-vertical-stack[data-slots="1"] .bar-prize-tag .prize-tag-name {
+    max-width: 380px;
 }
 
 /* 2 Slot (Multi-Winner 2 Orang: Berdekatan Elegan, Menghilangkan Gap Raksasa) */
 .bars-vertical-stack[data-slots="2"] {
     justify-content: center;
-    gap: 24px;
+    gap: 16px;
     height: 100%;
 }
 .bars-vertical-stack[data-slots="2"] .winner-entry-bar {
-    height: 84px;
-    gap: 14px;
+    height: 90px;
+    max-width: 980px;
+    gap: 16px;
 }
 .bars-vertical-stack[data-slots="2"] .bar-rank-badge {
-    width: 84px;
-    font-size: 36px;
+    width: 90px;
+    font-size: 40px;
 }
 .bars-vertical-stack[data-slots="2"] .winner-person-name {
-    font-size: 34px;
+    font-size: 36px;
+}
+.bars-vertical-stack[data-slots="2"] .standby-label-badge {
+    font-size: 20px;
+    padding: 6px 20px;
 }
 
 /* 3 Slot (Multi-Winner 3 Orang) */
 .bars-vertical-stack[data-slots="3"] {
     justify-content: center;
-    gap: 18px;
+    gap: 14px;
     height: 100%;
 }
 .bars-vertical-stack[data-slots="3"] .winner-entry-bar {
-    height: 80px;
+    height: 82px;
+    max-width: 980px;
     gap: 14px;
 }
 .bars-vertical-stack[data-slots="3"] .bar-rank-badge {
-    width: 80px;
-    font-size: 34px;
+    width: 82px;
+    font-size: 35px;
 }
 .bars-vertical-stack[data-slots="3"] .winner-person-name {
-    font-size: 32px;
+    font-size: 33px;
 }
 
 /* 4 Slot (Multi-Winner 4 Orang) */

@@ -174,6 +174,22 @@ function initDoorprizeTv() {
         const uniquePrizes = Array.from(uniquePrizesMap.values());
         const uniqueCount = uniquePrizes.length;
 
+        showcaseDeck.dataset.slots = effectiveSlots;
+        showcaseDeck.dataset.unique = uniqueCount;
+
+        const stageCanvas = document.querySelector('.stage-canvas-16-9');
+        if (stageCanvas) {
+            stageCanvas.dataset.slots = effectiveSlots;
+            stageCanvas.dataset.unique = uniqueCount;
+        }
+        const spotlightZone = document.getElementById('tvPrizeSpotlightZone');
+        if (spotlightZone) {
+            spotlightZone.dataset.slots = effectiveSlots;
+            spotlightZone.dataset.unique = uniqueCount;
+        }
+        const stageRightZone = document.getElementById('stageRightZone');
+        if (stageRightZone) stageRightZone.dataset.slots = effectiveSlots;
+
         const badgeTitle = document.getElementById('prizeBadgeTitle');
         if (badgeTitle) {
             badgeTitle.textContent = uniqueCount >= 4 
@@ -307,6 +323,18 @@ function initDoorprizeTv() {
 
         if (idleBarsStack) idleBarsStack.dataset.slots = newSlots;
         if (resultBarsStack) resultBarsStack.dataset.slots = newSlots;
+
+        const stageCanvas = document.querySelector('.stage-canvas-16-9');
+        if (stageCanvas) stageCanvas.dataset.slots = newSlots;
+
+        const spotlightZone = document.getElementById('tvPrizeSpotlightZone');
+        if (spotlightZone) spotlightZone.dataset.slots = newSlots;
+
+        const stageRightZone = document.getElementById('stageRightZone');
+        if (stageRightZone) stageRightZone.dataset.slots = newSlots;
+
+        const showcaseDeck = document.getElementById('prizeShowcaseDeck');
+        if (showcaseDeck) showcaseDeck.dataset.slots = newSlots;
 
         [idleBarsStack, resultBarsStack].forEach(stack => {
             if (!stack) return;
