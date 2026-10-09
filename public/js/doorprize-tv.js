@@ -43,6 +43,263 @@ function initDoorprizeTv() {
     let activeWinnerDetails = Array(currentSlots).fill(null);
     let slotLocked = Array(currentSlots).fill(false);
 
+    let currentPrizes = Array.isArray(window.doorprizePrizes) ? window.doorprizePrizes : (Array.isArray(window.doorprizeSpin?.prizes) ? window.doorprizeSpin.prizes : []);
+    let currentPrizePlan = Array.isArray(window.doorprizeSpin?.prize_plan) ? window.doorprizeSpin.prize_plan : [];
+
+    function getEffectiveSlots() {
+        if (isSpinning || (activeWinners && activeWinners.some(w => w !== null))) {
+            return currentSlots;
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('slots')) {
+            const parsed = parseInt(urlParams.get('slots'), 10);
+            if (parsed >= 1 && parsed <= 10) return parsed;
+        }
+        try {
+            const rawStored = localStorage.getItem('doorprize.allocation') || sessionStorage.getItem('doorprize.allocation');
+            if (rawStored) {
+                const stored = JSON.parse(rawStored);
+                if (Array.isArray(stored) && stored.length > 0) {
+                    const valid = stored.filter(r => r && r.prizeId);
+                    if (valid.length > 0) {
+                        const sum = valid.reduce((acc, r) => acc + (parseInt(r.count, 10) || 0), 0);
+                        if (sum >= 1) return Math.min(10, sum);
+                    }
+                }
+            }
+            const storedSlots = parseInt(localStorage.getItem('doorprize.slots') || sessionStorage.getItem('doorprize.slots'), 10);
+            if (storedSlots && storedSlots >= 1 && storedSlots <= 10) {
+                return storedSlots;
+            }
+        } catch (e) {}
+        return currentSlots;
+    }
+
+    function getPrizeForSlot(slotIdx, prizes = currentPrizes, plan = currentPrizePlan) {
+        // 1. Cek dari prize_plan remote jika ada dan valid
+        if (Array.isArray(plan) && plan[slotIdx] !== undefined && plan[slotIdx] !== null) {
+            const pId = plan[slotIdx];
+            const found = prizes.find(p => String(p.id) === String(pId));
+            if (found) return found;
+        }
+
+        // 2. Cek apakah ada alokasi dari localStorage (sinkronisasi real-time dengan dasbor operator)
+        try {
+            const stored = JSON.parse(localStorage.getItem('doorprize.allocation') || '[]');
+            if (Array.isArray(stored) && stored.length > 0) {
+                const validRows = stored.filter(r => r && r.prizeId);
+                if (validRows.length > 0) {
+                    const effSlots = getEffectiveSlots();
+                    const explicitSum = validRows.reduce((acc, r) => acc + (parseInt(r.count, 10) || 0), 0);
+                    const blankRows = validRows.filter(r => !parseInt(r.count, 10));
+
+                    let targetId = null;
+                    let slotCounter = 0;
+
+                    for (const row of validRows) {
+                        const rowId = row.prizeId;
+                        let count = parseInt(row.count, 10);
+                        if (!count) {
+                            if (blankRows.length === 1 && effSlots > explicitSum) {
+                                count = Math.max(1, effSlots - explicitSum);
+                            } else {
+                                count = 1;
+                            }
+                        }
+
+                        if (slotIdx >= slotCounter && slotIdx < slotCounter + count) {
+                            targetId = rowId;
+                            break;
+                        }
+                        slotCounter += count;
+                    }
+
+                    if (!targetId && validRows[0]?.prizeId) {
+                        targetId = validRows[0].prizeId;
+                    }
+
+                    if (targetId) {
+                        const found = prizes.find(p => String(p.id) === String(targetId));
+                        if (found) return found;
+                    }
+                }
+            }
+        } catch (e) {}
+
+        // 3. Fallback: Hadiah pertama di daftar prizes untuk SEMUA slot agar tidak mengambil kado lain dari DB
+        if (Array.isArray(prizes) && prizes.length > 0) {
+            return prizes[0];
+        }
+
+        return {
+            id: slotIdx + 1,
+            name: `Hadiah #${slotIdx + 1}`,
+            image_url: null,
+            quantity: 1
+        };
+    }
+
+    function renderPrizeShowcase(prizes = currentPrizes, plan = currentPrizePlan, slots = null) {
+        currentPrizes = prizes;
+        currentPrizePlan = plan;
+        const showcaseDeck = document.getElementById('prizeShowcaseDeck');
+        if (!showcaseDeck) return;
+
+        const effectiveSlots = (slots !== null && slots !== undefined) ? Number(slots) : getEffectiveSlots();
+        if (!isSpinning && (!activeWinners || !activeWinners.some(w => w !== null)) && effectiveSlots !== currentSlots) {
+            updateSlotsLayout(effectiveSlots);
+        }
+
+        showcaseDeck.dataset.slots = effectiveSlots;
+
+        // Ambil hadiah yang dialokasikan untuk slot yang sedang aktif (effectiveSlots)
+        const mapped = [];
+        for (let i = 0; i < effectiveSlots; i++) {
+            mapped.push(getPrizeForSlot(i, prizes, plan));
+        }
+
+        // Kumpulkan hadiah unik untuk slot yang aktif
+        const uniquePrizesMap = new Map();
+        mapped.forEach((p, idx) => {
+            if (p) {
+                const key = String(p.id ?? p.name);
+                if (!uniquePrizesMap.has(key)) {
+                    uniquePrizesMap.set(key, { prize: p, slots: [idx + 1] });
+                } else {
+                    uniquePrizesMap.get(key).slots.push(idx + 1);
+                }
+            }
+        });
+
+        const uniquePrizes = Array.from(uniquePrizesMap.values());
+        const uniqueCount = uniquePrizes.length;
+
+        const badgeTitle = document.getElementById('prizeBadgeTitle');
+        if (badgeTitle) {
+            badgeTitle.textContent = uniqueCount >= 4 
+                ? `${uniqueCount} HADIAH YANG DIUNDI` 
+                : 'HADIAH YANG DIUNDI';
+        }
+
+        const formatSlotRange = (slotsArray) => {
+            if (!slotsArray || slotsArray.length === 0) return '';
+            if (slotsArray.length === 1) return `#${slotsArray[0]}`;
+            const min = Math.min(...slotsArray);
+            const max = Math.max(...slotsArray);
+            const isConsec = (max - min + 1 === slotsArray.length);
+            return isConsec ? `#${min} - #${max}` : slotsArray.map(s => `#${s}`).join(', ');
+        };
+
+        if (uniqueCount === 1 && uniquePrizes[0]) {
+            const heroData = uniquePrizes[0];
+            const hero = heroData.prize;
+            const heroSlots = heroData.slots;
+            const slotRangeText = formatSlotRange(heroSlots);
+            const winnerCountText = heroSlots.length > 1 
+                ? `${heroSlots.length} PEMENANG` 
+                : '1 PEMENANG';
+
+            const heroImg = hero.image_url 
+                ? `<img src="${hero.image_url}" class="prize-hero-img" alt="${hero.name || ''}" />`
+                : `<div class="prize-hero-icon-fallback">🎁</div>`;
+
+            showcaseDeck.innerHTML = `
+                <div class="prize-card-hero" id="prizeCardHero">
+                    <div class="prize-hero-img-box">
+                        <div class="prize-chip-pin">${slotRangeText}</div>
+                        ${heroImg}
+                    </div>
+                    <div class="prize-hero-info">
+                        <div class="prize-hero-badge-pill">
+                            <span class="badge-sparkle">✦</span>
+                            <span>DOORPRIZE &bull; ${winnerCountText}</span>
+                            <span class="badge-sparkle">✦</span>
+                        </div>
+                        <div class="prize-hero-title">${(hero.name || 'Hadiah Doorprize').toUpperCase()}</div>
+                    </div>
+                </div>
+            `;
+        } else if (uniqueCount <= 3) {
+            let cardsHtml = `<div class="prize-cards-grid" id="prizeCardsGrid" data-count="${uniqueCount}">`;
+
+            uniquePrizes.forEach((uItem, uIdx) => {
+                const p = uItem.prize;
+                const pSlots = uItem.slots;
+                const pName = p?.name || `Hadiah #${uIdx + 1}`;
+                const pImg = p?.image_url
+                    ? `<img src="${p.image_url}" class="prize-chip-img" id="topPrizeImg-${uIdx}" alt="${pName}" />`
+                    : `<div class="prize-chip-icon" id="topPrizeIcon-${uIdx}">🎁</div>`;
+                const slotPin = formatSlotRange(pSlots);
+
+                cardsHtml += `
+                    <div class="prize-card-chip" id="topPrizeChip-${uIdx}" data-slots="${pSlots.join(',')}">
+                        <div class="prize-chip-img-box">
+                            <div class="prize-chip-pin">${slotPin}</div>
+                            ${pImg}
+                        </div>
+                        <div class="prize-chip-name" id="topPrizeName-${uIdx}">${pName.toUpperCase()}</div>
+                    </div>
+                `;
+            });
+            cardsHtml += '</div>';
+            showcaseDeck.innerHTML = cardsHtml;
+        } else {
+            // >= 4 Hadiah: Smooth Continuous Running Marquee (Reel)
+            let groupList = uniquePrizes;
+            if (groupList.length < 6) {
+                groupList = [...groupList, ...groupList];
+            }
+            const duration = Math.max(30, Math.round(groupList.length * 3.2));
+
+            let cardsHtml = '';
+            groupList.forEach((uItem, uIdx) => {
+                const p = uItem.prize;
+                const pSlots = uItem.slots;
+                const pName = p?.name || `Hadiah #${uIdx + 1}`;
+                const pImg = p?.image_url
+                    ? `<img src="${p.image_url}" class="prize-chip-img" alt="${pName}" />`
+                    : `<div class="prize-chip-icon">🎁</div>`;
+                const slotPin = formatSlotRange(pSlots);
+
+                cardsHtml += `
+                    <div class="prize-card-chip" data-slots="${pSlots.join(',')}">
+                        <div class="prize-chip-img-box">
+                            <div class="prize-chip-pin">${slotPin}</div>
+                            ${pImg}
+                        </div>
+                        <div class="prize-chip-name">${pName.toUpperCase()}</div>
+                    </div>
+                `;
+            });
+
+            showcaseDeck.innerHTML = `
+                <div class="prize-marquee-viewport" data-count="${uniqueCount}" style="--marquee-duration: ${duration}s;">
+                    <div class="prize-marquee-track">
+                        <div class="marquee-group">
+                            ${cardsHtml}
+                        </div>
+                        <div class="marquee-group" aria-hidden="true">
+                            ${cardsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update tags in standby bars & revealed bars
+        for (let i = 0; i < 10; i++) {
+            const idleName = document.getElementById(`idlePrizeName-${i}`);
+            const winnerName = document.getElementById(`winnerPrizeName-${i}`);
+            const p = mapped[i] || getPrizeForSlot(i, prizes, plan);
+            const pName = p?.name || `Hadiah #${i + 1}`;
+
+            if (idleName) idleName.textContent = pName;
+            if (winnerName && (!activeWinnerDetails[i] || !activeWinnerDetails[i].prize)) {
+                winnerName.textContent = pName;
+            }
+        }
+    }
+
     // Dynamic Slot Layout Manager (Mendukung 1 s/d 10 Pemenang & Kategori BE)
     function updateSlotsLayout(newSlots, activeCategories = []) {
         newSlots = Math.max(1, Math.min(10, Number(newSlots) || 5));
@@ -94,11 +351,20 @@ function initDoorprizeTv() {
                     gachaRow.style.height = `${h}px`;
                     gachaRow.dataset.col = "0";
                 } else {
-                    const col = i < 5 ? 0 : 1;
-                    const rowInCol = i % 5;
-                    const top = 15 + rowInCol * 125;
+                    const half = Math.ceil(newSlots / 2);
+                    const col = i < half ? 0 : 1;
+                    const rowInCol = col === 0 ? i : (i - half);
+                    let top = 15 + rowInCol * 125;
+                    let h = 120;
+                    if (half === 3) {
+                        top = 90 + rowInCol * 170;
+                        h = 145;
+                    } else if (half === 4) {
+                        top = 40 + rowInCol * 145;
+                        h = 135;
+                    }
                     gachaRow.style.top = `${top}px`;
-                    gachaRow.style.height = `120px`;
+                    gachaRow.style.height = `${h}px`;
                     gachaRow.dataset.col = String(col);
                 }
             }
@@ -384,6 +650,7 @@ function initDoorprizeTv() {
         winners.forEach((winner, idx) => {
             const nameEl = document.getElementById(`winnerName-${idx}`);
             const catEl = document.getElementById(`winnerCat-${idx}`);
+            const prizeEl = document.getElementById(`winnerPrizeName-${idx}`);
             if (nameEl) nameEl.textContent = getName(winner);
 
             const detail = (winnerDetails && winnerDetails[idx]) ? winnerDetails[idx] : winner;
@@ -397,6 +664,11 @@ function initDoorprizeTv() {
                     catEl.classList.remove('visible');
                 }
             }
+
+            const prizeName = (detail && typeof detail === 'object' && detail.prize) 
+                ? detail.prize 
+                : (getPrizeForSlot(idx)?.name || `Hadiah #${idx + 1}`);
+            if (prizeEl) prizeEl.textContent = prizeName;
         });
 
         if (instant) {
@@ -405,9 +677,9 @@ function initDoorprizeTv() {
             return;
         }
 
-        // Penguncian Dramatis 1 per 1 dari Line 1 s/d Line 5
+        // Penguncian Dramatis 1 per 1 di Setiap Baris
         const total = Math.min(winners.length, currentSlots);
-        const lockStepDelay = 520; // 520ms jeda per baris membangun antisipasi maksimal
+        const lockStepDelay = 500; // 500ms jeda dramatis antar slot
 
         for (let i = 0; i < total; i++) {
             setTimeout(() => {
@@ -456,22 +728,30 @@ function initDoorprizeTv() {
             if (popupWinnersGrid) {
                 popupWinnersGrid.innerHTML = '';
                 winners.forEach((w, idx) => {
+                    const detail = (winnerDetails && winnerDetails[idx]) ? winnerDetails[idx] : w;
+                    const prizeName = (detail && typeof detail === 'object' && detail.prize)
+                        ? detail.prize
+                        : (getPrizeForSlot(idx)?.name || `Hadiah #${idx + 1}`);
+
                     const row = document.createElement('div');
                     row.className = 'popup-winner-row';
                     row.innerHTML = `
                         <div class="popup-winner-rank">${idx + 1}</div>
-                        <div class="popup-winner-name">${getName(w)}</div>
+                        <div class="popup-winner-info">
+                            <div class="popup-winner-name">${getName(w)}</div>
+                            <div class="popup-winner-prize-pill">🎁 ${prizeName}</div>
+                        </div>
                     `;
                     popupWinnersGrid.appendChild(row);
                 });
             }
 
-            // Tampilkan kartu gacha dengan 5 baris terkunci selama 2.8 detik, lalu transisi mulus ke viewResult
+            // Tampilkan kartu gacha dengan semua baris terkunci selama 2.6 detik, lalu transisi mulus ke viewResult
             setTimeout(() => {
                 switchView('result');
-            }, 2800);
+            }, 2600);
 
-        }, total * lockStepDelay + 350);
+        }, total * lockStepDelay + 300);
     }
 
     // 8. Standalone Local Spin (Bisa diuji dengan SPASI di TV)
@@ -556,6 +836,27 @@ function initDoorprizeTv() {
         });
     }
 
+    // Dengarkan perubahan alokasi hadiah dari dasbor operator secara instan antar-tab
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'doorprize.allocation' || e.key === 'doorprize.slots') {
+            renderPrizeShowcase();
+        }
+    });
+
+    let lastAllocationRaw = localStorage.getItem('doorprize.allocation');
+    let lastSlotsRaw = localStorage.getItem('doorprize.slots');
+    setInterval(() => {
+        if (!isSpinning && (!activeWinners || !activeWinners.some(w => w !== null))) {
+            const currentAllocationRaw = localStorage.getItem('doorprize.allocation');
+            const currentSlotsRaw = localStorage.getItem('doorprize.slots');
+            if (currentAllocationRaw !== lastAllocationRaw || currentSlotsRaw !== lastSlotsRaw) {
+                lastAllocationRaw = currentAllocationRaw;
+                lastSlotsRaw = currentSlotsRaw;
+                renderPrizeShowcase();
+            }
+        }
+    }, 1000);
+
     // 11. Remote Synchronization dengan Dasbor Admin (/doorprize)
     const remote = window.doorprizeSpin || null;
     let remoteSeq = remote ? remote.seq : 0;
@@ -570,6 +871,14 @@ function initDoorprizeTv() {
 
         if (targetSlots !== currentSlots || initial) {
             updateSlotsLayout(targetSlots, targetCats);
+        }
+
+        if (state.prizes || state.prize_plan || targetSlots !== currentSlots || initial) {
+            renderPrizeShowcase(
+                Array.isArray(state.prizes) ? state.prizes : currentPrizes,
+                Array.isArray(state.prize_plan) ? state.prize_plan : currentPrizePlan,
+                targetSlots
+            );
         }
 
         if (state.status === 'spinning') {
@@ -596,6 +905,8 @@ function initDoorprizeTv() {
         updateSlotsLayout(Number(urlParams.get('slots')));
     }
 
+    renderPrizeShowcase();
+
     const isPreviewParam = window.location.search.includes('preview=');
     if (isPreviewParam) {
         if (window.location.search.includes('preview=spinning')) {
@@ -605,14 +916,24 @@ function initDoorprizeTv() {
         applyRemote(remote, { initial: true });
 
         const stateUrl = window.doorprizeSpinStateUrl;
+        let currentRemoteStatus = remote ? remote.status : 'idle';
+        let currentRemoteSlots = remote ? Number(remote.slots) : currentSlots;
         setInterval(async () => {
             try {
                 const response = await fetch(`${stateUrl}?seq=${remoteSeq}`, {
                     headers: { 'Accept': 'application/json' }
                 });
                 const state = await response.json();
-                if (state.seq !== remoteSeq) {
+
+                const seqChanged = state.seq !== remoteSeq;
+                const statusChanged = state.status !== currentRemoteStatus;
+                const slotsChanged = Number(state.slots) !== currentRemoteSlots;
+                const planChanged = JSON.stringify(state.prize_plan || []) !== JSON.stringify(currentPrizePlan || []);
+
+                if (seqChanged || statusChanged || slotsChanged || planChanged) {
                     remoteSeq = state.seq;
+                    currentRemoteStatus = state.status;
+                    if (state.slots) currentRemoteSlots = Number(state.slots);
                     applyRemote(state);
                 }
             } catch (e) {}

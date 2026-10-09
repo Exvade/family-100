@@ -152,6 +152,7 @@ function initDoorprizeTv() {
 
         showcaseDeck.dataset.slots = effectiveSlots;
 
+        // Ambil hadiah yang dialokasikan untuk slot yang sedang aktif (effectiveSlots)
         const mapped = [];
         for (let i = 0; i < effectiveSlots; i++) {
             mapped.push(getPrizeForSlot(i, prizes, plan));
@@ -171,7 +172,14 @@ function initDoorprizeTv() {
         });
 
         const uniquePrizes = Array.from(uniquePrizesMap.values());
-        const isSingleHero = uniquePrizes.length === 1;
+        const uniqueCount = uniquePrizes.length;
+
+        const badgeTitle = document.getElementById('prizeBadgeTitle');
+        if (badgeTitle) {
+            badgeTitle.textContent = uniqueCount >= 4 
+                ? `${uniqueCount} HADIAH YANG DIUNDI` 
+                : 'HADIAH YANG DIUNDI';
+        }
 
         const formatSlotRange = (slotsArray) => {
             if (!slotsArray || slotsArray.length === 0) return '';
@@ -182,7 +190,7 @@ function initDoorprizeTv() {
             return isConsec ? `#${min} - #${max}` : slotsArray.map(s => `#${s}`).join(', ');
         };
 
-        if (isSingleHero && uniquePrizes[0]) {
+        if (uniqueCount === 1 && uniquePrizes[0]) {
             const heroData = uniquePrizes[0];
             const hero = heroData.prize;
             const heroSlots = heroData.slots;
@@ -192,7 +200,7 @@ function initDoorprizeTv() {
                 : '1 PEMENANG';
 
             const heroImg = hero.image_url 
-                ? `<img src="${hero.image_url}" class="prize-hero-img" alt="${hero.name}" />`
+                ? `<img src="${hero.image_url}" class="prize-hero-img" alt="${hero.name || ''}" />`
                 : `<div class="prize-hero-icon-fallback">🎁</div>`;
 
             showcaseDeck.innerHTML = `
@@ -211,10 +219,8 @@ function initDoorprizeTv() {
                     </div>
                 </div>
             `;
-        } else {
-            const uniqueCount = uniquePrizes.length;
-            const compactClass = uniqueCount > 3 ? 'compact-names' : '';
-            let cardsHtml = `<div class="prize-cards-grid ${compactClass}" id="prizeCardsGrid" data-count="${uniqueCount}">`;
+        } else if (uniqueCount <= 3) {
+            let cardsHtml = `<div class="prize-cards-grid" id="prizeCardsGrid" data-count="${uniqueCount}">`;
 
             uniquePrizes.forEach((uItem, uIdx) => {
                 const p = uItem.prize;
@@ -237,6 +243,47 @@ function initDoorprizeTv() {
             });
             cardsHtml += '</div>';
             showcaseDeck.innerHTML = cardsHtml;
+        } else {
+            // >= 4 Hadiah: Smooth Continuous Running Marquee (Reel)
+            let groupList = uniquePrizes;
+            if (groupList.length < 6) {
+                groupList = [...groupList, ...groupList];
+            }
+            const duration = Math.max(30, Math.round(groupList.length * 3.2));
+
+            let cardsHtml = '';
+            groupList.forEach((uItem, uIdx) => {
+                const p = uItem.prize;
+                const pSlots = uItem.slots;
+                const pName = p?.name || `Hadiah #${uIdx + 1}`;
+                const pImg = p?.image_url
+                    ? `<img src="${p.image_url}" class="prize-chip-img" alt="${pName}" />`
+                    : `<div class="prize-chip-icon">🎁</div>`;
+                const slotPin = formatSlotRange(pSlots);
+
+                cardsHtml += `
+                    <div class="prize-card-chip" data-slots="${pSlots.join(',')}">
+                        <div class="prize-chip-img-box">
+                            <div class="prize-chip-pin">${slotPin}</div>
+                            ${pImg}
+                        </div>
+                        <div class="prize-chip-name">${pName.toUpperCase()}</div>
+                    </div>
+                `;
+            });
+
+            showcaseDeck.innerHTML = `
+                <div class="prize-marquee-viewport" data-count="${uniqueCount}" style="--marquee-duration: ${duration}s;">
+                    <div class="prize-marquee-track">
+                        <div class="marquee-group">
+                            ${cardsHtml}
+                        </div>
+                        <div class="marquee-group" aria-hidden="true">
+                            ${cardsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // Update tags in standby bars & revealed bars
@@ -304,11 +351,20 @@ function initDoorprizeTv() {
                     gachaRow.style.height = `${h}px`;
                     gachaRow.dataset.col = "0";
                 } else {
-                    const col = i < 5 ? 0 : 1;
-                    const rowInCol = i % 5;
-                    const top = 15 + rowInCol * 125;
+                    const half = Math.ceil(newSlots / 2);
+                    const col = i < half ? 0 : 1;
+                    const rowInCol = col === 0 ? i : (i - half);
+                    let top = 15 + rowInCol * 125;
+                    let h = 120;
+                    if (half === 3) {
+                        top = 90 + rowInCol * 170;
+                        h = 145;
+                    } else if (half === 4) {
+                        top = 40 + rowInCol * 145;
+                        h = 135;
+                    }
                     gachaRow.style.top = `${top}px`;
-                    gachaRow.style.height = `120px`;
+                    gachaRow.style.height = `${h}px`;
                     gachaRow.dataset.col = String(col);
                 }
             }

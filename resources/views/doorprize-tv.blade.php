@@ -118,45 +118,52 @@
 
             <!-- 5. RIGHT TOP STAGE: PRIZE SPOTLIGHT SHOWCASE (FOTO BESAR & PIN NOMOR MINI) -->
             <div class="tv-prize-spotlight-zone" id="tvPrizeSpotlightZone">
+                @php
+                    $activePrizesSlice = array_slice($mappedPrizes, 0, $slotCount);
+                    $uniquePrizes = [];
+                    foreach ($activePrizesSlice as $idx => $pz) {
+                        if ($pz) {
+                            $pKey = $pz['id'] ?? $pz['name'];
+                            if (!isset($uniquePrizes[$pKey])) {
+                                $uniquePrizes[$pKey] = [
+                                    'prize' => $pz,
+                                    'slots' => [$idx + 1],
+                                ];
+                            } else {
+                                $uniquePrizes[$pKey]['slots'][] = $idx + 1;
+                            }
+                        }
+                    }
+                    $uniqueCount = count($uniquePrizes);
+                @endphp
                 <div class="prize-zone-badge">
                     <span class="badge-sparkle">✦</span>
-                    <span class="badge-title">HADIAH YANG DIUNDI</span>
+                    <span class="badge-title" id="prizeBadgeTitle">
+                        @if ($uniqueCount >= 4)
+                            {{ $uniqueCount }} HADIAH YANG DIUNDI
+                        @else
+                            HADIAH YANG DIUNDI
+                        @endif
+                    </span>
                     <span class="badge-sparkle">✦</span>
                 </div>
 
                 <div class="tv-prizes-showcase-deck" id="prizeShowcaseDeck" data-slots="{{ $slotCount }}">
-                    @php
-                        $activePrizesSlice = array_slice($mappedPrizes, 0, $slotCount);
-                        $uniquePrizes = [];
-                        foreach ($activePrizesSlice as $idx => $pz) {
-                            if ($pz) {
-                                $pKey = $pz['id'] ?? $pz['name'];
-                                if (!isset($uniquePrizes[$pKey])) {
-                                    $uniquePrizes[$pKey] = [
-                                        'prize' => $pz,
-                                        'slots' => [$idx + 1],
-                                    ];
-                                } else {
-                                    $uniquePrizes[$pKey]['slots'][] = $idx + 1;
-                                }
-                            }
-                        }
-                        $isSingleHero = count($uniquePrizes) === 1;
-                    @endphp
-
-                    @if ($isSingleHero && !empty($uniquePrizes))
+                    @if ($uniqueCount === 1 && !empty($uniquePrizes))
                         @php
                             $heroData = reset($uniquePrizes);
                             $heroPrize = $heroData['prize'];
                             $heroSlots = $heroData['slots'];
                             $slotRange = count($heroSlots) === 1 ? '#' . $heroSlots[0] : '#' . min($heroSlots) . ' - #' . max($heroSlots);
                             $winnerCountText = count($heroSlots) > 1 ? count($heroSlots) . ' PEMENANG' : '1 PEMENANG';
+                            $heroName = is_array($heroPrize) ? ($heroPrize['name'] ?? 'Hadiah Doorprize') : ($heroPrize->name ?? 'Hadiah Doorprize');
+                            $heroImg = is_array($heroPrize) ? ($heroPrize['image_url'] ?? null) : ($heroPrize->imageUrl() ?? null);
                         @endphp
                         <div class="prize-card-hero" id="prizeCardHero">
                             <div class="prize-hero-img-box">
                                 <div class="prize-chip-pin">{{ $slotRange }}</div>
-                                @if (!empty($heroPrize['image_url']))
-                                    <img src="{{ $heroPrize['image_url'] }}" class="prize-hero-img" alt="{{ $heroPrize['name'] }}" />
+                                @if (!empty($heroImg))
+                                    <img src="{{ $heroImg }}" class="prize-hero-img" alt="{{ $heroName }}" />
                                 @else
                                     <div class="prize-hero-icon-fallback">🎁</div>
                                 @endif
@@ -167,20 +174,17 @@
                                     <span>DOORPRIZE &bull; {{ $winnerCountText }}</span>
                                     <span class="badge-sparkle">✦</span>
                                 </div>
-                                <div class="prize-hero-title">{{ strtoupper($heroPrize['name']) }}</div>
+                                <div class="prize-hero-title">{{ strtoupper($heroName) }}</div>
                             </div>
                         </div>
-                    @else
-                        @php
-                            $uniqueCount = count($uniquePrizes);
-                        @endphp
-                        <div class="prize-cards-grid {{ $uniqueCount > 3 ? 'compact-names' : '' }}" id="prizeCardsGrid" data-count="{{ $uniqueCount }}">
+                    @elseif ($uniqueCount <= 3)
+                        <div class="prize-cards-grid" id="prizeCardsGrid" data-count="{{ $uniqueCount }}">
                             @foreach ($uniquePrizes as $uIdx => $uItem)
                                 @php
                                     $pz = $uItem['prize'];
                                     $slotsArray = $uItem['slots'];
-                                    $pzName = $pz['name'] ?? ('Hadiah #' . ($uIdx + 1));
-                                    $pzImg = $pz['image_url'] ?? null;
+                                    $pzName = is_array($pz) ? ($pz['name'] ?? ('Hadiah #' . ($uIdx + 1))) : ($pz->name ?? ('Hadiah #' . ($uIdx + 1)));
+                                    $pzImg = is_array($pz) ? ($pz['image_url'] ?? null) : ($pz->imageUrl() ?? null);
                                     $isConsec = count($slotsArray) > 1 && $slotsArray === range(min($slotsArray), max($slotsArray));
                                     $slotPin = count($slotsArray) === 1 
                                         ? '#' . $slotsArray[0] 
@@ -198,6 +202,68 @@
                                     <div class="prize-chip-name" id="topPrizeName-{{ $uIdx }}">{{ strtoupper($pzName) }}</div>
                                 </div>
                             @endforeach
+                        </div>
+                    @else
+                        @php
+                            $marqueeItems = $uniquePrizes;
+                            if (count($marqueeItems) < 6) {
+                                $marqueeItems = array_merge($marqueeItems, $marqueeItems);
+                            }
+                            $marqueeDuration = max(30, (int) round(count($marqueeItems) * 3.2));
+                        @endphp
+                        <div class="prize-marquee-viewport" data-count="{{ $uniqueCount }}" style="--marquee-duration: {{ $marqueeDuration }}s;">
+                            <div class="prize-marquee-track">
+                                <div class="marquee-group">
+                                    @foreach ($marqueeItems as $uIdx => $uItem)
+                                        @php
+                                            $pz = $uItem['prize'];
+                                            $slotsArray = $uItem['slots'];
+                                            $pzName = is_array($pz) ? ($pz['name'] ?? ('Hadiah #' . ($uIdx + 1))) : ($pz->name ?? ('Hadiah #' . ($uIdx + 1)));
+                                            $pzImg = is_array($pz) ? ($pz['image_url'] ?? null) : ($pz->imageUrl() ?? null);
+                                            $isConsec = count($slotsArray) > 1 && $slotsArray === range(min($slotsArray), max($slotsArray));
+                                            $slotPin = count($slotsArray) === 1 
+                                                ? '#' . $slotsArray[0] 
+                                                : ($isConsec ? '#' . min($slotsArray) . ' - #' . max($slotsArray) : implode(', ', array_map(fn($s) => '#' . $s, $slotsArray)));
+                                        @endphp
+                                        <div class="prize-card-chip" data-slots="{{ implode(',', $slotsArray) }}">
+                                            <div class="prize-chip-img-box">
+                                                <div class="prize-chip-pin">{{ $slotPin }}</div>
+                                                @if (!empty($pzImg))
+                                                    <img src="{{ $pzImg }}" class="prize-chip-img" alt="{{ $pzName }}" />
+                                                @else
+                                                    <div class="prize-chip-icon">🎁</div>
+                                                @endif
+                                            </div>
+                                            <div class="prize-chip-name">{{ strtoupper($pzName) }}</div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="marquee-group" aria-hidden="true">
+                                    @foreach ($marqueeItems as $uIdx => $uItem)
+                                        @php
+                                            $pz = $uItem['prize'];
+                                            $slotsArray = $uItem['slots'];
+                                            $pzName = is_array($pz) ? ($pz['name'] ?? ('Hadiah #' . ($uIdx + 1))) : ($pz->name ?? ('Hadiah #' . ($uIdx + 1)));
+                                            $pzImg = is_array($pz) ? ($pz['image_url'] ?? null) : ($pz->imageUrl() ?? null);
+                                            $isConsec = count($slotsArray) > 1 && $slotsArray === range(min($slotsArray), max($slotsArray));
+                                            $slotPin = count($slotsArray) === 1 
+                                                ? '#' . $slotsArray[0] 
+                                                : ($isConsec ? '#' . min($slotsArray) . ' - #' . max($slotsArray) : implode(', ', array_map(fn($s) => '#' . $s, $slotsArray)));
+                                        @endphp
+                                        <div class="prize-card-chip" data-slots="{{ implode(',', $slotsArray) }}">
+                                            <div class="prize-chip-img-box">
+                                                <div class="prize-chip-pin">{{ $slotPin }}</div>
+                                                @if (!empty($pzImg))
+                                                    <img src="{{ $pzImg }}" class="prize-chip-img" alt="{{ $pzName }}" />
+                                                @else
+                                                    <div class="prize-chip-icon">🎁</div>
+                                                @endif
+                                            </div>
+                                            <div class="prize-chip-name">{{ strtoupper($pzName) }}</div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                     @endif
                 </div>
