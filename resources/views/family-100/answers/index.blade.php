@@ -327,7 +327,7 @@
                                     Jumlah Kotak Hadiah:
                                 </label>
                                 <select name="gift_count" id="selectGiftCount" class="form-select form-select-sm w-auto fw-bold" onchange="this.form.submit()">
-                                    @for ($i = 5; $i <= 20; $i++)
+                                    @for ($i = 5; $i <= 30; $i++)
                                         <option value="{{ $i }}" {{ $giftCount === $i ? 'selected' : '' }}>
                                             {{ $i }} Kotak {{ $i === 15 ? '(Default)' : '' }}
                                         </option>
@@ -366,8 +366,8 @@
                 </div>
             </div>
 
-            <!-- Grid Kartu Kotak Hadiah (1 s/d 15-20) -->
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3" id="giftsContainer">
+            <!-- Grid Kartu Kotak Hadiah (1 s/d 15-30) -->
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 row-cols-xl-6 g-3" id="giftsContainer">
                 @foreach ($gifts as $gift)
                     <div class="col" data-gift-card="{{ $gift->id }}">
                         <div class="card h-100 shadow-sm border transition-all {{ $gift->is_opened ? 'border-success bg-success-lt' : 'border-warning-subtle bg-white' }}" style="border-radius: 12px;">

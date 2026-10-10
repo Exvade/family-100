@@ -162,10 +162,37 @@
             width: 100%;
             height: 100%;
             max-height: 65vh;
-            gap: clamp(0.6rem, 1.3vh, 1.2rem) clamp(0.6rem, 1.2vw, 1.4rem);
+            gap: clamp(0.5rem, 1.1vh, 1.2rem) clamp(0.5rem, 1vw, 1.4rem);
             grid-template-columns: repeat(5, 1fr);
             grid-auto-rows: 1fr;
             perspective: 1200px;
+        }
+
+        .gift-grid.cols-6 {
+            grid-template-columns: repeat(6, 1fr);
+            gap: clamp(0.35rem, 0.8vh, 0.75rem) clamp(0.35rem, 0.75vw, 0.9rem);
+            max-height: 68vh;
+        }
+
+        .gift-grid.cols-6 .gift-number-badge {
+            width: clamp(2.3rem, 4.4vh, 3.4rem);
+            height: clamp(2.3rem, 4.4vh, 3.4rem);
+            font-size: clamp(1.15rem, 2.2vh, 1.7rem);
+            margin-top: clamp(0.2rem, 0.5vh, 0.5rem);
+        }
+
+        .gift-grid.cols-6 .gift-bow svg {
+            width: clamp(24px, 3.2vh, 32px);
+            height: clamp(24px, 3.2vh, 32px);
+        }
+
+        .gift-grid.cols-6 .gift-tap-hint {
+            font-size: clamp(0.52rem, 0.95vh, 0.7rem);
+            margin-top: 0.2rem;
+        }
+
+        .gift-grid.cols-6 .opened-box-name {
+            font-size: clamp(0.8rem, 1.4vh, 1.15rem);
         }
 
         /* Kartu Kotak Hadiah Burgundy */
@@ -564,7 +591,7 @@
 
         <!-- Grid Kotak Hadiah 3D Burgundy & Emas -->
         <section class="gift-grid-wrapper">
-            <div class="gift-grid" id="giftGrid">
+            <div class="gift-grid {{ $giftCount > 20 ? 'cols-6' : '' }}" id="giftGrid">
                 @foreach ($gifts as $gift)
                     <div class="gift-box-item {{ $gift->is_opened ? 'opened' : '' }}" data-gift-id="{{ $gift->id }}" data-number="{{ $gift->number }}" data-name="{{ $gift->name }}" data-description="{{ $gift->description }}" data-winner="{{ $gift->winner_name }}" data-open-url="{{ route('family-100.gifts.open', $gift) }}">
                         <div class="gift-box-card">
@@ -825,7 +852,7 @@
         });
 
         // Handler Klik Membuka Kotak Hadiah Langsung di Layar TV
-        document.querySelectorAll('.gift-box-item').forEach(box => {
+        function attachGiftBoxClick(box) {
             box.addEventListener('click', async () => {
                 if (box.classList.contains('opened')) return;
                 const giftId = Number(box.dataset.giftId);
@@ -850,7 +877,51 @@
                     openedIds.add(giftId);
                 } catch (e) {}
             });
-        });
+        }
+
+        document.querySelectorAll('.gift-box-item').forEach(attachGiftBoxClick);
+
+        function renderGiftGrid(gifts) {
+            const grid = document.getElementById('giftGrid');
+            if (!grid) return;
+            const giftCount = gifts.length;
+            grid.classList.toggle('cols-6', giftCount > 20);
+
+            grid.innerHTML = gifts.map(gift => `
+                <div class="gift-box-item ${gift.is_opened ? 'opened' : ''}" data-gift-id="${gift.id}" data-number="${gift.number}" data-name="${escapeHtml(gift.name)}" data-description="${escapeHtml(gift.description || '')}" data-winner="${escapeHtml(gift.winner_name || '')}" data-open-url="/family-100/hadiah/${gift.id}/open">
+                    <div class="gift-box-card">
+                        <div class="gift-ribbon-v"></div>
+                        <div class="gift-ribbon-h"></div>
+                        <div class="gift-bow">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36">
+                                <defs>
+                                    <linearGradient id="bowGoldGrad_${gift.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#fff8ed" />
+                                        <stop offset="35%" stop-color="#fde68a" />
+                                        <stop offset="70%" stop-color="#d4af37" />
+                                        <stop offset="100%" stop-color="#92400e" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M18 18 C12 10, 4 12, 6 18 C8 24, 15 20, 18 18 Z" fill="url(#bowGoldGrad_${gift.id})" />
+                                <path d="M18 18 C24 10, 32 12, 30 18 C28 24, 21 20, 18 18 Z" fill="url(#bowGoldGrad_${gift.id})" />
+                                <path d="M16 19 L11 28 L14 26 L17 29 Z" fill="#92400e" />
+                                <path d="M20 19 L25 28 L22 26 L19 29 Z" fill="#92400e" />
+                                <circle cx="18" cy="18" r="3.2" fill="#fff8ed" stroke="#92400e" stroke-width="1" />
+                            </svg>
+                        </div>
+                        <div class="gift-number-badge">${gift.number}</div>
+                        <div class="gift-tap-hint">Pilih Kotak</div>
+                        <div class="gift-opened-content">
+                            <span class="opened-box-number">Kotak #${gift.number}</span>
+                            <div class="opened-box-name">${escapeHtml(gift.name)}</div>
+                            ${gift.winner_name ? `<div class="opened-box-winner">${escapeHtml(gift.winner_name)}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            grid.querySelectorAll('.gift-box-item').forEach(attachGiftBoxClick);
+        }
 
         function revealBox(box, number, name, desc, winner) {
             box.classList.add('opened');
@@ -887,31 +958,41 @@
                     return;
                 }
 
-                // Cek kotak-kotak yang dibuka dari dashboard
-                (data.gifts || []).forEach(g => {
-                    const box = document.querySelector(`[data-gift-id="${g.id}"]`);
-                    if (!box) return;
+                const grid = document.getElementById('giftGrid');
+                if (grid && data.gift_count) {
+                    grid.classList.toggle('cols-6', data.gift_count > 20);
+                }
 
-                    // Update data atribut terbaru
-                    box.dataset.name = g.name;
-                    box.dataset.description = g.description || '';
-                    box.dataset.winner = g.winner_name || '';
+                const currentDomBoxCount = document.querySelectorAll('#giftGrid .gift-box-item').length;
+                if (data.gifts && data.gifts.length !== currentDomBoxCount) {
+                    renderGiftGrid(data.gifts);
+                } else {
+                    // Cek kotak-kotak yang dibuka dari dashboard
+                    (data.gifts || []).forEach(g => {
+                        const box = document.querySelector(`[data-gift-id="${g.id}"]`);
+                        if (!box) return;
 
-                    if (g.is_opened && !openedIds.has(g.id)) {
-                        // Baru saja dibuka dari dashboard
-                        openedIds.add(g.id);
-                        revealBox(box, g.number, g.name, g.description, g.winner_name);
-                        showCelebrationModal(g.number, g.name, g.description, g.winner_name);
-                    } else if (!g.is_opened && openedIds.has(g.id)) {
-                        // Baru saja direset/ditutup kembali dari dashboard
-                        openedIds.delete(g.id);
-                        box.classList.remove('opened');
-                    } else if (g.is_opened) {
-                        // Pastikan teks nama hadiah sinkron
-                        const nameEl = box.querySelector('.opened-box-name');
-                        if (nameEl) nameEl.textContent = g.name;
-                    }
-                });
+                        // Update data atribut terbaru
+                        box.dataset.name = g.name;
+                        box.dataset.description = g.description || '';
+                        box.dataset.winner = g.winner_name || '';
+
+                        if (g.is_opened && !openedIds.has(g.id)) {
+                            // Baru saja dibuka dari dashboard
+                            openedIds.add(g.id);
+                            revealBox(box, g.number, g.name, g.description, g.winner_name);
+                            showCelebrationModal(g.number, g.name, g.description, g.winner_name);
+                        } else if (!g.is_opened && openedIds.has(g.id)) {
+                            // Baru saja direset/ditutup kembali dari dashboard
+                            openedIds.delete(g.id);
+                            box.classList.remove('opened');
+                        } else if (g.is_opened) {
+                            // Pastikan teks nama hadiah sinkron
+                            const nameEl = box.querySelector('.opened-box-name');
+                            if (nameEl) nameEl.textContent = g.name;
+                        }
+                    });
+                }
             } catch (err) {}
         }
 

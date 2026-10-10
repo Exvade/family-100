@@ -202,12 +202,12 @@ class GiftController extends Controller
     }
 
     /**
-     * Ubah jumlah total kotak hadiah yang aktif (1 s/d 20, default 15).
+     * Ubah jumlah total kotak hadiah yang aktif (1 s/d 30, default 15).
      */
     public function updateCount(Request $request): JsonResponse|RedirectResponse
     {
         $data = $request->validate([
-            'gift_count' => 'required|integer|min:1|max:20',
+            'gift_count' => 'required|integer|min:1|max:30',
         ]);
 
         $count = (int) $data['gift_count'];

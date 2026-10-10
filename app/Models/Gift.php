@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Gift extends Model
 {
     public const DEFAULT_COUNT = 15;
-    public const MAX_COUNT = 20;
+    public const MAX_COUNT = 30;
     public const MIN_COUNT = 1;
 
     protected $fillable = [

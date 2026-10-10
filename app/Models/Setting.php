@@ -43,7 +43,7 @@ class Setting extends Model
     {
         $count = (int) static::get(self::GIFT_COUNT, (string) self::DEFAULT_GIFT_COUNT);
 
-        return max(1, min(20, $count ?: self::DEFAULT_GIFT_COUNT));
+        return max(1, min(30, $count ?: self::DEFAULT_GIFT_COUNT));
     }
 
     /** Durasi timer Family 100 dalam detik. */
